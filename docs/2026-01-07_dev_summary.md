@@ -1,77 +1,36 @@
-# Tiga Project Development Log
-Date: 2026-01-07
-Author: Antigravity Agent & User
+# 2026-01-07 Development Summary
 
-## 1. Project Overview
-**Tiga** is a modern, lightweight, and cross-platform ToDo list application designed with a "Mobile First" philosophy. It aims to provide a premium user experience comparable to top-tier apps like TickTick or Notion, but with a cleaner, focused interface.
+## Initial Focus: Mobile UX Refinement (Morning Session)
+*   **Goal**: Refine mobile interactions and visual polish.
+*   **Key Changes**:
+    *   **Glassmorphism**: Applied `backdrop-blur` and semi-transparent backgrounds to `Sidebar`, `NoteEditor`, and `DateTimePicker`.
+    *   **Sidebar Navigation**: Moved from a top-bar heavy design to a slide-over Sidebar for filtering (All, Today, Upcoming, Completed).
+    *   **Animations**: Removed `LayoutGroup` causing "auto-scroll" bugs. Implemented `AnimatePresence` for smooth list filtering.
+    *   **Mobile Date Picker**: Replaced native browser picker with an iOS-style bottom sheet picker (`react-mobile-picker`).
+    *   **Branding**: Added "Tiga" Logo (Check circle icon).
+    *   **iOS Fixes**: Added `padding-top: env(safe-area-inset-top)` for status bar clearance.
 
-### Tech Stack
-- **Frontend**: React, Vite, TypeScript, TailwindCSS
-- **Animation**: Framer Motion (for spring physics and micro-interactions)
-- **Mobile/PWA**: Capacitor (planned), Responsive Web Design
-- **Backend**: FastAPI (Python), SQLite, SQLAlchemy
+## Session 2: Transformation to "Note App" (Evening Session)
+*   **Goal**: Pivot from a simple Todo list to a "Task-first Note App" with rich text capabilities.
+*   **Key Changes**:
+    1.  **"Flow" Editor (Tiptap Integration)**:
+        *   Replaced the old `Textarea` + `ReactMarkdown` toggle with a seamless **WYSIWYG Tiptap Editor**.
+        *   Supports live Markdown rendering (Headers, Lists, Bold) and Task Lists.
+        *   Added a mobile-friendly formatting toolbar.
+    2.  **Bottom Navigation & Views**:
+        *   Implemented a Glass-morphic **Bottom Navigation Bar** with "Tasks" and "Notes" tabs.
+        *   **Tasks View**: The classic checklist view.
+        *   **Notes View**: A new **Masonry/Grid** layout to visualize content-rich items as cards.
+    3.  **Adaptive UX**:
+        *   **Context-Aware FAB**:
+            *   *In Tasks*: Shows `+` -> Opens **Quick Input** bar.
+            *   *In Notes*: Shows `Pen` -> Instantly opens **Full Editor**.
+        *   **Smart Input**: Added a "Maximize" `⤢` button to the Quick Input bar to escalate a task into a full note.
+    4.  **Animation Polish**:
+        *   **Fixed Layout Shift**: Solved mobile "jerkiness" during tab switching by stabilizing the container height and using `relative/absolute` positioning correctly.
+        *   **Spring Physics**: Applied premium "Pop" animations (`type: spring`, `stiffness: 350`) to note cards with staggered entry delays.
 
-## 2. Recent Development Highlights (Phase 3: Mobile UX Refactor)
-
-Today's session focused heavily on interacting refining the mobile experience and establishing a unique brand identity.
-
-### 🎨 Branding & UI Overhaul
-- **New Logo**: Designed and integrated the "Tiga" logo (Feather/Checkmark motif).
-- **Glassmorphism Theme**: Applied a premium "Glass" aesthetic to the Login and Registration pages, featuring soft gradients, blur effects, and modern typography.
-- **Sidebar Navigation**: Implemented a slide-in drawer for mobile navigation, cleaning up the main dashboard view.
-
-### 📱 Mobile Experience Optimization
-- **Floating Action Button (FAB)**: Added a sticky "Quick Add" button with a rubber-band spring animation.
-- **Lightweight Note Editor**: Replaced the heavy `uiw/react-md-editor` with a custom, lightweight solution using `react-textarea-autosize` and `react-markdown`.
-    - **Why?** The previous editor was too heavy for mobile control.
-    - **Result**: A "Notion-like" clean writing interface with a minimal toolbar (Bold, List, Checkbox, Image) and instant Edit/Preview toggling.
-
-### ✨ Non-Linear Animations (Juicy Feel)
-Implemented "Spring Physics" animations to make the app feel alive:
-- **Bouncy Checkbox**: Completing a task triggers a satisfying pop/spring animation on the checkmark.
-- **Staggered List**: Task items slide in with a natural delay.
-- **Elastic Sidebar**: The navigation drawer opens with a high-stiffness spring transition.
-- **FAB Micro-interactions**: The add button rotates on entry and scales elastically when pressed.
-
-## 3. Current System Status
-- **Services**: Both Frontend (`:5173`) and Backend (`:8000`) are fully functional and integrated.
-- **Deployment**: The app is runnable locally via `./start_app.sh`.
-- **iOS Build**: Capacitor iOS integration complete, buildable via Xcode.
-
-## 4. Session 2 Updates (2026-01-07 PM)
-
-### 📱 Mobile Date Picker
-- Replaced native `datetime-local` input with custom **Bottom Sheet** date picker
-- Uses `react-mobile-picker` for iOS-style wheel selection
-- Quick preset buttons: Today, Tomorrow, Next Week
-- Spring animation for sheet entrance/exit
-
-### 🎯 TodoItem UX Simplification
-- **Removed** inline expand/collapse functionality
-- **New behavior**: Click card → Opens NoteEditor directly
-- Cleaner card design without ChevronDown button
-
-### 🎨 Login & Register Redesign
-- Minimal, unified design language across both pages
-- **Gradient backgrounds** with animated floating orbs (breathing effect)
-- **Icon-prefixed inputs** with 2xl rounded corners
-- **Spring entrance animations** with staggered delays
-- **Loading spinner** on submit button
-- Consistent `indigo-500` color palette
-
-### 📱 iOS / Capacitor Integration
-- Fixed touch targets for iOS (44x44px minimum)
-- Added `pt-safe` iOS safe area padding to Sidebar header
-- Build pipeline: `npm run build && npx cap sync ios && npx cap open ios`
-- Tailwind Typography plugin added for Markdown rendering
-
-### 🔧 Technical Fixes
-- Fixed TypeScript lint errors (unused imports)
-- Removed dead code (e.g., `filter === 'active'` check)
-- Unified FAB to circular design (`rounded-full`, 56x56)
-
-## 5. Next Steps
-- **iOS Safe Area Polish**: Fine-tune for Dynamic Island / notch devices
-- **PWA Configuration**: Finalize `manifest.json` and service workers
-- **Dark Mode**: Consider adding theme toggle
-
+## Next Steps
+*   **Sidebar 2.0**: Refactor Sidebar to support **Projects/Lists** (e.g., "Work", "Personal") instead of just date filters.
+*   **Backend Support**: Add `lists` table and relationships.
+*   **Refine Notes**: Filter "Notes" view to exclude empty tasks.

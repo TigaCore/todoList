@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api/client';
-import { Plus, Search, Menu } from 'lucide-react';
+import { Plus, Search, Menu, PenLine, Maximize2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import TodoItem from '../components/TodoItem';
 import NoteEditor from '../components/NoteEditor';
 import Sidebar from '../components/Sidebar';
 import DateTimePicker from '../components/DateTimePicker';
+import BottomNav, { Tab } from '../components/BottomNav';
+import NotesView from '../components/NotesView';
 import { LocalNotifications } from '@capacitor/local-notifications';
 import { isToday, parseISO, format } from 'date-fns';
 
@@ -35,6 +37,9 @@ const Dashboard = () => {
     const [filter, setFilter] = useState<'all' | 'today' | 'upcoming' | 'completed'>('all');
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [isInputOpen, setIsInputOpen] = useState(false);
+
+    // Bottom Navigation State
+    const [activeTab, setActiveTab] = useState<Tab>('tasks');
 
     // Notes Editor State
     const [editingNote, setEditingNote] = useState<Todo | null>(null);
@@ -116,11 +121,23 @@ const Dashboard = () => {
 
     const handleSaveNote = async (content: string) => {
         if (!editingNote) return;
+
         try {
-            const response = await api.put<Todo>(`/todos/${editingNote.id}`, {
-                content
-            });
-            setTodos(todos.map(t => t.id === editingNote.id ? response.data : t));
+            if (editingNote.id === 0) {
+                // Create new Note
+                const response = await api.post<Todo>('/todos/', {
+                    title: editingNote.title || 'Untitled Note', // Default title if empty
+                    content: content,
+                    is_completed: false
+                });
+                setTodos([response.data, ...todos]);
+            } else {
+                // Update existing Note
+                const response = await api.put<Todo>(`/todos/${editingNote.id}`, {
+                    content
+                });
+                setTodos(todos.map(t => t.id === editingNote.id ? response.data : t));
+            }
             setEditingNote(null);
         } catch (error) {
             console.error('Error saving note:', error);
@@ -172,6 +189,8 @@ const Dashboard = () => {
     });
 
     const getFilterTitle = () => {
+        if (activeTab === 'notes') return 'All Notes';
+
         switch (filter) {
             case 'today': return 'Today';
             case 'upcoming': return 'Upcoming';
@@ -205,65 +224,82 @@ const Dashboard = () => {
             </div>
 
             <main className="flex-1 max-w-5xl mx-auto w-full px-4 pt-4 md:px-8 md:pt-0 pb-24 md:pb-8">
-                <div className="space-y-3">
-                    <AnimatePresence mode="wait">
-                        <motion.div
-                            key={filter}
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            transition={{ duration: 0.15 }}
-                            className="space-y-3"
-                        >
-                            {filteredTodos.map((todo, index) => (
-                                <TodoItem
-                                    key={todo.id}
-                                    todo={todo}
-                                    index={index}
-                                    onToggle={handleToggle}
-                                    onDelete={handleDelete}
-                                    onOpenNotes={(t) => setEditingNote(t)}
-                                    onOpenDatePicker={(t) => setDatePickerTodo(t)}
-                                />
-                            ))}
-                        </motion.div>
-                    </AnimatePresence>
+                <div className="relative min-h-[50vh] overflow-hidden">
+                    <AnimatePresence>
+                        {activeTab === 'tasks' ? (
+                            <motion.div
+                                key="tasks"
+                                initial={{ opacity: 0, position: 'absolute', top: 0, left: 0, width: '100%' }}
+                                animate={{ opacity: 1, position: 'relative' }}
+                                exit={{ opacity: 0, position: 'absolute', top: 0, left: 0, width: '100%' }}
+                                transition={{ duration: 0.2 }}
+                                className="space-y-3 pb-20"
+                            >
+                                {filteredTodos.map((todo, index) => (
+                                    <TodoItem
+                                        key={todo.id}
+                                        todo={todo}
+                                        index={index}
+                                        onToggle={handleToggle}
+                                        onDelete={handleDelete}
+                                        onOpenNotes={(t) => setEditingNote(t)}
+                                        onOpenDatePicker={(t) => setDatePickerTodo(t)}
+                                    />
+                                ))}
 
-                    {filteredTodos.length === 0 && (
-                        <motion.div
-                            initial={{ opacity: 0, scale: 0.9, y: 20 }}
-                            animate={{
-                                opacity: 1,
-                                scale: 1,
-                                y: 0,
-                                transition: {
-                                    duration: 0.5,
-                                    ease: [0.34, 1.56, 0.64, 1],
-                                    delay: 0.15
-                                }
-                            }}
-                            className="flex flex-col items-center justify-center py-20 text-gray-400"
-                        >
-                            <div className="w-32 h-32 bg-indigo-100 rounded-full flex items-center justify-center mb-4">
-                                <Search size={40} className="text-indigo-300" />
-                            </div>
-                            <p>No tasks found in "{getFilterTitle()}"</p>
-                        </motion.div>
-                    )}
+                                {filteredTodos.length === 0 && (
+                                    <motion.div
+                                        initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                                        animate={{
+                                            opacity: 1,
+                                            scale: 1,
+                                            y: 0,
+                                            transition: {
+                                                duration: 0.5,
+                                                ease: [0.34, 1.56, 0.64, 1],
+                                                delay: 0.15
+                                            }
+                                        }}
+                                        className="flex flex-col items-center justify-center py-20 text-gray-400"
+                                    >
+                                        <div className="w-32 h-32 bg-indigo-100 rounded-full flex items-center justify-center mb-4">
+                                            <Search size={40} className="text-indigo-300" />
+                                        </div>
+                                        <p>No tasks found in "{getFilterTitle()}"</p>
+                                    </motion.div>
+                                )}
+                            </motion.div>
+                        ) : (
+                            <motion.div
+                                key="notes"
+                                initial={{ opacity: 0, position: 'absolute', top: 0, left: 0, width: '100%' }}
+                                animate={{ opacity: 1, position: 'relative' }}
+                                exit={{ opacity: 0, position: 'absolute', top: 0, left: 0, width: '100%' }}
+                                transition={{ duration: 0.2 }}
+                                className="pb-20"
+                            >
+                                <NotesView
+                                    notes={todos}
+                                    onNoteClick={(t) => setEditingNote(t)}
+                                />
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
                 </div>
             </main>
 
             {/* Floating Action Button (FAB) and Input Container */}
             <div className="fixed bottom-6 w-full px-4 md:bottom-10 md:px-0 z-20 pointer-events-none">
-                <div className="max-w-xl mx-auto flex items-end justify-end gap-3 pointer-events-auto">
+                <div className="max-w-xl mx-auto flex items-end justify-center pointer-events-none relative h-20">
+                    {/* Input Form - only show when open */}
                     <AnimatePresence mode="wait">
-                        {isInputOpen && (
+                        {isInputOpen && activeTab === 'tasks' && (
                             <motion.form
                                 initial={{ opacity: 0, scale: 0.92, y: 16 }}
                                 animate={{
                                     opacity: 1,
                                     scale: 1,
-                                    y: 0,
+                                    y: -80, // Push it up above the nav bar
                                     transition: {
                                         type: "spring",
                                         stiffness: 400,
@@ -281,9 +317,9 @@ const Dashboard = () => {
                                     }
                                 }}
                                 onSubmit={handleAddTodo}
-                                className="flex-1 w-full"
+                                className="absolute bottom-0 w-full px-4 pointer-events-auto"
                             >
-                                <div className="glass-panel p-2 rounded-2xl flex items-center shadow-2xl">
+                                <div className="glass-panel p-2 rounded-2xl flex items-center shadow-2xl bg-white/90 backdrop-blur-xl border border-white/20">
                                     <input
                                         type="text"
                                         value={title}
@@ -293,11 +329,32 @@ const Dashboard = () => {
                                         autoFocus
                                         onBlur={(e) => {
                                             // Close if clicking outside (not on submit button)
-                                            if (!e.relatedTarget?.closest('button[type="submit"]')) {
+                                            if (!e.relatedTarget?.closest('button')) {
                                                 setTimeout(() => setIsInputOpen(false), 150);
                                             }
                                         }}
                                     />
+                                    {/* Expand Button */}
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            // Open full editor with current title
+                                            const newNote = {
+                                                id: 0, // Temp ID
+                                                title: title,
+                                                is_completed: false,
+                                                content: ''
+                                            };
+                                            setEditingNote(newNote as Todo);
+                                            setTitle('');
+                                            setIsInputOpen(false);
+                                        }}
+                                        className="p-2 mr-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                                        title="Open Full Editor"
+                                    >
+                                        <Maximize2 size={20} />
+                                    </button>
+
                                     <button
                                         type="submit"
                                         disabled={!title.trim()}
@@ -310,12 +367,14 @@ const Dashboard = () => {
                         )}
                     </AnimatePresence>
 
+                    {/* FAB Button - Centered */}
                     {!isInputOpen && (
                         <motion.button
                             initial={{ scale: 0.8, opacity: 0 }}
                             animate={{
                                 scale: 1,
                                 opacity: 1,
+                                y: -6, // Lift slightly to sit on nav bar
                                 transition: {
                                     type: "spring",
                                     stiffness: 500,
@@ -323,16 +382,55 @@ const Dashboard = () => {
                                 }
                             }}
                             exit={{ scale: 0.8, opacity: 0 }}
-                            className="w-14 h-14 bg-indigo-500 text-white rounded-full shadow-lg shadow-indigo-500/30 hover:bg-indigo-600 hover:shadow-indigo-500/40 active:scale-95 transition-colors flex items-center justify-center"
-                            onClick={() => setIsInputOpen(true)}
+                            className="w-14 h-14 bg-indigo-600 text-white rounded-full shadow-lg shadow-indigo-600/30 hover:bg-indigo-700 hover:shadow-indigo-600/40 active:scale-95 transition-all flex items-center justify-center pointer-events-auto border-4 border-indigo-50"
+                            onClick={() => {
+                                if (activeTab === 'notes') {
+                                    // Open Note Editor directly
+                                    setEditingNote({
+                                        id: 0,
+                                        title: '',
+                                        is_completed: false,
+                                        content: ''
+                                    } as Todo);
+                                } else {
+                                    // Open Quick Input
+                                    setIsInputOpen(true);
+                                }
+                            }}
                             whileHover={{ scale: 1.06 }}
                             whileTap={{ scale: 0.94 }}
                         >
-                            <Plus size={28} />
+                            {/* Icon changes based on tab */}
+                            <AnimatePresence mode="wait">
+                                {activeTab === 'notes' ? (
+                                    <motion.div
+                                        key="pen"
+                                        initial={{ rotate: -90, opacity: 0 }}
+                                        animate={{ rotate: 0, opacity: 1 }}
+                                        exit={{ rotate: 90, opacity: 0 }}
+                                        transition={{ duration: 0.2 }}
+                                    >
+                                        <PenLine size={24} strokeWidth={2.5} />
+                                    </motion.div>
+                                ) : (
+                                    <motion.div
+                                        key="plus"
+                                        initial={{ rotate: 90, opacity: 0 }}
+                                        animate={{ rotate: 0, opacity: 1 }}
+                                        exit={{ rotate: -90, opacity: 0 }}
+                                        transition={{ duration: 0.2 }}
+                                    >
+                                        <Plus size={28} strokeWidth={2.5} />
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
                         </motion.button>
                     )}
                 </div>
             </div>
+
+            {/* Bottom Navigation */}
+            <BottomNav activeTab={activeTab} onTabChange={setActiveTab} />
 
             {/* Sidebar */}
             <Sidebar
@@ -368,9 +466,9 @@ const Dashboard = () => {
                                     stiffness: 280,
                                     mass: 0.9
                                 }}
-                                className="fixed bottom-0 left-0 right-0 z-50 flex flex-col pointer-events-none max-h-[70vh] sm:max-h-[80vh] sm:max-w-md sm:right-4 sm:left-auto sm:bottom-4"
+                                className="fixed bottom-0 left-0 right-0 z-50 flex flex-col pointer-events-none max-h-[85vh] sm:max-h-[80vh] sm:max-w-2xl sm:mx-auto sm:right-4 sm:left-4 sm:bottom-4"
                             >
-                                <div className="h-full pointer-events-auto rounded-t-2xl sm:rounded-2xl overflow-hidden">
+                                <div className="h-full pointer-events-auto rounded-t-3xl sm:rounded-2xl overflow-hidden shadow-2xl">
                                     <NoteEditor
                                         isOpen={true}
                                         note={editingNote}
