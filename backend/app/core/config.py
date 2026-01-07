@@ -14,7 +14,7 @@ class Settings(BaseSettings):
     
     # JWT
     secret_key: str = "your-secret-key-change-this-in-production"
-    algorithm: str = "sercret-key-algorithm"
+    algorithm: str = "HS256"
     access_token_expire_minutes: int = 30
     
     class Config:
@@ -22,7 +22,7 @@ class Settings(BaseSettings):
     
     @property
     def database_url(self) -> str:
-        return f"postgresql://{self.db_user}:{self.db_password}@{self.db_host}:{self.db_port}/{self.db_name}"
+        return "sqlite:///./sql_app.db"
 
 
 settings = Settings()

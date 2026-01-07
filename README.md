@@ -1,133 +1,78 @@
-# TodoList App 
+# Full-Stack ToDo List App
 
-## 项目概述
+A modern, cross-platform ToDo list application built with a Python backend and a React frontend. Designed to run on Web, Mobile (via Capacitor), and Desktop.
 
-一个支持全平台同步的待办事项管理应用，提供灵活的任务管理和日历视图功能。
+## 🏗 Technology Stack
 
-## 支持平台
+### Backend
+- **Framework**: FastAPI (Python)
+- **Database**: SQLite (Dev) / PostgreSQL (Prod)
+- **ORM**: SQLAlchemy
+- **Authentication**: JWT (OAuth2)
 
-- **桌面端**: macOS, Windows
-- **移动端**: iOS, Android, HarmonyOS
-- **数据同步**: 全平台同步
+### Frontend (Cross-Platform)
+- **Core**: React + TypeScript + Vite
+- **UI Architecture**: Tailwind CSS
+- **Mobile Runtime**: Capacitor (iOS & Android)
+- **State Management**: React Hooks (Local State)
 
-## 核心功能
+## 🚀 Getting Started
 
-### 1. 用户系统
+### Prerequisites
+- Python 3.12+
+- Node.js 18+
 
-- 账号注册/登录
-- 用户数据云端存储
+### Quick Start (One-Click)
+Run the startup script to launch both services:
+```bash
+./start_app.sh
+```
 
-### 2. 待办事项管理
+### Manual Startup
 
-#### 2.1 基础功能
+**1. Backend**
+```bash
+cd backend
+pip install -r pyproject.toml
+python main.py
+```
+*Server: http://localhost:8000 | Docs: http://localhost:8000/docs*
 
-- **增删改查**: 创建、编辑、删除、标记完成
-- 任务属性
-  - 标题和备注信息
-  - 优先级 (高/中/低)
-  - 状态
+**2. Frontend**
+```bash
+cd frontend
+npm install
+npm run dev
+```
+*App: http://localhost:5173*
 
-#### 2.2 组织结构
+## 📱 Mobile Development (Capacitor)
+To build for mobile devices:
 
-- 自定义列表：用户可创建分类文件夹
-  - 预设: 工作、个人等
-  - 支持自定义命名和颜色
-- **标签系统**: 多标签支持，便于分类和筛选
+1. **Build frontend**:
+   ```bash
+   cd frontend
+   npm run build
+   ```
+2. **Sync with Capacitor**:
+   ```bash
+   npx cap sync
+   ```
+3. **Open Native IDE**:
+   ```bash
+   npx cap open android  # Requires Android Studio
+   # or
+   npx cap open ios      # Requires Xcode (Mac only)
+   ```
 
-#### 2.3 提醒系统
-
-- 定时提醒
-  - 指定具体日期和时间
-  - 提前提醒设置 (5分钟/15分钟/1小时/1天等)
-- 重复提醒
-  - 重复模式: 每天/每周/每月/自定义
-  - 结束条件: 指定结束日期或次数
-
-### 3. 视图模式
-
-#### 3.1 列表视图
-
-- 按列表/标签分组显示
-- 优先级排序
-- 完成状态筛选
-- 搜索功能
-
-#### 3.2 日历视图
-
-- 月/周/日视图切换
-- 事项在对应日期显示
-- 拖拽调整日期
-- 快速创建事项
-
-## 技术架构
-
-### 前端技术栈
-
-- **Web**
-- 移动端
-  - iOS
-  - Android
-  - HarmonyOS
-- **桌面端**
-
-### 后端技术栈
-
-- **API**: 
-- **数据库**: 
-- **实时同步**: 
-- 推送服务
-
-### 数据同步策略
-
-- **离线优先**: 本地数据优先，网络恢复后同步
-- **冲突处理**: 时间戳 + 用户选择策略
-- **增量同步**: 只同步变更数据
-
-## 数据模型概述
-
-### 用户 (User)
-
-- 用户ID、邮箱、密码
-- 设备信息、设备标签、同步状态
-
-### 列表 (List)
-
-- 列表ID、名称、颜色、图标
-- 创建时间、排序权重
-
-### 任务 (Task)
-
-- 任务ID、标题、描述、备注
-- 优先级、完成状态
-- 所属列表、标签数组
-- 创建/修改/完成时间
-
-### 提醒 (Reminder)
-
-- 提醒时间、提前时长
-- 重复规则、结束条件
-- 关联任务ID
-
-### 标签 (Tag)
-
-- 标签ID、名称、颜色
-
-## 开发阶段规划
-
-### Phase 1 - MVP
-
-- 基础CRUD功能
-- 简单提醒
-- Web端 + 移动端
-
-### Phase 2 - 完整功能
-
-- 高级提醒系统
-- 日历视图
-- 桌面端应用
-
-### Phase 3 - 优化增强
-
-- 全平台适配
-- 性能优化
-- 高级功能 (统计、导入导出等)
+## 📂 Project Structure
+```
+.
+├── backend/            # FastAPI Server
+│   ├── app/            # App Logic (Models, API, etc.)
+│   └── main.py         # Entry Point
+├── frontend/           # React Web App
+│   ├── src/            # Components & Pages
+│   └── capacitor.config.ts # Mobile Config
+└── start_app.sh        # Startup Script
+```

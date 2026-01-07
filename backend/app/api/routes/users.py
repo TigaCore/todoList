@@ -10,7 +10,7 @@ from app.utils.auth import create_access_token
 from app.utils.dependencies import get_current_user
 from app.models.user import User
 
-router = APIRouter(prefix="/users", tags=["users"])
+router = APIRouter(tags=["users"])
 security = HTTPBearer()
 
 

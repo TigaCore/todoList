@@ -1,0 +1,28 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-indigo-50 text-gray-900 antialiased;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  }
+}
+
+@layer components {
+  .glass-panel {
+    @apply bg-white/70 backdrop-blur-lg border border-white/20 shadow-xl;
+  }
+
+  .glass-card {
+    @apply bg-white/60 backdrop-blur-md border border-white/30 shadow-sm hover:shadow-md transition-all duration-200;
+  }
+
+  .glass-input {
+    @apply bg-white/50 backdrop-blur-sm border-gray-200/50 focus:bg-white/80 focus:ring-2 focus:ring-indigo-500/50 transition-all duration-200;
+  }
+
+  .btn-primary {
+    @apply bg-indigo-600 text-white hover:bg-indigo-700 active:bg-indigo-800 transition-colors duration-200 shadow-lg shadow-indigo-600/20 hover:shadow-indigo-600/40;
+  }
+}
