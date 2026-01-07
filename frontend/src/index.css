@@ -15,7 +15,7 @@
   }
 
   .glass-card {
-    @apply bg-white/60 backdrop-blur-md border border-white/30 shadow-sm hover:shadow-md transition-all duration-200;
+    @apply bg-white/60 backdrop-blur-md border border-white/30 shadow-sm hover:shadow-md transition-shadow duration-200;
   }
 
   .glass-input {

@@ -1,1 +1,1 @@
-{"root":["./src/app.tsx","./src/main.tsx","./src/vite-env.d.ts","./src/api/client.ts","./src/pages/dashboard.tsx","./src/pages/login.tsx","./src/pages/register.tsx"],"version":"5.9.3"}
+{"root":["./src/app.tsx","./src/main.tsx","./src/vite-env.d.ts","./src/api/client.ts","./src/components/datetimepicker.tsx","./src/components/noteeditor.tsx","./src/components/sidebar.tsx","./src/components/todoitem.tsx","./src/pages/dashboard.tsx","./src/pages/login.tsx","./src/pages/register.tsx"],"version":"5.9.3"}

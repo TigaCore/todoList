@@ -36,7 +36,42 @@ Implemented "Spring Physics" animations to make the app feel alive:
 ## 3. Current System Status
 - **Services**: Both Frontend (`:5173`) and Backend (`:8000`) are fully functional and integrated.
 - **Deployment**: The app is runnable locally via `./start_app.sh`.
+- **iOS Build**: Capacitor iOS integration complete, buildable via Xcode.
 
-## 4. Next Steps
-- **Mobile Date Picker**: Implement a custom "Bottom Sheet" date picker to replace the native browser input, offering quick presets (Today, Tomorrow).
-- **PWA Configuration**: Finalize `manifest.json` and service workers for installability.
+## 4. Session 2 Updates (2026-01-07 PM)
+
+### 📱 Mobile Date Picker
+- Replaced native `datetime-local` input with custom **Bottom Sheet** date picker
+- Uses `react-mobile-picker` for iOS-style wheel selection
+- Quick preset buttons: Today, Tomorrow, Next Week
+- Spring animation for sheet entrance/exit
+
+### 🎯 TodoItem UX Simplification
+- **Removed** inline expand/collapse functionality
+- **New behavior**: Click card → Opens NoteEditor directly
+- Cleaner card design without ChevronDown button
+
+### 🎨 Login & Register Redesign
+- Minimal, unified design language across both pages
+- **Gradient backgrounds** with animated floating orbs (breathing effect)
+- **Icon-prefixed inputs** with 2xl rounded corners
+- **Spring entrance animations** with staggered delays
+- **Loading spinner** on submit button
+- Consistent `indigo-500` color palette
+
+### 📱 iOS / Capacitor Integration
+- Fixed touch targets for iOS (44x44px minimum)
+- Added `pt-safe` iOS safe area padding to Sidebar header
+- Build pipeline: `npm run build && npx cap sync ios && npx cap open ios`
+- Tailwind Typography plugin added for Markdown rendering
+
+### 🔧 Technical Fixes
+- Fixed TypeScript lint errors (unused imports)
+- Removed dead code (e.g., `filter === 'active'` check)
+- Unified FAB to circular design (`rounded-full`, 56x56)
+
+## 5. Next Steps
+- **iOS Safe Area Polish**: Fine-tune for Dynamic Island / notch devices
+- **PWA Configuration**: Finalize `manifest.json` and service workers
+- **Dark Mode**: Consider adding theme toggle
+

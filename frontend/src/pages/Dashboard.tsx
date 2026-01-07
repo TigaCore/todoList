@@ -1,13 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api/client';
-import { Plus, Search, Menu, Calendar } from 'lucide-react';
+import { Plus, Search, Menu } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import TodoItem from '../components/TodoItem';
 import NoteEditor from '../components/NoteEditor';
 import Sidebar from '../components/Sidebar';
+import DateTimePicker from '../components/DateTimePicker';
 import { LocalNotifications } from '@capacitor/local-notifications';
-import { isToday, parseISO } from 'date-fns';
+import { isToday, parseISO, format } from 'date-fns';
 
 interface Todo {
     id: number;
@@ -19,9 +20,17 @@ interface Todo {
     reminder_at?: string;
 }
 
+interface User {
+    id: number;
+    email: string;
+    nickname: string;
+    avatar?: string;
+}
+
 const Dashboard = () => {
     const navigate = useNavigate();
     const [todos, setTodos] = useState<Todo[]>([]);
+    const [user, setUser] = useState<User | null>(null);
     const [title, setTitle] = useState('');
     const [filter, setFilter] = useState<'all' | 'today' | 'upcoming' | 'completed'>('all');
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -30,10 +39,23 @@ const Dashboard = () => {
     // Notes Editor State
     const [editingNote, setEditingNote] = useState<Todo | null>(null);
 
+    // Date Picker State
+    const [datePickerTodo, setDatePickerTodo] = useState<Todo | null>(null);
+
     useEffect(() => {
         fetchTodos();
+        fetchUser();
         requestNotificationPermission();
     }, []);
+
+    const fetchUser = async () => {
+        try {
+            const response = await api.get<User>('/users/me');
+            setUser(response.data);
+        } catch (error) {
+            console.error('Error fetching user:', error);
+        }
+    };
 
     const requestNotificationPermission = async () => {
         try {
@@ -146,11 +168,7 @@ const Dashboard = () => {
                 return todo.due_date && !isToday(parseISO(todo.due_date)) && new Date(todo.due_date) > new Date();
             }
         }
-        return filter === 'all' || (filter === 'active' && !todo.is_completed); // Default to showing all non-completed for 'all' or 'active' logic if mixed
-    }).sort((a, b) => {
-        // Sort: Non-completed first, then by date
-        if (a.is_completed === b.is_completed) return 0;
-        return a.is_completed ? 1 : -1;
+        return filter === 'all';
     });
 
     const getFilterTitle = () => {
@@ -166,11 +184,14 @@ const Dashboard = () => {
         <div className="min-h-screen bg-indigo-50/50 flex flex-col">
             {/* Mobile Header */}
             <header className="bg-white/80 backdrop-blur-md sticky top-0 z-10 px-4 py-3 flex items-center justify-between shadow-sm md:hidden">
-                <button onClick={() => setIsSidebarOpen(true)} className="p-2 -ml-2 text-gray-600">
+                <button
+                    onClick={() => setIsSidebarOpen(true)}
+                    className="p-3 -ml-2 text-gray-600 hover:bg-gray-100 rounded-lg active:bg-gray-200 min-w-[44px] min-h-[44px] flex items-center justify-center"
+                >
                     <Menu size={24} />
                 </button>
                 <h1 className="font-bold text-lg text-gray-800">{getFilterTitle()}</h1>
-                <div className="w-10"></div> {/* Spacer for center alignment */}
+                <div className="w-11"></div> {/* Spacer for center alignment */}
             </header>
 
             {/* Desktop Header (Hidden on Mobile) */}
@@ -183,31 +204,135 @@ const Dashboard = () => {
                 </div>
             </div>
 
-            <main className="flex-1 max-w-5xl mx-auto w-full px-4 md:px-8 pb-24 md:pb-8">
+            <main className="flex-1 max-w-5xl mx-auto w-full px-4 pt-4 md:px-8 md:pt-0 pb-24 md:pb-8">
                 <div className="space-y-3">
-                    <AnimatePresence mode='popLayout'>
-                        {filteredTodos.map(todo => (
-                            <TodoItem
-                                key={todo.id}
-                                todo={todo}
-                                onToggle={handleToggle}
-                                onDelete={handleDelete}
-                                onOpenNotes={(t) => setEditingNote(t)}
-                                onUpdateDate={handleUpdateDate}
-                            />
-                        ))}
+                    <AnimatePresence mode="wait">
+                        <motion.div
+                            key={filter}
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ duration: 0.15 }}
+                            className="space-y-3"
+                        >
+                            {filteredTodos.map((todo, index) => (
+                                <TodoItem
+                                    key={todo.id}
+                                    todo={todo}
+                                    index={index}
+                                    onToggle={handleToggle}
+                                    onDelete={handleDelete}
+                                    onOpenNotes={(t) => setEditingNote(t)}
+                                    onOpenDatePicker={(t) => setDatePickerTodo(t)}
+                                />
+                            ))}
+                        </motion.div>
                     </AnimatePresence>
 
                     {filteredTodos.length === 0 && (
-                        <div className="flex flex-col items-center justify-center py-20 text-gray-400">
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                            animate={{
+                                opacity: 1,
+                                scale: 1,
+                                y: 0,
+                                transition: {
+                                    duration: 0.5,
+                                    ease: [0.34, 1.56, 0.64, 1],
+                                    delay: 0.15
+                                }
+                            }}
+                            className="flex flex-col items-center justify-center py-20 text-gray-400"
+                        >
                             <div className="w-32 h-32 bg-indigo-100 rounded-full flex items-center justify-center mb-4">
                                 <Search size={40} className="text-indigo-300" />
                             </div>
                             <p>No tasks found in "{getFilterTitle()}"</p>
-                        </div>
+                        </motion.div>
                     )}
                 </div>
             </main>
+
+            {/* Floating Action Button (FAB) and Input Container */}
+            <div className="fixed bottom-6 w-full px-4 md:bottom-10 md:px-0 z-20 pointer-events-none">
+                <div className="max-w-xl mx-auto flex items-end justify-end gap-3 pointer-events-auto">
+                    <AnimatePresence mode="wait">
+                        {isInputOpen && (
+                            <motion.form
+                                initial={{ opacity: 0, scale: 0.92, y: 16 }}
+                                animate={{
+                                    opacity: 1,
+                                    scale: 1,
+                                    y: 0,
+                                    transition: {
+                                        type: "spring",
+                                        stiffness: 400,
+                                        damping: 25,
+                                        mass: 0.8
+                                    }
+                                }}
+                                exit={{
+                                    opacity: 0,
+                                    scale: 0.92,
+                                    y: 16,
+                                    transition: {
+                                        duration: 0.2,
+                                        ease: [0.4, 0, 1, 1]
+                                    }
+                                }}
+                                onSubmit={handleAddTodo}
+                                className="flex-1 w-full"
+                            >
+                                <div className="glass-panel p-2 rounded-2xl flex items-center shadow-2xl">
+                                    <input
+                                        type="text"
+                                        value={title}
+                                        onChange={(e) => setTitle(e.target.value)}
+                                        placeholder="What needs to be done?"
+                                        className="flex-1 bg-transparent border-none outline-none focus:outline-none focus:ring-0 text-gray-800 placeholder-gray-400 text-lg px-4 py-2"
+                                        autoFocus
+                                        onBlur={(e) => {
+                                            // Close if clicking outside (not on submit button)
+                                            if (!e.relatedTarget?.closest('button[type="submit"]')) {
+                                                setTimeout(() => setIsInputOpen(false), 150);
+                                            }
+                                        }}
+                                    />
+                                    <button
+                                        type="submit"
+                                        disabled={!title.trim()}
+                                        className="p-3 bg-indigo-500 text-white rounded-full hover:bg-indigo-600 disabled:opacity-50 disabled:hover:bg-indigo-500 transition-colors shadow-lg shadow-indigo-500/25"
+                                    >
+                                        <Plus size={24} />
+                                    </button>
+                                </div>
+                            </motion.form>
+                        )}
+                    </AnimatePresence>
+
+                    {!isInputOpen && (
+                        <motion.button
+                            initial={{ scale: 0.8, opacity: 0 }}
+                            animate={{
+                                scale: 1,
+                                opacity: 1,
+                                transition: {
+                                    type: "spring",
+                                    stiffness: 500,
+                                    damping: 25
+                                }
+                            }}
+                            exit={{ scale: 0.8, opacity: 0 }}
+                            className="w-14 h-14 bg-indigo-500 text-white rounded-full shadow-lg shadow-indigo-500/30 hover:bg-indigo-600 hover:shadow-indigo-500/40 active:scale-95 transition-colors flex items-center justify-center"
+                            onClick={() => setIsInputOpen(true)}
+                            whileHover={{ scale: 1.06 }}
+                            whileTap={{ scale: 0.94 }}
+                        >
+                            <Plus size={28} />
+                        </motion.button>
+                    )}
+                </div>
+            </div>
 
             {/* Sidebar */}
             <Sidebar
@@ -216,82 +341,62 @@ const Dashboard = () => {
                 onLogout={handleLogout}
                 activeFilter={filter}
                 onFilterChange={setFilter}
+                user={user}
             />
 
-            {/* Floating Action Button (FAB) */}
-            <motion.div
-                className="fixed bottom-6 right-6 md:bottom-10 md:right-10 z-20"
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-            >
-                <button
-                    onClick={() => setIsInputOpen(true)}
-                    className="w-14 h-14 bg-indigo-600 rounded-full shadow-lg shadow-indigo-600/40 flex items-center justify-center text-white"
-                >
-                    <Plus size={28} />
-                </button>
-            </motion.div>
-
-            {/* Quick Add Bottom Sheet / Overlay */}
+            {/* Note Editor Overlay */}
             <AnimatePresence>
-                {isInputOpen && (
-                    <>
-                        <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            onClick={() => setIsInputOpen(false)}
-                            className="fixed inset-0 bg-black/40 backdrop-blur-sm z-30"
-                        />
-                        <motion.div
-                            initial={{ y: '100%' }}
-                            animate={{ y: 0 }}
-                            exit={{ y: '100%' }}
-                            className="fixed bottom-0 left-0 right-0 bg-white rounded-t-2xl p-4 z-40 shadow-2xl glass-panel"
-                        >
-                            <form onSubmit={handleAddTodo} className="flex flex-col gap-4">
-                                <input
-                                    type="text"
-                                    autoFocus
-                                    value={title}
-                                    onChange={(e) => setTitle(e.target.value)}
-                                    placeholder="What would you like to do?"
-                                    className="w-full text-lg bg-transparent border-none focus:ring-0 p-2 placeholder:text-gray-400"
-                                />
-                                <div className="flex justify-between items-center border-t border-gray-100 pt-3">
-                                    <div className="flex gap-2">
-                                        <button type="button" className="p-2 text-gray-400 hover:bg-gray-100 rounded-full">
-                                            <Menu size={20} />
-                                        </button>
-                                        <button type="button" className="p-2 text-gray-400 hover:bg-gray-100 rounded-full">
-                                            <Calendar size={20} />
-                                        </button>
-                                    </div>
-                                    <button
-                                        type="submit"
-                                        disabled={!title.trim()}
-                                        className="bg-indigo-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-indigo-700 disabled:opacity-50"
-                                    >
-                                        Add Task
-                                    </button>
+                {
+                    editingNote && (
+                        <>
+                            {/* Backdrop */}
+                            <motion.div
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0 }}
+                                className="fixed inset-0 bg-black/30 backdrop-blur-sm z-50 pointer-events-auto"
+                                onClick={() => setEditingNote(null)}
+                            />
+                            {/* Drawer - Bottom sheet style, not fullscreen */}
+                            <motion.div
+                                initial={{ y: '100%' }}
+                                animate={{ y: 0 }}
+                                exit={{ y: '100%' }}
+                                transition={{
+                                    type: "spring",
+                                    damping: 28,
+                                    stiffness: 280,
+                                    mass: 0.9
+                                }}
+                                className="fixed bottom-0 left-0 right-0 z-50 flex flex-col pointer-events-none max-h-[70vh] sm:max-h-[80vh] sm:max-w-md sm:right-4 sm:left-auto sm:bottom-4"
+                            >
+                                <div className="h-full pointer-events-auto rounded-t-2xl sm:rounded-2xl overflow-hidden">
+                                    <NoteEditor
+                                        isOpen={true}
+                                        note={editingNote}
+                                        onSave={handleSaveNote}
+                                        onClose={() => setEditingNote(null)}
+                                    />
                                 </div>
-                            </form>
-                        </motion.div>
-                    </>
-                )}
-            </AnimatePresence>
+                            </motion.div>
+                        </>
+                    )
+                }
+            </AnimatePresence >
 
-            {/* Notes Editor Overlay */}
-            {editingNote && (
-                <NoteEditor
-                    initialContent={editingNote.content || ''}
-                    onSave={handleSaveNote}
-                    onClose={() => setEditingNote(null)}
-                />
-            )}
-        </div>
+            {/* Date Time Picker - At root level for proper centering */}
+            <DateTimePicker
+                isOpen={!!datePickerTodo}
+                onClose={() => setDatePickerTodo(null)}
+                onSelect={(date) => {
+                    if (datePickerTodo) {
+                        handleUpdateDate(datePickerTodo.id, format(date, "yyyy-MM-dd'T'HH:mm"));
+                        setDatePickerTodo(null);
+                    }
+                }}
+                initialDate={datePickerTodo?.due_date ? new Date(datePickerTodo.due_date) : undefined}
+            />
+        </div >
     );
 };
 

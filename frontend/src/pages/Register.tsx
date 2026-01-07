@@ -2,157 +2,167 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import api from '../api/client';
 import { motion } from 'framer-motion';
+import { ArrowRight, Mail, Lock, User } from 'lucide-react';
 
 const Register = () => {
     const [nickname, setNickname] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
     const navigate = useNavigate();
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
+        setIsLoading(true);
         try {
-            await api.post('/users/register', {
-                nickname,
-                email,
-                password
-            });
+            await api.post('/users/register', { nickname, email, password });
             navigate('/login');
         } catch (err: any) {
-            console.error('Registration Error:', err);
-            setError(err.response?.data?.detail || 'Registration failed.');
+            setError(err.response?.data?.detail || 'Registration failed');
+        } finally {
+            setIsLoading(false);
         }
     };
 
     return (
-        <div className="min-h-screen bg-indigo-50/50 flex flex-col justify-center py-12 sm:px-6 lg:px-8 relative overflow-hidden">
-            {/* Background Decoration */}
-            <div className="absolute top-[-10%] right-[-10%] w-[40%] h-[40%] bg-purple-200/30 rounded-full blur-3xl" />
-            <div className="absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] bg-indigo-200/30 rounded-full blur-3xl" />
-
+        <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-indigo-50 flex flex-col justify-center px-6 py-12">
+            {/* Animated Background Orbs */}
             <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="sm:mx-auto sm:w-full sm:max-w-md z-10"
-            >
-                <div className="flex justify-center mb-6">
-                    <img src="/logo.png" alt="Tiga Logo" className="h-20 w-auto drop-shadow-lg" />
-                </div>
-
-                <h2 className="text-center text-3xl font-bold text-gray-900 tracking-tight">
-                    Join Tiga
-                </h2>
-                <p className="mt-2 text-center text-sm text-gray-500">
-                    Get more things done, effortlessly.
-                </p>
-            </motion.div>
-
+                className="absolute top-32 right-10 w-80 h-80 bg-purple-200/40 rounded-full blur-3xl"
+                animate={{
+                    scale: [1, 1.15, 1],
+                    opacity: [0.3, 0.5, 0.3]
+                }}
+                transition={{ duration: 9, repeat: Infinity, ease: "easeInOut" }}
+            />
             <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 }}
-                className="mt-8 sm:mx-auto sm:w-full sm:max-w-[400px] z-10"
-            >
-                <div className="glass-panel py-8 px-4 sm:rounded-2xl sm:px-10">
-                    <form className="space-y-6" onSubmit={handleSubmit}>
-                        <div>
-                            <label htmlFor="nickname" className="block text-sm font-medium text-gray-700">
-                                Nickname
-                            </label>
-                            <div className="mt-1">
-                                <input
-                                    id="nickname"
-                                    name="nickname"
-                                    type="text"
-                                    required
-                                    className="glass-input w-full px-4 py-3 rounded-lg outline-none"
-                                    placeholder="Your Name"
-                                    value={nickname}
-                                    onChange={(e) => setNickname(e.target.value)}
-                                />
-                            </div>
-                        </div>
+                className="absolute bottom-10 left-10 w-72 h-72 bg-indigo-200/40 rounded-full blur-3xl"
+                animate={{
+                    scale: [1.1, 1, 1.1],
+                    opacity: [0.4, 0.6, 0.4]
+                }}
+                transition={{ duration: 7, repeat: Infinity, ease: "easeInOut" }}
+            />
 
-                        <div>
-                            <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                                Email address
-                            </label>
-                            <div className="mt-1">
-                                <input
-                                    id="email"
-                                    name="email"
-                                    type="email"
-                                    autoComplete="email"
-                                    required
-                                    className="glass-input w-full px-4 py-3 rounded-lg outline-none"
-                                    placeholder="you@example.com"
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
-                                />
-                            </div>
-                        </div>
+            <div className="w-full max-w-sm mx-auto z-10">
+                {/* Logo & Title */}
+                <motion.div
+                    initial={{ opacity: 0, y: 30 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ type: "spring", stiffness: 100, damping: 15 }}
+                    className="text-center mb-10"
+                >
+                    <motion.img
+                        src="/logo.png"
+                        alt="Tiga"
+                        className="h-16 w-auto mx-auto mb-4"
+                        whileHover={{ scale: 1.05, rotate: -5 }}
+                        transition={{ type: "spring", stiffness: 300 }}
+                    />
+                    <h1 className="text-2xl font-bold text-gray-900">Create account</h1>
+                    <p className="text-gray-500 mt-1 text-sm">Start your productivity journey</p>
+                </motion.div>
 
-                        <div>
-                            <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                                Password
-                            </label>
-                            <div className="mt-1">
-                                <input
-                                    id="password"
-                                    name="password"
-                                    type="password"
-                                    autoComplete="new-password"
-                                    required
-                                    className="glass-input w-full px-4 py-3 rounded-lg outline-none"
-                                    placeholder="••••••••"
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                />
-                            </div>
-                        </div>
-
-                        {error && (
-                            <div className="bg-red-50 text-red-500 text-sm p-3 rounded-lg border border-red-100 text-center">
-                                {error}
-                            </div>
-                        )}
-
-                        <button
-                            type="submit"
-                            className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium btn-primary"
-                        >
-                            Create Account
-                        </button>
-                    </form>
-
-                    <div className="mt-6">
-                        <div className="relative">
-                            <div className="absolute inset-0 flex items-center">
-                                <div className="w-full border-t border-gray-200" />
-                            </div>
-                            <div className="relative flex justify-center text-sm">
-                                <span className="px-2 bg-white/50 text-gray-500">
-                                    Already have an account?
-                                </span>
-                            </div>
-                        </div>
-
-                        <div className="mt-6">
-                            <Link
-                                to="/login"
-                                className="w-full flex justify-center py-3 px-4 border border-gray-200 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors"
-                            >
-                                Sign in instead
-                            </Link>
-                        </div>
+                {/* Form */}
+                <motion.form
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.1, type: "spring", stiffness: 100, damping: 15 }}
+                    onSubmit={handleSubmit}
+                    className="space-y-4"
+                >
+                    {/* Name Input */}
+                    <div className="relative">
+                        <User className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                        <input
+                            type="text"
+                            placeholder="Your name"
+                            value={nickname}
+                            onChange={(e) => setNickname(e.target.value)}
+                            required
+                            className="w-full pl-12 pr-4 py-4 bg-white/80 backdrop-blur-sm border border-gray-200 rounded-2xl text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 transition-all"
+                        />
                     </div>
-                </div>
-            </motion.div>
+
+                    {/* Email Input */}
+                    <div className="relative">
+                        <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                        <input
+                            type="email"
+                            placeholder="Email"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            required
+                            className="w-full pl-12 pr-4 py-4 bg-white/80 backdrop-blur-sm border border-gray-200 rounded-2xl text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 transition-all"
+                        />
+                    </div>
+
+                    {/* Password Input */}
+                    <div className="relative">
+                        <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                        <input
+                            type="password"
+                            placeholder="Password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            required
+                            className="w-full pl-12 pr-4 py-4 bg-white/80 backdrop-blur-sm border border-gray-200 rounded-2xl text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 transition-all"
+                        />
+                    </div>
+
+                    {/* Error */}
+                    {error && (
+                        <motion.p
+                            initial={{ opacity: 0, y: -10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="text-red-500 text-sm text-center"
+                        >
+                            {error}
+                        </motion.p>
+                    )}
+
+                    {/* Submit Button */}
+                    <motion.button
+                        type="submit"
+                        disabled={isLoading}
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        className="w-full py-4 bg-indigo-500 text-white font-medium rounded-2xl flex items-center justify-center gap-2 hover:bg-indigo-600 transition-colors disabled:opacity-70 shadow-lg shadow-indigo-500/25"
+                    >
+                        {isLoading ? (
+                            <motion.div
+                                className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full"
+                                animate={{ rotate: 360 }}
+                                transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                            />
+                        ) : (
+                            <>
+                                Create Account
+                                <ArrowRight size={18} />
+                            </>
+                        )}
+                    </motion.button>
+                </motion.form>
+
+                {/* Sign In Link */}
+                <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.3 }}
+                    className="mt-8 text-center"
+                >
+                    <p className="text-gray-500 text-sm">
+                        Already have an account?{' '}
+                        <Link to="/login" className="text-indigo-600 font-medium hover:underline">
+                            Sign in
+                        </Link>
+                    </p>
+                </motion.div>
+            </div>
         </div>
     );
 };
 
 export default Register;
-
