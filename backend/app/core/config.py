@@ -19,12 +19,22 @@ class Settings(BaseSettings):
     
     # Cloud Database URL (Optional override)
     database_url_env: str | None = None
+    
+    # Supabase API (Optional, for Auth/Storage)
+    supabase_url: str | None = None
+    supabase_key: str | None = None
 
     class Config:
         env_file = ".env"
+        extra = "ignore"
     
     @property
     def database_url(self) -> str:
+        # 0. Check for standard DATABASE_URL (Common in cloud providers like Supabase/Render)
+        import os
+        if os.getenv("DATABASE_URL"):
+            return os.getenv("DATABASE_URL")
+
         # 1. 优先使用完整连接字符串 (如果有)
         if self.database_url_env:
             return self.database_url_env
