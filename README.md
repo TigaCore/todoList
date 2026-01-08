@@ -66,6 +66,23 @@ To start both the backend and frontend servers:
     *   Navigate to `frontend/`.
     *   Run individually: `npm run dev`.
 
+## Mobile App Build & Repackaging
+
+This project uses Capacitor to package the web app as a native mobile application.
+
+To repackage the app (e.g., after making code changes), run the following commands:
+
+```bash
+cd frontend
+npm run build      # Build the React web assets
+npx cap sync       # Sync the built assets to Android/iOS projects
+```
+
+After syncing, you can open the native IDEs to build the final binary:
+
+- **Android**: `npx cap open android`
+- **iOS**: `npx cap open ios`
+
 ## License
 
 [MIT](LICENSE)
