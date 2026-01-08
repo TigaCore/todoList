@@ -1,3 +1,9 @@
+import sys
+import os
+
+# Add the current directory (backend) to sys.path to allow importing 'app'
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.api.api import api_router
