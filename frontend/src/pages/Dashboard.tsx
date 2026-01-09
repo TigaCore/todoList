@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api/client';
 import { Plus, Search, Menu, PenLine, Maximize2 } from 'lucide-react';
@@ -47,6 +47,9 @@ const Dashboard = () => {
     // Date Picker State
     const [datePickerTodo, setDatePickerTodo] = useState<Todo | null>(null);
 
+    // Web Notification Timers
+    const notificationTimers = useRef<{ [key: number]: NodeJS.Timeout }>({});
+
     useEffect(() => {
         fetchTodos();
         fetchUser();
@@ -63,10 +66,45 @@ const Dashboard = () => {
     };
 
     const requestNotificationPermission = async () => {
+        // Request Web Notification permission parallely
+        if ('Notification' in window) {
+            Notification.requestPermission();
+        }
+
         try {
             await LocalNotifications.requestPermissions();
         } catch (e) {
-            console.log('Notifications not supported on this platform');
+            console.log('Capacitor Notifications not supported');
+        }
+    };
+
+    const scheduleWebNotification = async (task: Todo, date: Date) => {
+        if (!('Notification' in window)) return;
+
+        if (Notification.permission !== 'granted') {
+            const permission = await Notification.requestPermission();
+            if (permission !== 'granted') return;
+        }
+
+        const now = new Date();
+        const delay = date.getTime() - now.getTime();
+
+        if (delay > 0) {
+            // Clear existing timer for this task if any
+            if (notificationTimers.current[task.id]) {
+                clearTimeout(notificationTimers.current[task.id]);
+            }
+
+            // Schedule new timer
+            const timerId = setTimeout(() => {
+                new Notification("Task Reminder", {
+                    body: task.title,
+                    icon: '/vite.svg' // Assuming default vite icon exists, or we can omit
+                });
+                // Play a sound if desired, or just notification
+            }, delay);
+
+            notificationTimers.current[task.id] = timerId;
         }
     };
 
@@ -154,16 +192,24 @@ const Dashboard = () => {
 
             const date = new Date(dateStr);
             if (date > new Date()) {
-                await LocalNotifications.schedule({
-                    notifications: [
-                        {
-                            title: "Task Reminder",
-                            body: response.data.title,
-                            id: id,
-                            schedule: { at: date },
-                        }
-                    ]
-                });
+                // Schedule Web Notification (Browser)
+                scheduleWebNotification(response.data, date);
+
+                // Schedule Capacitor Notification (Mobile/Native)
+                try {
+                    await LocalNotifications.schedule({
+                        notifications: [
+                            {
+                                title: "Task Reminder",
+                                body: response.data.title,
+                                id: id,
+                                schedule: { at: date },
+                            }
+                        ]
+                    });
+                } catch (e) {
+                    console.log('Failed to schedule native notification', e);
+                }
             }
         } catch (error) {
             console.error('Error updating date:', error);
