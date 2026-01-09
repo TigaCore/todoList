@@ -1,6 +1,15 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { NodeViewWrapper, NodeViewContent, NodeViewProps } from '@tiptap/react';
+import mermaid from 'mermaid';
 import { ChevronDown } from 'lucide-react';
+
+// Initialize mermaid with default config
+mermaid.initialize({
+    startOnLoad: false,
+    theme: 'default',
+    securityLevel: 'loose',
+    fontFamily: 'Inter, system-ui, sans-serif',
+});
 
 // Common programming languages for the selector
 const LANGUAGES = [
@@ -33,10 +42,15 @@ const LANGUAGES = [
 ];
 
 const CodeBlockComponent: React.FC<NodeViewProps> = ({ node, updateAttributes }) => {
+    const [svg, setSvg] = useState<string>('');
+    const [error, setError] = useState<string>('');
+    const [isPreview, setIsPreview] = useState(true);
     const [showDropdown, setShowDropdown] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
 
     const language = node.attrs.language || '';
+    const content = node.textContent || '';
+    const isMermaid = language === 'mermaid';
 
     // Close dropdown when clicking outside
     useEffect(() => {
@@ -49,9 +63,35 @@ const CodeBlockComponent: React.FC<NodeViewProps> = ({ node, updateAttributes })
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
+    useEffect(() => {
+        if (!isMermaid || !content.trim() || !isPreview) {
+            setSvg('');
+            setError('');
+            return;
+        }
+
+        const renderMermaid = async () => {
+            try {
+                const id = `mermaid-${Math.random().toString(36).substring(2, 11)}`;
+                const { svg: renderedSvg } = await mermaid.render(id, content.trim());
+                setSvg(renderedSvg);
+                setError('');
+            } catch (err) {
+                setError(err instanceof Error ? err.message : 'Failed to render diagram');
+                setSvg('');
+            }
+        };
+
+        const timeoutId = setTimeout(renderMermaid, 300);
+        return () => clearTimeout(timeoutId);
+    }, [content, isMermaid, isPreview]);
+
     const handleLanguageChange = (newLanguage: string) => {
         updateAttributes({ language: newLanguage });
         setShowDropdown(false);
+        if (newLanguage === 'mermaid') {
+            setIsPreview(true);
+        }
     };
 
     const currentLanguageLabel = LANGUAGES.find(l => l.value === language)?.label || language || 'Plain Text';
@@ -84,7 +124,72 @@ const CodeBlockComponent: React.FC<NodeViewProps> = ({ node, updateAttributes })
         </div>
     );
 
-    // All code blocks shown as code (no mermaid preview in editor mode)
+    // For mermaid blocks in preview mode with successful render
+    if (isMermaid && isPreview && svg) {
+        return (
+            <NodeViewWrapper className="mermaid-block relative group my-4">
+                <button
+                    onClick={() => setIsPreview(false)}
+                    className="absolute top-2 right-2 z-10 px-2 py-1 text-xs font-medium rounded bg-white/80 hover:bg-white text-gray-600 opacity-0 group-hover:opacity-100 transition-opacity shadow-sm border border-gray-200"
+                    contentEditable={false}
+                >
+                    Edit
+                </button>
+                <div
+                    className="mermaid-preview bg-white rounded-lg p-4 border border-gray-200 overflow-x-auto flex justify-center min-h-[120px]"
+                    dangerouslySetInnerHTML={{ __html: svg }}
+                    contentEditable={false}
+                />
+                <LanguageLabel />
+            </NodeViewWrapper>
+        );
+    }
+
+    // For mermaid blocks with error
+    if (isMermaid && isPreview && error) {
+        return (
+            <NodeViewWrapper className="mermaid-block relative group my-4">
+                <button
+                    onClick={() => setIsPreview(false)}
+                    className="absolute top-2 right-2 z-10 px-2 py-1 text-xs font-medium rounded bg-white/80 hover:bg-white text-gray-600 opacity-0 group-hover:opacity-100 transition-opacity shadow-sm border border-gray-200"
+                    contentEditable={false}
+                >
+                    Edit
+                </button>
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4" contentEditable={false}>
+                    <div className="text-red-600 text-sm font-medium mb-1">Mermaid Syntax Error</div>
+                    <div className="text-red-500 text-xs font-mono mb-3">{error}</div>
+                    <pre className="bg-gray-900 rounded p-3 overflow-x-auto min-h-[80px]">
+                        <code className="text-gray-300 text-sm">{content}</code>
+                    </pre>
+                </div>
+                <LanguageLabel />
+            </NodeViewWrapper>
+        );
+    }
+
+    // For mermaid blocks in edit mode
+    if (isMermaid && !isPreview) {
+        return (
+            <NodeViewWrapper className="code-block-wrapper relative group my-4">
+                <button
+                    onClick={() => setIsPreview(true)}
+                    className="absolute top-2 right-2 z-10 px-2 py-1 text-xs font-medium rounded bg-gray-600 hover:bg-gray-500 text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                    contentEditable={false}
+                >
+                    Preview
+                </button>
+                <pre className="!my-0 min-h-[120px]">
+                    <code>
+                        <NodeViewContent />
+                    </code>
+                </pre>
+                <LanguageLabel />
+            </NodeViewWrapper>
+        );
+    }
+
+    // For regular code blocks (non-mermaid)
     return (
         <NodeViewWrapper className="code-block-wrapper relative group my-4">
             <pre className="!my-0 min-h-[80px]">

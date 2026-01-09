@@ -233,14 +233,15 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ isOpen, note, onSave, onClose }
 
                     {/* Content */}
                     <div className="flex-1 overflow-hidden flex">
-                        {/* Editor Mode - Full TiptapEditor */}
+                        {/* Editor Mode - Raw Textarea */}
                         {viewMode === 'editor' && (
-                            <div className="flex-1 overflow-hidden">
-                                <TiptapEditor
-                                    initialContent={content}
-                                    onUpdate={setContent}
-                                />
-                            </div>
+                            <textarea
+                                value={content}
+                                onChange={(e) => setContent(e.target.value)}
+                                className="flex-1 w-full resize-none bg-gray-50 font-mono text-sm p-4 focus:outline-none focus:bg-white transition-colors"
+                                placeholder="Write your markdown here..."
+                                spellCheck={false}
+                            />
                         )}
 
                         {/* Preview Mode */}
@@ -257,12 +258,13 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ isOpen, note, onSave, onClose }
                                     <div className="px-3 py-1.5 bg-gray-50 border-b border-gray-200 text-xs font-medium text-gray-500 shrink-0">
                                         Editor
                                     </div>
-                                    <div className="flex-1 overflow-hidden">
-                                        <TiptapEditor
-                                            initialContent={content}
-                                            onUpdate={setContent}
-                                        />
-                                    </div>
+                                    <textarea
+                                        value={content}
+                                        onChange={(e) => setContent(e.target.value)}
+                                        className="flex-1 w-full resize-none bg-gray-50 font-mono text-sm p-4 focus:outline-none focus:bg-white transition-colors"
+                                        placeholder="Write your markdown here..."
+                                        spellCheck={false}
+                                    />
                                 </div>
                                 <div className="w-1/2 flex flex-col overflow-hidden">
                                     <div className="px-3 py-1.5 bg-gray-50 border-b border-gray-200 text-xs font-medium text-gray-500 shrink-0">
