@@ -25,26 +25,23 @@ echo "------------------------------------------------"
 echo "📦 Setting up Backend..."
 cd backend
 
-# Create venv if it doesn't exist
-if [ ! -d "venv" ]; then
-    echo "   Creating Python virtual environment..."
-    python3 -m venv venv
+# Check for uv
+if ! command -v uv &> /dev/null; then
+    echo "⚠️  uv is not installed. Installing uv..."
+    curl -LsSf https://astral.sh/uv/install.sh | sh
+    source $HOME/.cargo/env 2>/dev/null || true
 fi
 
-# Activate venv
-echo "   Activating venv..."
-source venv/bin/activate
-
-# Upgrade pip
-echo "   Upgrading pip..."
-pip install --upgrade pip > /dev/null
-
-# Install dependencies
-echo "   Installing dependencies..."
-if [ -f "pyproject.toml" ]; then
-    pip install -e .
+# Create venv and install dependencies using uv
+echo "   Syncing dependencies with uv..."
+if [ -f "uv.lock" ]; then
+    uv sync
+elif [ -f "pyproject.toml" ]; then
+    uv sync
 elif [ -f "requirements.txt" ]; then
-    pip install -r requirements.txt
+    uv venv
+    source .venv/bin/activate 2>/dev/null || source venv/bin/activate
+    uv pip install -r requirements.txt
 else
     echo "⚠️  No dependency file found (pyproject.toml or requirements.txt)."
 fi

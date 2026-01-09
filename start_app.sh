@@ -28,7 +28,13 @@ echo "------------------------------------------------"
 # Start Backend
 echo "Starting Backend..."
 cd backend
-python main.py > ../logs/backend.log 2>&1 &
+if command -v uv &> /dev/null; then
+    uv run python main.py > ../logs/backend.log 2>&1 &
+else
+    # Fallback for systems without uv in path but with venv
+    source venv/bin/activate 2>/dev/null || source .venv/bin/activate 2>/dev/null
+    python3 main.py > ../logs/backend.log 2>&1 &
+fi
 BACKEND_PID=$!
 cd ..
 echo "✅ Backend running (PID: $BACKEND_PID)"
