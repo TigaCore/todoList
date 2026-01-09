@@ -6,7 +6,13 @@ import TaskItem from '@tiptap/extension-task-item';
 import Placeholder from '@tiptap/extension-placeholder';
 import Typography from '@tiptap/extension-typography';
 import { Markdown } from 'tiptap-markdown';
-import { Bold, Italic, List, ListOrdered, CheckSquare, Heading1, Heading2, Quote } from 'lucide-react';
+import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight';
+import { common, createLowlight } from 'lowlight';
+import { Bold, Italic, List, ListOrdered, CheckSquare, Heading1, Heading2, Quote, Code } from 'lucide-react';
+
+// Create a lowlight instance with common languages
+// Includes: javascript, typescript, python, css, html, xml, json, bash, c, cpp, java, etc.
+const lowlight = createLowlight(common);
 
 interface TiptapEditorProps {
     initialContent: string;
@@ -17,7 +23,13 @@ interface TiptapEditorProps {
 const TiptapEditor: React.FC<TiptapEditorProps> = ({ initialContent, onUpdate, placeholder = "Start writing..." }) => {
     const editor = useEditor({
         extensions: [
-            StarterKit,
+            StarterKit.configure({
+                codeBlock: false, // Disable default code block, we use CodeBlockLowlight instead
+            }),
+            CodeBlockLowlight.configure({
+                lowlight,
+                defaultLanguage: 'javascript',
+            }),
             TaskList,
             TaskItem.configure({
                 nested: true,
@@ -32,6 +44,7 @@ const TiptapEditor: React.FC<TiptapEditorProps> = ({ initialContent, onUpdate, p
         editorProps: {
             attributes: {
                 class: 'prose prose-indigo prose-sm sm:prose-base max-w-none focus:outline-none min-h-[200px] px-4 py-3',
+                spellcheck: 'false',
             },
         },
         onUpdate: ({ editor }) => {
@@ -64,6 +77,7 @@ const TiptapEditor: React.FC<TiptapEditorProps> = ({ initialContent, onUpdate, p
     const toggleH1 = () => editor.chain().focus().toggleHeading({ level: 1 }).run();
     const toggleH2 = () => editor.chain().focus().toggleHeading({ level: 2 }).run();
     const toggleBlockquote = () => editor.chain().focus().toggleBlockquote().run();
+    const toggleCodeBlock = () => editor.chain().focus().toggleCodeBlock().run();
 
     return (
         <div className="flex flex-col h-full bg-white relative">
@@ -89,6 +103,7 @@ const TiptapEditor: React.FC<TiptapEditorProps> = ({ initialContent, onUpdate, p
                 <ToolbarButton onClick={toggleTaskList} isActive={editor.isActive('taskList')} icon={<CheckSquare size={18} />} />
                 <div className="w-px h-6 bg-gray-200 mx-1" />
                 <ToolbarButton onClick={toggleBlockquote} isActive={editor.isActive('blockquote')} icon={<Quote size={18} />} />
+                <ToolbarButton onClick={toggleCodeBlock} isActive={editor.isActive('codeBlock')} icon={<Code size={18} />} />
             </div>
         </div>
     );
