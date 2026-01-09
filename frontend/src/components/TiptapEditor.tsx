@@ -1,12 +1,26 @@
 import React, { useEffect } from 'react';
-import { useEditor, EditorContent } from '@tiptap/react';
+import { useEditor, EditorContent, ReactNodeViewRenderer } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import TaskList from '@tiptap/extension-task-list';
 import TaskItem from '@tiptap/extension-task-item';
 import Placeholder from '@tiptap/extension-placeholder';
 import Typography from '@tiptap/extension-typography';
 import { Markdown } from 'tiptap-markdown';
-import { Bold, Italic, List, ListOrdered, CheckSquare, Heading1, Heading2, Quote } from 'lucide-react';
+import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight';
+import { common, createLowlight } from 'lowlight';
+import { Bold, Italic, List, ListOrdered, CheckSquare, Heading1, Heading2, Quote, Code, GitBranch } from 'lucide-react';
+import CodeBlockComponent from './CodeBlockComponent';
+
+// Create a lowlight instance with common languages
+// Includes: javascript, typescript, python, css, html, xml, json, bash, c, cpp, java, etc.
+const lowlight = createLowlight(common);
+
+// Extend CodeBlockLowlight with custom NodeView for Mermaid rendering
+const CustomCodeBlock = CodeBlockLowlight.extend({
+    addNodeView() {
+        return ReactNodeViewRenderer(CodeBlockComponent);
+    },
+});
 
 interface TiptapEditorProps {
     initialContent: string;
@@ -17,7 +31,13 @@ interface TiptapEditorProps {
 const TiptapEditor: React.FC<TiptapEditorProps> = ({ initialContent, onUpdate, placeholder = "Start writing..." }) => {
     const editor = useEditor({
         extensions: [
-            StarterKit,
+            StarterKit.configure({
+                codeBlock: false, // Disable default code block, we use CustomCodeBlock instead
+            }),
+            CustomCodeBlock.configure({
+                lowlight,
+                defaultLanguage: 'javascript',
+            }),
             TaskList,
             TaskItem.configure({
                 nested: true,
@@ -32,6 +52,7 @@ const TiptapEditor: React.FC<TiptapEditorProps> = ({ initialContent, onUpdate, p
         editorProps: {
             attributes: {
                 class: 'prose prose-indigo prose-sm sm:prose-base max-w-none focus:outline-none min-h-[200px] px-4 py-3',
+                spellcheck: 'false',
             },
         },
         onUpdate: ({ editor }) => {
@@ -64,6 +85,8 @@ const TiptapEditor: React.FC<TiptapEditorProps> = ({ initialContent, onUpdate, p
     const toggleH1 = () => editor.chain().focus().toggleHeading({ level: 1 }).run();
     const toggleH2 = () => editor.chain().focus().toggleHeading({ level: 2 }).run();
     const toggleBlockquote = () => editor.chain().focus().toggleBlockquote().run();
+    const toggleCodeBlock = () => editor.chain().focus().toggleCodeBlock().run();
+    const insertMermaid = () => editor.chain().focus().insertContent('```mermaid\ngraph TD\n    A[Start] --> B[End]\n```\n').run();
 
     return (
         <div className="flex flex-col h-full bg-white relative">
@@ -89,6 +112,8 @@ const TiptapEditor: React.FC<TiptapEditorProps> = ({ initialContent, onUpdate, p
                 <ToolbarButton onClick={toggleTaskList} isActive={editor.isActive('taskList')} icon={<CheckSquare size={18} />} />
                 <div className="w-px h-6 bg-gray-200 mx-1" />
                 <ToolbarButton onClick={toggleBlockquote} isActive={editor.isActive('blockquote')} icon={<Quote size={18} />} />
+                <ToolbarButton onClick={toggleCodeBlock} isActive={editor.isActive('codeBlock')} icon={<Code size={18} />} />
+                <ToolbarButton onClick={insertMermaid} isActive={editor.isActive('mermaidCodeBlock')} icon={<GitBranch size={18} />} />
             </div>
         </div>
     );

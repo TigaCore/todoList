@@ -16,8 +16,9 @@ const getBaseUrl = () => {
         return 'http://10.0.2.2:8000/api';
     }
 
-    // 3. Default for Web and iOS Simulator (localhost works fine)
-    return 'http://127.0.0.1:8000/api';
+    // 3. Web: Use the current hostname being accessed (supporting localhost and local network IP)
+    const hostname = window.location.hostname;
+    return `http://${hostname}:8000/api`;
 };
 
 const api = axios.create({

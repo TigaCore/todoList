@@ -51,7 +51,7 @@ echo "   Logs: logs/frontend.log"
 
 echo "------------------------------------------------"
 echo "App is running! Access it at:"
-echo "   Frontend: http://localhost:5173"
+echo "   Frontend: http://localhost:5173 & http://<ip>:5173"
 echo "   Backend:  http://localhost:8000"
 echo ""
 echo "Press Ctrl+C to stop all services."
