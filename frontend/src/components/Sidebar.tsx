@@ -172,11 +172,10 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, onLogout, activeFilt
                                     initial={{ opacity: 0, y: -20 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     exit={{ opacity: 0, y: -20 }}
-                                    className={`absolute top-4 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-full text-sm font-medium ${
-                                        message.type === 'success'
-                                            ? 'bg-green-500 text-white'
-                                            : 'bg-red-500 text-white'
-                                    }`}
+                                    className={`absolute top-4 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-full text-sm font-medium ${message.type === 'success'
+                                        ? 'bg-green-500 text-white'
+                                        : 'bg-red-500 text-white'
+                                        }`}
                                 >
                                     {message.text}
                                 </motion.div>
@@ -409,11 +408,10 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, onLogout, activeFilt
                                                     <button
                                                         key={option.value}
                                                         onClick={() => setTheme(option.value)}
-                                                        className={`flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                                                            theme === option.value
-                                                                ? 'bg-indigo-500 text-white'
-                                                                : 'bg-white/50 dark:bg-gray-700/50 text-gray-600 dark:text-gray-300'
-                                                        }`}
+                                                        className={`flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg text-xs font-medium transition-all ${theme === option.value
+                                                            ? 'bg-indigo-500 text-white'
+                                                            : 'bg-white/50 dark:bg-gray-700/50 text-gray-600 dark:text-gray-300'
+                                                            }`}
                                                     >
                                                         {option.icon}
                                                         <span className="hidden sm:inline">{option.label}</span>
@@ -435,11 +433,10 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, onLogout, activeFilt
                                                     <button
                                                         key={option.value}
                                                         onClick={() => setLanguage(option.value)}
-                                                        className={`flex-1 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                                                            language === option.value
-                                                                ? 'bg-indigo-500 text-white'
-                                                                : 'bg-white/50 dark:bg-gray-700/50 text-gray-600 dark:text-gray-300'
-                                                        }`}
+                                                        className={`flex-1 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${language === option.value
+                                                            ? 'bg-indigo-500 text-white'
+                                                            : 'bg-white/50 dark:bg-gray-700/50 text-gray-600 dark:text-gray-300'
+                                                            }`}
                                                     >
                                                         {option.label}
                                                     </button>

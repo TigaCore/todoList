@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api/client';
-import { Plus, Search, Menu, PenLine, Maximize2 } from 'lucide-react';
+import { Plus, Search, Menu, PenLine, Maximize2, History } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import TodoItem from '../components/TodoItem';
 import NoteEditor from '../components/NoteEditor';
@@ -9,6 +9,7 @@ import Sidebar from '../components/Sidebar';
 import DateTimePicker from '../components/DateTimePicker';
 import BottomNav, { Tab } from '../components/BottomNav';
 import NotesView from '../components/NotesView';
+import TimelineDrawer from '../components/TimelineDrawer';
 import { LocalNotifications } from '@capacitor/local-notifications';
 import { isToday, parseISO, format } from 'date-fns';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -39,6 +40,7 @@ const Dashboard = () => {
     const [filter, setFilter] = useState<'all' | 'today' | 'upcoming' | 'completed'>('all');
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [isInputOpen, setIsInputOpen] = useState(false);
+    const [isTimelineOpen, setIsTimelineOpen] = useState(false);
 
     // Bottom Navigation State
     const [activeTab, setActiveTab] = useState<Tab>('tasks');
@@ -262,7 +264,12 @@ const Dashboard = () => {
                     <Menu size={24} />
                 </button>
                 <h1 className="font-bold text-lg text-gray-800 dark:text-gray-100">{getFilterTitle()}</h1>
-                <div className="w-11"></div> {/* Spacer for center alignment */}
+                <button
+                    onClick={() => setIsTimelineOpen(true)}
+                    className="p-3 -mr-2 text-gray-600 dark:text-gray-300 hover:bg-white/50 dark:hover:bg-gray-700/50 rounded-xl active:bg-white/70 dark:active:bg-gray-600/70 min-w-[44px] min-h-[44px] flex items-center justify-center transition-colors"
+                >
+                    <History size={22} />
+                </button>
             </header>
 
             {/* Desktop Header (Hidden on Mobile) */}
@@ -273,6 +280,13 @@ const Dashboard = () => {
                     </button>
                     <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">{getFilterTitle()}</h1>
                 </div>
+                <button
+                    onClick={() => setIsTimelineOpen(true)}
+                    className="p-2 hover:bg-white/60 dark:hover:bg-gray-700/60 rounded-xl transition-colors text-gray-600 dark:text-gray-300 flex items-center gap-2"
+                >
+                    <History size={22} />
+                    <span className="text-sm font-medium">Timeline</span>
+                </button>
             </div>
 
             <main className="flex-1 max-w-5xl mx-auto w-full px-4 pt-4 md:px-8 md:pt-0 pb-24 md:pb-8">
@@ -572,6 +586,14 @@ const Dashboard = () => {
                     }
                 }}
                 initialDate={datePickerTodo?.due_date ? new Date(datePickerTodo.due_date) : undefined}
+            />
+
+            {/* Timeline Drawer */}
+            <TimelineDrawer
+                isOpen={isTimelineOpen}
+                onClose={() => setIsTimelineOpen(false)}
+                todos={todos}
+                onOpenTodo={(todo) => setEditingNote(todo)}
             />
         </div >
     );
