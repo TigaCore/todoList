@@ -20,6 +20,11 @@ class UserUpdate(BaseModel):
     avatar: Optional[str] = None
 
 
+class ChangePasswordRequest(BaseModel):
+    current_password: str
+    new_password: str
+
+
 class UserResponse(BaseModel):
     id: int
     email: str
@@ -27,7 +32,7 @@ class UserResponse(BaseModel):
     avatar: Optional[str] = None
     created_at: datetime
     updated_at: datetime
-    
+
     class Config:
         from_attributes = True
 

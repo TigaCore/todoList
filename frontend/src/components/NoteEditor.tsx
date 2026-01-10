@@ -1,17 +1,30 @@
-import React, { useState, useEffect } from 'react';
-import { X, Maximize2, Minimize2, Code, Eye, Columns } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { X, Maximize2, Minimize2, Code, Edit3, Keyboard } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import TiptapEditor from './TiptapEditor';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
-import mermaid from 'mermaid';
 
-// Initialize mermaid
-mermaid.initialize({
-    startOnLoad: false,
-    theme: 'default',
-    securityLevel: 'loose',
-    fontFamily: 'Inter, system-ui, sans-serif',
-});
+// Keyboard shortcuts data
+const shortcuts = [
+    { category: '文本格式', items: [
+        { keys: ['⌘', 'B'], desc: '粗体' },
+        { keys: ['⌘', 'I'], desc: '斜体' },
+        { keys: ['⌘', 'U'], desc: '下划线' },
+        { keys: ['⌘', 'E'], desc: '行内代码' },
+        { keys: ['⌘', '⇧', 'X'], desc: '删除线' },
+    ]},
+    { category: '段落', items: [
+        { keys: ['⌘', '⌥', '1-6'], desc: '标题级别' },
+        { keys: ['⌘', '⇧', '7'], desc: '有序列表' },
+        { keys: ['⌘', '⇧', '8'], desc: '无序列表' },
+        { keys: ['⌘', '⇧', '9'], desc: '引用块' },
+        { keys: ['⌘', '⌥', 'C'], desc: '代码块' },
+    ]},
+    { category: '编辑', items: [
+        { keys: ['⌘', 'Z'], desc: '撤销' },
+        { keys: ['⌘', '⇧', 'Z'], desc: '重做' },
+        { keys: ['⌘', 'A'], desc: '全选' },
+    ]},
+];
 
 interface Todo {
     id: number;
@@ -30,74 +43,60 @@ interface NoteEditorProps {
     onClose: () => void;
 }
 
-type ViewMode = 'editor' | 'preview' | 'split';
-
-// Mermaid renderer component
-const MermaidDiagram: React.FC<{ code: string }> = ({ code }) => {
-    const [svg, setSvg] = useState<string>('');
-    const [error, setError] = useState<string>('');
-
-    useEffect(() => {
-        const renderDiagram = async () => {
-            try {
-                const id = `mermaid-${Math.random().toString(36).substring(2, 11)}`;
-                const { svg: renderedSvg } = await mermaid.render(id, code.trim());
-                setSvg(renderedSvg);
-                setError('');
-            } catch (err) {
-                setError(err instanceof Error ? err.message : 'Failed to render diagram');
-                setSvg('');
-            }
-        };
-
-        if (code.trim()) {
-            renderDiagram();
-        }
-    }, [code]);
-
-    if (error) {
-        return (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4 my-4">
-                <div className="text-red-600 text-sm font-medium mb-1">Mermaid Error</div>
-                <div className="text-red-500 text-xs font-mono">{error}</div>
-            </div>
-        );
-    }
-
-    if (svg) {
-        return (
-            <div
-                className="my-4 flex justify-center bg-white rounded-lg p-4 border border-gray-200"
-                dangerouslySetInnerHTML={{ __html: svg }}
-            />
-        );
-    }
-
-    return null;
-};
+type ViewMode = 'edit' | 'source';
 
 const NoteEditor: React.FC<NoteEditorProps> = ({ isOpen, note, onSave, onClose }) => {
     const [content, setContent] = useState(note?.content || '');
     const [isFullscreen, setIsFullscreen] = useState(false);
-    const [viewMode, setViewMode] = useState<ViewMode>('editor');
+    const [viewMode, setViewMode] = useState<ViewMode>('edit');
+    const [showShortcuts, setShowShortcuts] = useState(false);
+    const shortcutsRef = useRef<HTMLDivElement>(null);
+    // Key to force TipTap re-render when switching modes
+    const [tiptapKey, setTiptapKey] = useState(0);
+
+    // Close shortcuts popover when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (e: MouseEvent) => {
+            if (shortcutsRef.current && !shortcutsRef.current.contains(e.target as Node)) {
+                setShowShortcuts(false);
+            }
+        };
+        if (showShortcuts) {
+            document.addEventListener('mousedown', handleClickOutside);
+        }
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [showShortcuts]);
 
     // Update content when note changes
     useEffect(() => {
         if (note) {
             setContent(note.content || '');
+            setTiptapKey(prev => prev + 1); // Force TipTap to reinitialize
         }
     }, [note]);
 
-    // Handle ESC key to exit fullscreen
+    // Handle ESC key to exit fullscreen or close shortcuts
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
-            if (e.key === 'Escape' && isFullscreen) {
-                setIsFullscreen(false);
+            if (e.key === 'Escape') {
+                if (showShortcuts) {
+                    setShowShortcuts(false);
+                } else if (isFullscreen) {
+                    setIsFullscreen(false);
+                }
             }
         };
         document.addEventListener('keydown', handleKeyDown);
         return () => document.removeEventListener('keydown', handleKeyDown);
-    }, [isFullscreen]);
+    }, [isFullscreen, showShortcuts]);
+
+    // When switching from source to edit mode, force TipTap to reinitialize with new content
+    const handleViewModeChange = (newMode: ViewMode) => {
+        if (viewMode === 'source' && newMode === 'edit') {
+            setTiptapKey(prev => prev + 1);
+        }
+        setViewMode(newMode);
+    };
 
     const handleSave = () => {
         onSave(content);
@@ -106,220 +105,258 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ isOpen, note, onSave, onClose }
 
     if (!isOpen || !note) return null;
 
-    // Markdown Preview Component with Mermaid support
-    const MarkdownPreview = ({ className = '' }: { className?: string }) => (
-        <div className={`prose prose-indigo prose-sm sm:prose-base max-w-none overflow-y-auto p-4 ${className}`}>
-            <ReactMarkdown
-                remarkPlugins={[remarkGfm]}
-                components={{
-                    pre: ({ children, ...props }) => {
-                        // Check if this pre contains a mermaid code block
-                        const child = React.Children.toArray(children)[0] as React.ReactElement;
-                        if (child?.props?.className?.includes('language-mermaid')) {
-                            // Return children without pre wrapper for mermaid
-                            return <>{children}</>;
-                        }
-                        return (
-                            <pre className="bg-gray-900 text-gray-100 rounded-lg p-4 overflow-x-auto" {...props}>
-                                {children}
-                            </pre>
-                        );
-                    },
-                    code: ({ className, children, ...props }) => {
-                        const match = /language-(\w+)/.exec(className || '');
-                        const lang = match ? match[1] : '';
-                        const codeContent = String(children).replace(/\n$/, '');
-
-                        // Render mermaid diagrams
-                        if (lang === 'mermaid') {
-                            return <MermaidDiagram code={codeContent} />;
-                        }
-
-                        const isInline = !className;
-                        return isInline ? (
-                            <code className="bg-gray-100 text-pink-600 px-1.5 py-0.5 rounded text-sm" {...props}>
-                                {children}
-                            </code>
-                        ) : (
-                            <code className={className} {...props}>
-                                {children}
-                            </code>
-                        );
-                    },
-                }}
-            >
-                {content || '*No content yet*'}
-            </ReactMarkdown>
-        </div>
-    );
-
     // View mode toggle button component
     const ViewModeToggle = () => (
-        <div className="flex items-center bg-gray-100 rounded-lg p-0.5">
+        <div className="flex items-center bg-white/40 backdrop-blur-sm rounded-xl p-0.5 border border-white/50">
             <button
-                onClick={() => setViewMode('editor')}
-                className={`flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-md transition-colors ${viewMode === 'editor'
-                    ? 'bg-white text-gray-800 shadow-sm'
-                    : 'text-gray-500 hover:text-gray-700'
+                onClick={() => handleViewModeChange('edit')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-all ${viewMode === 'edit'
+                    ? 'bg-white/80 text-gray-800 shadow-sm'
+                    : 'text-gray-500 hover:text-gray-700 hover:bg-white/30'
                     }`}
-                title="Editor"
+                title="Rich Editor"
+            >
+                <Edit3 size={14} />
+                <span className="hidden sm:inline">Edit</span>
+            </button>
+            <button
+                onClick={() => handleViewModeChange('source')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-all ${viewMode === 'source'
+                    ? 'bg-white/80 text-gray-800 shadow-sm'
+                    : 'text-gray-500 hover:text-gray-700 hover:bg-white/30'
+                    }`}
+                title="Markdown Source"
             >
                 <Code size={14} />
-                <span className="hidden sm:inline">Editor</span>
-            </button>
-            <button
-                onClick={() => setViewMode('split')}
-                className={`flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-md transition-colors ${viewMode === 'split'
-                    ? 'bg-white text-gray-800 shadow-sm'
-                    : 'text-gray-500 hover:text-gray-700'
-                    }`}
-                title="Split View"
-            >
-                <Columns size={14} />
-                <span className="hidden sm:inline">Split</span>
-            </button>
-            <button
-                onClick={() => setViewMode('preview')}
-                className={`flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-md transition-colors ${viewMode === 'preview'
-                    ? 'bg-white text-gray-800 shadow-sm'
-                    : 'text-gray-500 hover:text-gray-700'
-                    }`}
-                title="Preview"
-            >
-                <Eye size={14} />
-                <span className="hidden sm:inline">Preview</span>
+                <span className="hidden sm:inline">Source</span>
             </button>
         </div>
     );
 
-    // Fullscreen mode
-    if (isFullscreen) {
-        return (
-            <div className="fixed inset-0 z-50 bg-gray-100 flex flex-col">
-                {/* Centered container with max width */}
-                <div className="flex-1 flex flex-col max-w-5xl mx-auto w-full bg-white shadow-lg">
-                    {/* Header */}
-                    <div className="flex items-center justify-between px-4 py-3 bg-white border-b border-gray-200 shrink-0">
-                        <div className="flex items-center gap-3">
-                            <button
-                                onClick={() => setIsFullscreen(false)}
-                                className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors"
-                                title="Exit Fullscreen (ESC)"
-                            >
-                                <Minimize2 size={20} />
-                            </button>
-                            <h1 className="font-semibold text-gray-800 truncate max-w-md">
-                                {note.title}
-                            </h1>
-                        </div>
-
-                        <ViewModeToggle />
-
-                        <div className="flex items-center gap-2">
-                            <button
-                                onClick={handleSave}
-                                className="px-4 py-1.5 bg-indigo-500 text-white text-sm font-medium rounded-lg hover:bg-indigo-600 transition-colors shadow-sm"
-                            >
-                                Save
-                            </button>
-                            <button
-                                onClick={onClose}
-                                className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors"
-                            >
-                                <X size={20} />
-                            </button>
-                        </div>
-                    </div>
-
-                    {/* Content */}
-                    <div className="flex-1 overflow-hidden flex">
-                        {/* Editor Mode - Raw Textarea */}
-                        {viewMode === 'editor' && (
-                            <textarea
-                                value={content}
-                                onChange={(e) => setContent(e.target.value)}
-                                className="flex-1 w-full resize-none bg-gray-50 font-mono text-sm p-4 focus:outline-none focus:bg-white transition-colors"
-                                placeholder="Write your markdown here..."
-                                spellCheck={false}
-                            />
-                        )}
-
-                        {/* Preview Mode */}
-                        {viewMode === 'preview' && (
-                            <div className="flex-1 overflow-y-auto bg-white">
-                                <MarkdownPreview />
-                            </div>
-                        )}
-
-                        {/* Split Mode */}
-                        {viewMode === 'split' && (
-                            <>
-                                <div className="w-1/2 border-r border-gray-200 flex flex-col overflow-hidden">
-                                    <div className="px-3 py-1.5 bg-gray-50 border-b border-gray-200 text-xs font-medium text-gray-500 shrink-0">
-                                        Editor
-                                    </div>
-                                    <textarea
-                                        value={content}
-                                        onChange={(e) => setContent(e.target.value)}
-                                        className="flex-1 w-full resize-none bg-gray-50 font-mono text-sm p-4 focus:outline-none focus:bg-white transition-colors"
-                                        placeholder="Write your markdown here..."
-                                        spellCheck={false}
-                                    />
-                                </div>
-                                <div className="w-1/2 flex flex-col overflow-hidden">
-                                    <div className="px-3 py-1.5 bg-gray-50 border-b border-gray-200 text-xs font-medium text-gray-500 shrink-0">
-                                        Preview
-                                    </div>
-                                    <div className="flex-1 overflow-y-auto bg-white">
-                                        <MarkdownPreview />
-                                    </div>
-                                </div>
-                            </>
-                        )}
-                    </div>
-                </div>
-            </div>
-        );
-    }
-
-    // Normal mode (non-fullscreen)
+    // Render both normal mode and fullscreen overlay
     return (
-        <div className="flex flex-col max-h-full h-full bg-white sm:rounded-2xl overflow-hidden shadow-2xl">
-            {/* Header */}
-            <div className="flex items-center justify-between px-4 py-3 bg-white border-b border-gray-100 shrink-0">
-                <button onClick={onClose} className="p-2 -ml-2 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100 transition-colors">
-                    <X size={24} />
-                </button>
+        <>
+            {/* Normal mode (non-fullscreen) */}
+            <div className={`flex flex-col max-h-full h-full glass-modal sm:rounded-2xl overflow-hidden ${isFullscreen ? 'invisible' : ''}`}>
+                {/* Header */}
+                <div className="flex items-center justify-between px-4 py-3 bg-white/50 border-b border-white/30 shrink-0">
+                    <button onClick={onClose} className="p-2 -ml-2 text-gray-400 hover:text-gray-600 rounded-xl hover:bg-white/50 transition-colors">
+                        <X size={24} />
+                    </button>
 
-                <div className="flex-1 text-center font-medium text-gray-700 mx-4 truncate">
-                    {note.title}
+                    <div className="flex-1 text-center font-medium text-gray-700 mx-4 truncate">
+                        {note.title}
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={() => setIsFullscreen(true)}
+                            className="p-2 text-gray-400 hover:text-gray-600 rounded-xl hover:bg-white/50 transition-colors"
+                            title="Fullscreen"
+                        >
+                            <Maximize2 size={20} />
+                        </button>
+                        <button
+                            onClick={handleSave}
+                            className="btn-primary px-4 py-1.5 text-sm font-medium rounded-full"
+                        >
+                            Done
+                        </button>
+                    </div>
                 </div>
 
-                <div className="flex items-center gap-2">
-                    <button
-                        onClick={() => setIsFullscreen(true)}
-                        className="p-2 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100 transition-colors"
-                        title="Fullscreen"
-                    >
-                        <Maximize2 size={20} />
-                    </button>
-                    <button
-                        onClick={handleSave}
-                        className="px-4 py-1.5 bg-indigo-500 text-white text-sm font-medium rounded-full hover:bg-indigo-600 transition-colors shadow-sm"
-                    >
-                        Done
-                    </button>
+                {/* Content Area */}
+                <div className="flex-1 overflow-hidden bg-white/30">
+                    <TiptapEditor
+                        key={`normal-${tiptapKey}`}
+                        initialContent={content}
+                        onUpdate={setContent}
+                    />
                 </div>
             </div>
 
-            {/* Content Area */}
-            <div className="flex-1 overflow-hidden bg-white">
-                <TiptapEditor
-                    initialContent={content}
-                    onUpdate={setContent}
-                />
-            </div>
-        </div>
+            {/* Fullscreen overlay */}
+            <AnimatePresence>
+                {isFullscreen && (
+                    <>
+                        {/* Backdrop */}
+                        <motion.div
+                            key="fullscreen-backdrop"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ duration: 0.2 }}
+                            className="fixed inset-0 z-[60]"
+                            style={{
+                                background: 'linear-gradient(135deg, #e0e7ff 0%, #f0f5ff 25%, #faf5ff 50%, #f0f5ff 75%, #e0e7ff 100%)',
+                            }}
+                        />
+                        {/* Fullscreen content */}
+                        <motion.div
+                            key="fullscreen-content"
+                            initial={{ opacity: 0, y: '30%', scale: 0.9 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: '20%', scale: 0.95 }}
+                            transition={{
+                                type: "spring",
+                                stiffness: 350,
+                                damping: 30,
+                                mass: 0.8,
+                            }}
+                            className="fixed inset-0 z-[61] flex items-center justify-center p-4"
+                        >
+                            <div className="flex flex-col w-full max-w-5xl h-full max-h-[calc(100vh-2rem)] glass-modal rounded-2xl overflow-hidden">
+                                {/* Header */}
+                                <div className="flex items-center justify-between px-4 py-3 bg-white/50 border-b border-white/30 shrink-0">
+                                    <div className="flex items-center gap-3">
+                                        <button
+                                            onClick={() => setIsFullscreen(false)}
+                                            className="p-2 text-gray-400 hover:text-gray-600 rounded-xl hover:bg-white/50 transition-colors"
+                                            title="Exit Fullscreen (ESC)"
+                                        >
+                                            <Minimize2 size={20} />
+                                        </button>
+                                        <h1 className="font-semibold text-gray-800 truncate max-w-md">
+                                            {note.title}
+                                        </h1>
+                                    </div>
+
+                                    <div className="flex items-center gap-3">
+                                        <ViewModeToggle />
+
+                                        {/* Keyboard Shortcuts Button */}
+                                        <div className="relative" ref={shortcutsRef}>
+                                            <button
+                                                onClick={() => setShowShortcuts(!showShortcuts)}
+                                                className={`p-2 rounded-xl transition-colors ${
+                                                    showShortcuts
+                                                        ? 'bg-white/60 text-indigo-600'
+                                                        : 'text-gray-400 hover:text-gray-600 hover:bg-white/50'
+                                                }`}
+                                                title="快捷键"
+                                            >
+                                                <Keyboard size={18} />
+                                            </button>
+
+                                            {/* Shortcuts Popover */}
+                                            <AnimatePresence>
+                                                {showShortcuts && (
+                                                    <motion.div
+                                                        initial={{ opacity: 0, y: 8, scale: 0.95 }}
+                                                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                                                        exit={{ opacity: 0, y: 8, scale: 0.95 }}
+                                                        transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                                                        className="absolute top-full right-0 mt-2 w-72 glass-modal rounded-xl p-4 shadow-xl z-10"
+                                                    >
+                                                        <h3 className="text-sm font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                                                            <Keyboard size={14} />
+                                                            键盘快捷键
+                                                        </h3>
+                                                        <div className="space-y-4">
+                                                            {shortcuts.map((group) => (
+                                                                <div key={group.category}>
+                                                                    <div className="text-xs font-medium text-gray-500 mb-2">
+                                                                        {group.category}
+                                                                    </div>
+                                                                    <div className="space-y-1.5">
+                                                                        {group.items.map((shortcut, idx) => (
+                                                                            <div key={idx} className="flex items-center justify-between text-sm">
+                                                                                <span className="text-gray-600">{shortcut.desc}</span>
+                                                                                <div className="flex items-center gap-0.5">
+                                                                                    {shortcut.keys.map((key, keyIdx) => (
+                                                                                        <kbd
+                                                                                            key={keyIdx}
+                                                                                            className="px-1.5 py-0.5 bg-gray-100/80 rounded text-xs font-mono text-gray-700 border border-gray-200/50 min-w-[22px] text-center"
+                                                                                        >
+                                                                                            {key}
+                                                                                        </kbd>
+                                                                                    ))}
+                                                                                </div>
+                                                                            </div>
+                                                                        ))}
+                                                                    </div>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                        <div className="mt-3 pt-3 border-t border-gray-200/50 text-xs text-gray-400 text-center">
+                                                            按 ESC 关闭提示
+                                                        </div>
+                                                    </motion.div>
+                                                )}
+                                            </AnimatePresence>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center gap-2">
+                                        <button
+                                            onClick={handleSave}
+                                            className="btn-primary px-4 py-1.5 text-sm font-medium rounded-xl"
+                                        >
+                                            Save
+                                        </button>
+                                        <button
+                                            onClick={onClose}
+                                            className="p-2 text-gray-400 hover:text-gray-600 rounded-xl hover:bg-white/50 transition-colors"
+                                        >
+                                            <X size={20} />
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* Content */}
+                                <div className="flex-1 overflow-hidden flex bg-white/30 relative">
+                                <AnimatePresence mode="wait" initial={false}>
+                                    {/* Edit Mode - TipTap Rich Editor */}
+                                    {viewMode === 'edit' && (
+                                        <motion.div
+                                            key="edit"
+                                            initial={{ opacity: 0, scale: 0.98 }}
+                                            animate={{ opacity: 1, scale: 1 }}
+                                            exit={{ opacity: 0, scale: 0.98 }}
+                                            transition={{ duration: 0.15 }}
+                                            className="absolute inset-0 flex"
+                                        >
+                                            <TiptapEditor
+                                                key={`fullscreen-${tiptapKey}`}
+                                                initialContent={content}
+                                                onUpdate={setContent}
+                                                centered={true}
+                                                toolbarPosition="top"
+                                            />
+                                        </motion.div>
+                                    )}
+
+                                    {/* Source Mode - Raw Markdown */}
+                                    {viewMode === 'source' && (
+                                        <motion.div
+                                            key="source"
+                                            initial={{ opacity: 0, scale: 0.98 }}
+                                            animate={{ opacity: 1, scale: 1 }}
+                                            exit={{ opacity: 0, scale: 0.98 }}
+                                            transition={{ duration: 0.15 }}
+                                            className="absolute inset-0 flex flex-col"
+                                        >
+                                            <div className="px-3 py-1.5 bg-white/30 border-b border-white/30 text-xs font-medium text-gray-500 shrink-0 flex items-center gap-2">
+                                                <Code size={12} />
+                                                Markdown Source
+                                            </div>
+                                            <textarea
+                                                value={content}
+                                                onChange={(e) => setContent(e.target.value)}
+                                                className="flex-1 w-full resize-none bg-transparent font-mono text-sm p-4 focus:outline-none"
+                                                placeholder="Write your markdown here..."
+                                                spellCheck={false}
+                                            />
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
+                            </div>
+                        </div>
+                    </motion.div>
+                    </>
+                )}
+            </AnimatePresence>
+        </>
     );
 };
 

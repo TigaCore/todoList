@@ -88,7 +88,7 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({ isOpen, onClose, onSele
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50"
+                        className="glass-backdrop fixed inset-0 z-50"
                         onClick={onClose}
                     />
 
@@ -99,34 +99,34 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({ isOpen, onClose, onSele
                             animate={isDesktop ? { opacity: 1, scale: 1 } : { y: 0 }}
                             exit={isDesktop ? { opacity: 0, scale: 0.95 } : { y: '100%' }}
                             transition={{ type: 'spring', damping: 28, stiffness: 300 }}
-                            className="bg-white w-full pointer-events-auto overflow-hidden
+                            className="glass-modal w-full pointer-events-auto overflow-hidden
                                 rounded-t-3xl max-h-[80vh]
-                                md:rounded-2xl md:max-w-md md:max-h-[90vh] md:shadow-2xl"
+                                md:rounded-2xl md:max-w-md md:max-h-[90vh]"
                         >
                             {/* Header */}
-                            <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+                            <div className="flex items-center justify-between px-5 py-4 border-b border-white/30 bg-white/30">
                                 <button
                                     onClick={onClose}
-                                    className="p-2 -ml-2 text-gray-400 hover:text-gray-600 rounded-full"
+                                    className="p-2 -ml-2 text-gray-400 hover:text-gray-600 rounded-xl hover:bg-white/50 transition-colors"
                                 >
                                     <X size={24} />
                                 </button>
                                 <h3 className="font-semibold text-gray-800">Set Due Date</h3>
                                 <button
                                     onClick={handleConfirm}
-                                    className="px-4 py-1.5 bg-indigo-500 text-white text-sm font-medium rounded-full hover:bg-indigo-600 transition-colors"
+                                    className="btn-primary px-4 py-1.5 text-sm font-medium rounded-full"
                                 >
                                     Done
                                 </button>
                             </div>
 
                             {/* Quick Options */}
-                            <div className="px-5 py-4 flex gap-2 overflow-x-auto border-b border-gray-100">
+                            <div className="px-5 py-4 flex gap-2 overflow-x-auto border-b border-white/30">
                                 {quickOptions.map((opt) => (
                                     <button
                                         key={opt.label}
                                         onClick={() => handleQuickSelect(opt.getDate)}
-                                        className="px-4 py-2 bg-indigo-50 text-indigo-600 rounded-full text-sm font-medium whitespace-nowrap hover:bg-indigo-100 transition-colors"
+                                        className="px-4 py-2 bg-indigo-100/60 text-indigo-600 rounded-full text-sm font-medium whitespace-nowrap hover:bg-indigo-100 transition-colors"
                                     >
                                         {opt.label}
                                     </button>
@@ -134,7 +134,7 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({ isOpen, onClose, onSele
                             </div>
 
                             {/* Picker Area */}
-                            <div className="px-4 py-6">
+                            <div className="px-4 py-6 bg-white/30">
                                 <div className="flex items-center justify-center gap-1 mb-4">
                                     <Calendar size={18} className="text-gray-400" />
                                     <span className="text-sm text-gray-500">Date</span>

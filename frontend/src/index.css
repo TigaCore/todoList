@@ -4,26 +4,205 @@
 
 @layer base {
   body {
-    @apply bg-indigo-50 text-gray-900 antialiased;
+    @apply text-gray-900 antialiased;
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    /* Gradient background for glassmorphism effect */
+    background: linear-gradient(135deg, #e0e7ff 0%, #f0f5ff 25%, #faf5ff 50%, #f0f5ff 75%, #e0e7ff 100%);
+    background-attachment: fixed;
+    min-height: 100vh;
+  }
+
+  /* Dark mode body */
+  .dark body,
+  body.dark,
+  html.dark body {
+    @apply text-gray-100;
+    background: linear-gradient(135deg, #0f0d1a 0%, #1a1625 25%, #1e1b2e 50%, #1a1625 75%, #0f0d1a 100%);
+  }
+
+  html.dark {
+    color-scheme: dark;
   }
 }
 
 @layer components {
+  /* Glass effect base - strong blur for main panels */
   .glass-panel {
-    @apply bg-white/70 backdrop-blur-lg border border-white/20 shadow-xl;
+    @apply bg-white/70 backdrop-blur-xl border border-white/50 shadow-xl;
+    box-shadow:
+      0 8px 32px rgba(99, 102, 241, 0.1),
+      inset 0 1px 0 rgba(255, 255, 255, 0.6);
   }
 
+  /* Glass card - medium blur for cards */
   .glass-card {
-    @apply bg-white/60 backdrop-blur-md border border-white/30 shadow-sm hover:shadow-md transition-shadow duration-200;
+    @apply bg-white/50 backdrop-blur-lg border border-white/60 shadow-lg transition-all duration-300;
+    box-shadow:
+      0 4px 24px rgba(99, 102, 241, 0.08),
+      inset 0 1px 0 rgba(255, 255, 255, 0.8);
   }
 
+  .glass-card:hover {
+    @apply bg-white/60 shadow-xl;
+    box-shadow:
+      0 8px 32px rgba(99, 102, 241, 0.12),
+      inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    transform: translateY(-2px);
+  }
+
+  /* Glass nav - for navigation bars */
+  .glass-nav {
+    @apply bg-white/60 backdrop-blur-xl border border-white/50;
+    box-shadow:
+      0 4px 24px rgba(99, 102, 241, 0.1),
+      inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  }
+
+  /* Glass modal - for overlays and modals */
+  .glass-modal {
+    @apply bg-white/80 backdrop-blur-2xl border border-white/60;
+    box-shadow:
+      0 25px 50px rgba(99, 102, 241, 0.15),
+      inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  }
+
+  /* Glass input */
   .glass-input {
-    @apply bg-white/50 backdrop-blur-sm border-gray-200/50 focus:bg-white/80 focus:ring-2 focus:ring-indigo-500/50 transition-all duration-200;
+    @apply bg-white/40 backdrop-blur-md border border-white/50 focus:bg-white/70 focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-300/50 transition-all duration-200;
+    box-shadow: inset 0 1px 2px rgba(99, 102, 241, 0.05);
   }
 
+  /* Glass button */
+  .glass-button {
+    @apply bg-white/50 backdrop-blur-md border border-white/60 hover:bg-white/70 transition-all duration-200;
+    box-shadow:
+      0 2px 8px rgba(99, 102, 241, 0.1),
+      inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  }
+
+  /* Primary button with glass effect */
   .btn-primary {
-    @apply bg-indigo-600 text-white hover:bg-indigo-700 active:bg-indigo-800 transition-colors duration-200 shadow-lg shadow-indigo-600/20 hover:shadow-indigo-600/40;
+    @apply bg-indigo-500/90 backdrop-blur-md text-white hover:bg-indigo-600/90 active:bg-indigo-700/90 transition-all duration-200 border border-indigo-400/30;
+    box-shadow:
+      0 4px 16px rgba(99, 102, 241, 0.3),
+      inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  }
+
+  .btn-primary:hover {
+    box-shadow:
+      0 6px 24px rgba(99, 102, 241, 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    transform: translateY(-1px);
+  }
+
+  /* Glass backdrop for modals */
+  .glass-backdrop {
+    @apply bg-indigo-950/20 backdrop-blur-sm;
+  }
+
+  /* FAB button with glass effect */
+  .glass-fab {
+    @apply bg-indigo-500/90 backdrop-blur-md border border-indigo-400/30;
+    box-shadow:
+      0 8px 32px rgba(99, 102, 241, 0.35),
+      inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  }
+
+  .glass-fab:hover {
+    @apply bg-indigo-600/90;
+    box-shadow:
+      0 12px 40px rgba(99, 102, 241, 0.45),
+      inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  }
+
+  /* ========== DARK MODE VARIANTS ========== */
+
+  /* Dark glass panel */
+  .dark .glass-panel {
+    @apply bg-gray-800/70 border-gray-700/50;
+    box-shadow:
+      0 8px 32px rgba(0, 0, 0, 0.3),
+      inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  }
+
+  /* Dark glass card */
+  .dark .glass-card {
+    @apply bg-gray-800/50 border-gray-700/40;
+    box-shadow:
+      0 4px 24px rgba(0, 0, 0, 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  }
+
+  .dark .glass-card:hover {
+    @apply bg-gray-800/70;
+    box-shadow:
+      0 8px 32px rgba(0, 0, 0, 0.3),
+      inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  }
+
+  /* Dark glass nav */
+  .dark .glass-nav {
+    @apply bg-gray-800/60 border-gray-700/50;
+    box-shadow:
+      0 4px 24px rgba(0, 0, 0, 0.25),
+      inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  }
+
+  /* Dark glass modal */
+  .dark .glass-modal {
+    @apply bg-gray-800/90 border-gray-700/60;
+    box-shadow:
+      0 25px 50px rgba(0, 0, 0, 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  }
+
+  /* Dark glass input */
+  .dark .glass-input {
+    @apply bg-gray-700/40 border-gray-600/50 text-gray-100 placeholder:text-gray-400;
+    @apply focus:bg-gray-700/70 focus:ring-indigo-400/30 focus:border-indigo-500/50;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.2);
+  }
+
+  /* Dark glass button */
+  .dark .glass-button {
+    @apply bg-gray-700/50 border-gray-600/60 text-gray-200 hover:bg-gray-700/70;
+    box-shadow:
+      0 2px 8px rgba(0, 0, 0, 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  }
+
+  /* Dark primary button */
+  .dark .btn-primary {
+    @apply bg-indigo-600/90 hover:bg-indigo-500/90 active:bg-indigo-700/90 border-indigo-500/30;
+    box-shadow:
+      0 4px 16px rgba(99, 102, 241, 0.25),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  }
+
+  .dark .btn-primary:hover {
+    box-shadow:
+      0 6px 24px rgba(99, 102, 241, 0.35),
+      inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  }
+
+  /* Dark glass backdrop */
+  .dark .glass-backdrop {
+    @apply bg-black/40 backdrop-blur-sm;
+  }
+
+  /* Dark glass FAB */
+  .dark .glass-fab {
+    @apply bg-indigo-600/90 border-indigo-500/30;
+    box-shadow:
+      0 8px 32px rgba(99, 102, 241, 0.3),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  }
+
+  .dark .glass-fab:hover {
+    @apply bg-indigo-500/90;
+    box-shadow:
+      0 12px 40px rgba(99, 102, 241, 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 0.15);
   }
 }
 
@@ -56,6 +235,12 @@
   border-radius: 0.25rem;
   font-family: 'Fira Code', monospace;
   font-size: 0.875em;
+}
+
+/* Dark mode inline code */
+.dark .ProseMirror code:not(pre code) {
+  background: #374151;
+  color: #f472b6;
 }
 
 /* Syntax Highlighting Colors */

@@ -27,10 +27,15 @@ const Login = () => {
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 flex flex-col justify-center px-6 py-12">
+        <div
+            className="min-h-screen flex flex-col justify-center px-6 py-12"
+            style={{
+                background: 'linear-gradient(135deg, #e0e7ff 0%, #f0f5ff 25%, #faf5ff 50%, #f0f5ff 75%, #e0e7ff 100%)',
+            }}
+        >
             {/* Animated Background Orbs */}
             <motion.div
-                className="absolute top-20 left-10 w-72 h-72 bg-indigo-200/40 rounded-full blur-3xl"
+                className="absolute top-20 left-10 w-72 h-72 bg-indigo-300/30 rounded-full blur-3xl"
                 animate={{
                     scale: [1, 1.2, 1],
                     opacity: [0.3, 0.5, 0.3]
@@ -38,7 +43,7 @@ const Login = () => {
                 transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
             />
             <motion.div
-                className="absolute bottom-20 right-10 w-96 h-96 bg-purple-200/40 rounded-full blur-3xl"
+                className="absolute bottom-20 right-10 w-96 h-96 bg-purple-300/30 rounded-full blur-3xl"
                 animate={{
                     scale: [1.2, 1, 1.2],
                     opacity: [0.4, 0.6, 0.4]
@@ -55,9 +60,9 @@ const Login = () => {
                     className="text-center mb-10"
                 >
                     <motion.img
-                        src="/logo.png"
+                        src="/logo.svg"
                         alt="Tiga"
-                        className="h-16 w-auto mx-auto mb-4"
+                        className="h-20 w-auto mx-auto mb-6 drop-shadow-xl"
                         whileHover={{ scale: 1.05, rotate: 5 }}
                         transition={{ type: "spring", stiffness: 300 }}
                     />
@@ -71,7 +76,7 @@ const Login = () => {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.1, type: "spring", stiffness: 100, damping: 15 }}
                     onSubmit={handleSubmit}
-                    className="space-y-5"
+                    className="glass-panel rounded-3xl p-6 space-y-5"
                 >
                     {/* Email Input */}
                     <div className="relative">
@@ -82,7 +87,7 @@ const Login = () => {
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                             required
-                            className="w-full pl-12 pr-4 py-4 bg-white/80 backdrop-blur-sm border border-gray-200 rounded-2xl text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 transition-all"
+                            className="w-full pl-12 pr-4 py-4 glass-input rounded-2xl text-gray-800 placeholder:text-gray-400"
                         />
                     </div>
 
@@ -95,7 +100,7 @@ const Login = () => {
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             required
-                            className="w-full pl-12 pr-4 py-4 bg-white/80 backdrop-blur-sm border border-gray-200 rounded-2xl text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 transition-all"
+                            className="w-full pl-12 pr-4 py-4 glass-input rounded-2xl text-gray-800 placeholder:text-gray-400"
                         />
                     </div>
 
@@ -116,7 +121,7 @@ const Login = () => {
                         disabled={isLoading}
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
-                        className="w-full py-4 bg-indigo-500 text-white font-medium rounded-2xl flex items-center justify-center gap-2 hover:bg-indigo-600 transition-colors disabled:opacity-70 shadow-lg shadow-indigo-500/25"
+                        className="w-full py-4 btn-primary font-medium rounded-2xl flex items-center justify-center gap-2 disabled:opacity-70"
                     >
                         {isLoading ? (
                             <motion.div
@@ -147,6 +152,43 @@ const Login = () => {
                         </Link>
                     </p>
                 </motion.div>
+
+                {/* Developer Quick Login */}
+                {import.meta.env.DEV && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 0.5 }}
+                        className="mt-6 pt-6 border-t border-white/30"
+                    >
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setEmail(import.meta.env.VITE_DEV_EMAIL || 'test@example.com');
+                                setPassword(import.meta.env.VITE_DEV_PASSWORD || 'password');
+                                const devEmail = import.meta.env.VITE_DEV_EMAIL || 'test@example.com';
+                                const devPass = import.meta.env.VITE_DEV_PASSWORD || 'password';
+                                setEmail(devEmail);
+                                setPassword(devPass);
+
+                                setIsLoading(true);
+                                api.post('/users/login', { email: devEmail, password: devPass })
+                                    .then(response => {
+                                        localStorage.setItem('token', response.data.access_token);
+                                        navigate('/');
+                                    })
+                                    .catch(() => {
+                                        setError('Dev login failed. Check console/network.');
+                                        setIsLoading(false);
+                                    });
+                            }}
+                            className="w-full py-3 glass-button font-medium rounded-xl flex items-center justify-center gap-2 text-gray-600 text-sm"
+                        >
+                            <Lock size={14} />
+                            Quick Dev Login
+                        </button>
+                    </motion.div>
+                )}
             </div>
         </div>
     );

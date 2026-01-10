@@ -11,6 +11,7 @@ import BottomNav, { Tab } from '../components/BottomNav';
 import NotesView from '../components/NotesView';
 import { LocalNotifications } from '@capacitor/local-notifications';
 import { isToday, parseISO, format } from 'date-fns';
+import { useLanguage } from '../contexts/LanguageContext';
 
 interface Todo {
     id: number;
@@ -31,6 +32,7 @@ interface User {
 
 const Dashboard = () => {
     const navigate = useNavigate();
+    const { t } = useLanguage();
     const [todos, setTodos] = useState<Todo[]>([]);
     const [user, setUser] = useState<User | null>(null);
     const [title, setTitle] = useState('');
@@ -235,102 +237,128 @@ const Dashboard = () => {
     });
 
     const getFilterTitle = () => {
-        if (activeTab === 'notes') return 'All Notes';
+        if (activeTab === 'notes') return t('tabs.notes');
 
         switch (filter) {
-            case 'today': return 'Today';
-            case 'upcoming': return 'Upcoming';
-            case 'completed': return 'Completed';
-            default: return 'All Tasks';
+            case 'today': return t('filter.today');
+            case 'upcoming': return t('filter.upcoming');
+            case 'completed': return t('filter.completed');
+            default: return t('filter.all');
         }
     };
 
+    const handleUserUpdate = (updatedUser: User) => {
+        setUser(updatedUser);
+    };
+
     return (
-        <div className="min-h-screen bg-indigo-50/50 flex flex-col">
+        <div className="min-h-screen flex flex-col">
             {/* Mobile Header */}
-            <header className="bg-white/80 backdrop-blur-md sticky top-0 z-10 px-4 py-3 flex items-center justify-between shadow-sm md:hidden">
+            <header className="glass-nav sticky top-0 z-10 px-4 py-3 flex items-center justify-between md:hidden">
                 <button
                     onClick={() => setIsSidebarOpen(true)}
-                    className="p-3 -ml-2 text-gray-600 hover:bg-gray-100 rounded-lg active:bg-gray-200 min-w-[44px] min-h-[44px] flex items-center justify-center"
+                    className="p-3 -ml-2 text-gray-600 dark:text-gray-300 hover:bg-white/50 dark:hover:bg-gray-700/50 rounded-xl active:bg-white/70 dark:active:bg-gray-600/70 min-w-[44px] min-h-[44px] flex items-center justify-center transition-colors"
                 >
                     <Menu size={24} />
                 </button>
-                <h1 className="font-bold text-lg text-gray-800">{getFilterTitle()}</h1>
+                <h1 className="font-bold text-lg text-gray-800 dark:text-gray-100">{getFilterTitle()}</h1>
                 <div className="w-11"></div> {/* Spacer for center alignment */}
             </header>
 
             {/* Desktop Header (Hidden on Mobile) */}
             <div className="hidden md:flex max-w-5xl mx-auto w-full pt-8 px-8 items-center justify-between mb-6">
                 <div className="flex items-center gap-4">
-                    <button onClick={() => setIsSidebarOpen(true)} className="p-2 hover:bg-white rounded-lg transition-colors text-gray-600">
+                    <button onClick={() => setIsSidebarOpen(true)} className="p-2 hover:bg-white/60 dark:hover:bg-gray-700/60 rounded-xl transition-colors text-gray-600 dark:text-gray-300">
                         <Menu size={24} />
                     </button>
-                    <h1 className="text-2xl font-bold text-gray-800">{getFilterTitle()}</h1>
+                    <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">{getFilterTitle()}</h1>
                 </div>
             </div>
 
             <main className="flex-1 max-w-5xl mx-auto w-full px-4 pt-4 md:px-8 md:pt-0 pb-24 md:pb-8">
-                <div className="relative min-h-[50vh] overflow-hidden">
-                    <AnimatePresence>
-                        {activeTab === 'tasks' ? (
-                            <motion.div
-                                key="tasks"
-                                initial={{ opacity: 0, position: 'absolute', top: 0, left: 0, width: '100%' }}
-                                animate={{ opacity: 1, position: 'relative' }}
-                                exit={{ opacity: 0, position: 'absolute', top: 0, left: 0, width: '100%' }}
-                                transition={{ duration: 0.2 }}
-                                className="space-y-3 pb-20"
-                            >
-                                {filteredTodos.map((todo, index) => (
-                                    <TodoItem
-                                        key={todo.id}
-                                        todo={todo}
-                                        index={index}
-                                        onToggle={handleToggle}
-                                        onDelete={handleDelete}
-                                        onOpenNotes={(t) => setEditingNote(t)}
-                                        onOpenDatePicker={(t) => setDatePickerTodo(t)}
-                                    />
-                                ))}
+                <div className="relative min-h-[50vh]">
+                    {/* Tasks View */}
+                    <motion.div
+                        animate={{
+                            opacity: activeTab === 'tasks' ? 1 : 0,
+                            scale: activeTab === 'tasks' ? 1 : 0.96,
+                        }}
+                        transition={{
+                            type: "spring",
+                            stiffness: 400,
+                            damping: 28,
+                            mass: 0.8,
+                        }}
+                        style={{
+                            position: activeTab === 'tasks' ? 'relative' : 'absolute',
+                            top: 0,
+                            left: 0,
+                            right: 0,
+                            pointerEvents: activeTab === 'tasks' ? 'auto' : 'none',
+                        }}
+                        className="space-y-3 pb-20 origin-top"
+                    >
+                        {filteredTodos.map((todo, index) => (
+                            <TodoItem
+                                key={todo.id}
+                                todo={todo}
+                                index={index}
+                                onToggle={handleToggle}
+                                onDelete={handleDelete}
+                                onOpenNotes={(t) => setEditingNote(t)}
+                                onOpenDatePicker={(t) => setDatePickerTodo(t)}
+                            />
+                        ))}
 
-                                {filteredTodos.length === 0 && (
-                                    <motion.div
-                                        initial={{ opacity: 0, scale: 0.9, y: 20 }}
-                                        animate={{
-                                            opacity: 1,
-                                            scale: 1,
-                                            y: 0,
-                                            transition: {
-                                                duration: 0.5,
-                                                ease: [0.34, 1.56, 0.64, 1],
-                                                delay: 0.15
-                                            }
-                                        }}
-                                        className="flex flex-col items-center justify-center py-20 text-gray-400"
-                                    >
-                                        <div className="w-32 h-32 bg-indigo-100 rounded-full flex items-center justify-center mb-4">
-                                            <Search size={40} className="text-indigo-300" />
-                                        </div>
-                                        <p>No tasks found in "{getFilterTitle()}"</p>
-                                    </motion.div>
-                                )}
-                            </motion.div>
-                        ) : (
+                        {filteredTodos.length === 0 && (
                             <motion.div
-                                key="notes"
-                                initial={{ opacity: 0, position: 'absolute', top: 0, left: 0, width: '100%' }}
-                                animate={{ opacity: 1, position: 'relative' }}
-                                exit={{ opacity: 0, position: 'absolute', top: 0, left: 0, width: '100%' }}
-                                transition={{ duration: 0.2 }}
-                                className="pb-20"
+                                initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                                animate={{
+                                    opacity: 1,
+                                    scale: 1,
+                                    y: 0,
+                                    transition: {
+                                        duration: 0.5,
+                                        ease: [0.34, 1.56, 0.64, 1],
+                                        delay: 0.15
+                                    }
+                                }}
+                                className="flex flex-col items-center justify-center py-20 text-gray-400"
                             >
-                                <NotesView
-                                    notes={todos}
-                                    onNoteClick={(t) => setEditingNote(t)}
-                                />
+                                <div className="w-32 h-32 bg-indigo-100 rounded-full flex items-center justify-center mb-4">
+                                    <Search size={40} className="text-indigo-300" />
+                                </div>
+                                <p>No tasks found in "{getFilterTitle()}"</p>
                             </motion.div>
                         )}
-                    </AnimatePresence>
+                    </motion.div>
+
+                    {/* Notes View */}
+                    <motion.div
+                        animate={{
+                            opacity: activeTab === 'notes' ? 1 : 0,
+                            scale: activeTab === 'notes' ? 1 : 0.96,
+                        }}
+                        transition={{
+                            type: "spring",
+                            stiffness: 400,
+                            damping: 28,
+                            mass: 0.8,
+                        }}
+                        style={{
+                            position: activeTab === 'notes' ? 'relative' : 'absolute',
+                            top: 0,
+                            left: 0,
+                            right: 0,
+                            pointerEvents: activeTab === 'notes' ? 'auto' : 'none',
+                        }}
+                        className="pb-20 origin-top"
+                    >
+                        <NotesView
+                            notes={todos}
+                            onNoteClick={(t) => setEditingNote(t)}
+                        />
+                    </motion.div>
                 </div>
             </main>
 
@@ -365,7 +393,7 @@ const Dashboard = () => {
                                 onSubmit={handleAddTodo}
                                 className="absolute bottom-0 w-full px-4 pointer-events-auto"
                             >
-                                <div className="glass-panel p-2 rounded-2xl flex items-center shadow-2xl bg-white/90 backdrop-blur-xl border border-white/20">
+                                <div className="glass-modal p-2 rounded-2xl flex items-center">
                                     <input
                                         type="text"
                                         value={title}
@@ -395,7 +423,7 @@ const Dashboard = () => {
                                             setTitle('');
                                             setIsInputOpen(false);
                                         }}
-                                        className="p-2 mr-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                                        className="p-2 mr-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50/50 rounded-xl transition-colors"
                                         title="Open Full Editor"
                                     >
                                         <Maximize2 size={20} />
@@ -404,7 +432,7 @@ const Dashboard = () => {
                                     <button
                                         type="submit"
                                         disabled={!title.trim()}
-                                        className="p-3 bg-indigo-500 text-white rounded-full hover:bg-indigo-600 disabled:opacity-50 disabled:hover:bg-indigo-500 transition-colors shadow-lg shadow-indigo-500/25"
+                                        className="glass-fab p-3 text-white rounded-full disabled:opacity-50 transition-all"
                                     >
                                         <Plus size={24} />
                                     </button>
@@ -428,7 +456,7 @@ const Dashboard = () => {
                                 }
                             }}
                             exit={{ scale: 0.8, opacity: 0 }}
-                            className="w-14 h-14 bg-indigo-600 text-white rounded-full shadow-lg shadow-indigo-600/30 hover:bg-indigo-700 hover:shadow-indigo-600/40 active:scale-95 transition-all flex items-center justify-center pointer-events-auto border-4 border-indigo-50"
+                            className="glass-fab w-14 h-14 text-white rounded-full active:scale-95 transition-all flex items-center justify-center pointer-events-auto border-2 border-white/20"
                             onClick={() => {
                                 if (activeTab === 'notes') {
                                     // Open Note Editor directly
@@ -476,7 +504,10 @@ const Dashboard = () => {
             </div>
 
             {/* Bottom Navigation */}
-            <BottomNav activeTab={activeTab} onTabChange={setActiveTab} />
+            <BottomNav activeTab={activeTab} onTabChange={(tab) => {
+                setActiveTab(tab);
+                setIsInputOpen(false); // Reset input state when switching tabs
+            }} />
 
             {/* Sidebar */}
             <Sidebar
@@ -486,6 +517,7 @@ const Dashboard = () => {
                 activeFilter={filter}
                 onFilterChange={setFilter}
                 user={user}
+                onUserUpdate={handleUserUpdate}
             />
 
             {/* Note Editor Overlay */}
@@ -498,21 +530,22 @@ const Dashboard = () => {
                                 initial={{ opacity: 0 }}
                                 animate={{ opacity: 1 }}
                                 exit={{ opacity: 0 }}
-                                className="fixed inset-0 bg-black/30 backdrop-blur-sm z-50 pointer-events-auto"
+                                transition={{ duration: 0.2 }}
+                                className="glass-backdrop fixed inset-0 z-50 pointer-events-auto"
                                 onClick={() => setEditingNote(null)}
                             />
                             {/* Drawer - Bottom sheet style, not fullscreen */}
                             <motion.div
-                                initial={{ y: '100%' }}
-                                animate={{ y: 0 }}
-                                exit={{ y: '100%' }}
+                                initial={{ y: '100%', scale: 0.92 }}
+                                animate={{ y: 0, scale: 1 }}
+                                exit={{ y: '30%', scale: 0.92, opacity: 0 }}
                                 transition={{
                                     type: "spring",
+                                    stiffness: 400,
                                     damping: 28,
-                                    stiffness: 280,
-                                    mass: 0.9
+                                    mass: 0.8,
                                 }}
-                                className="fixed bottom-0 left-0 right-0 z-50 flex flex-col pointer-events-none max-h-[85vh] sm:max-h-[80vh] sm:max-w-2xl sm:mx-auto sm:right-4 sm:left-4 sm:bottom-4"
+                                className="fixed bottom-0 left-0 right-0 z-50 flex flex-col pointer-events-none max-h-[85vh] sm:max-h-[80vh] sm:max-w-2xl sm:mx-auto sm:right-4 sm:left-4 sm:bottom-4 origin-bottom"
                             >
                                 <div className="h-full pointer-events-auto rounded-t-3xl sm:rounded-2xl overflow-hidden shadow-2xl">
                                     <NoteEditor

@@ -55,9 +55,9 @@ const Register = () => {
                     className="text-center mb-10"
                 >
                     <motion.img
-                        src="/logo.png"
+                        src="/logo.svg"
                         alt="Tiga"
-                        className="h-16 w-auto mx-auto mb-4"
+                        className="h-20 w-auto mx-auto mb-6 drop-shadow-xl"
                         whileHover={{ scale: 1.05, rotate: -5 }}
                         transition={{ type: "spring", stiffness: 300 }}
                     />

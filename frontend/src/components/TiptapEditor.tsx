@@ -26,9 +26,17 @@ interface TiptapEditorProps {
     initialContent: string;
     onUpdate: (content: string) => void;
     placeholder?: string;
+    centered?: boolean; // Center content for fullscreen mode
+    toolbarPosition?: 'top' | 'bottom'; // Toolbar position
 }
 
-const TiptapEditor: React.FC<TiptapEditorProps> = ({ initialContent, onUpdate, placeholder = "Start writing..." }) => {
+const TiptapEditor: React.FC<TiptapEditorProps> = ({
+    initialContent,
+    onUpdate,
+    placeholder = "Start writing...",
+    centered = false,
+    toolbarPosition = 'bottom'
+}) => {
     const editor = useEditor({
         extensions: [
             StarterKit.configure({
@@ -51,7 +59,9 @@ const TiptapEditor: React.FC<TiptapEditorProps> = ({ initialContent, onUpdate, p
         content: initialContent,
         editorProps: {
             attributes: {
-                class: 'prose prose-indigo prose-sm sm:prose-base max-w-none focus:outline-none min-h-[200px] px-4 py-3',
+                class: `prose prose-indigo prose-sm sm:prose-base focus:outline-none min-h-[200px] px-4 py-3 ${
+                    centered ? 'max-w-3xl mx-auto' : 'max-w-none'
+                }`,
                 spellcheck: 'false',
             },
         },
@@ -88,33 +98,51 @@ const TiptapEditor: React.FC<TiptapEditorProps> = ({ initialContent, onUpdate, p
     const toggleCodeBlock = () => editor.chain().focus().toggleCodeBlock().run();
     const insertMermaid = () => editor.chain().focus().insertContent('```mermaid\ngraph TD\n    A[Start] --> B[End]\n```\n').run();
 
+    const Toolbar = (
+        <div className={`relative shrink-0 ${
+            toolbarPosition === 'top'
+                ? 'border-b border-gray-100'
+                : 'border-t border-gray-100'
+        }`}>
+            {/* Right scroll fade indicator - always visible to hint more content */}
+            <div
+                className="absolute right-0 top-0 bottom-0 w-8 pointer-events-none z-10"
+                style={{
+                    background: 'linear-gradient(to left, rgba(255,255,255,1) 0%, rgba(255,255,255,0.8) 30%, rgba(255,255,255,0) 100%)'
+                }}
+            />
+
+            <div className={`px-4 py-3 bg-white flex items-center gap-2 overflow-x-auto noscrollbar ${
+                toolbarPosition === 'bottom' ? 'pb-safe' : ''
+            }`}>
+                <ToolbarButton onClick={toggleH1} isActive={editor.isActive('heading', { level: 1 })} icon={<Heading1 size={18} />} />
+                <ToolbarButton onClick={toggleH2} isActive={editor.isActive('heading', { level: 2 })} icon={<Heading2 size={18} />} />
+                <div className="w-px h-6 bg-gray-200 mx-1 shrink-0" />
+                <ToolbarButton onClick={toggleBold} isActive={editor.isActive('bold')} icon={<Bold size={18} />} />
+                <ToolbarButton onClick={toggleItalic} isActive={editor.isActive('italic')} icon={<Italic size={18} />} />
+                <div className="w-px h-6 bg-gray-200 mx-1 shrink-0" />
+                <ToolbarButton onClick={toggleBulletList} isActive={editor.isActive('bulletList')} icon={<List size={18} />} />
+                <ToolbarButton onClick={toggleOrderedList} isActive={editor.isActive('orderedList')} icon={<ListOrdered size={18} />} />
+                <ToolbarButton onClick={toggleTaskList} isActive={editor.isActive('taskList')} icon={<CheckSquare size={18} />} />
+                <div className="w-px h-6 bg-gray-200 mx-1 shrink-0" />
+                <ToolbarButton onClick={toggleBlockquote} isActive={editor.isActive('blockquote')} icon={<Quote size={18} />} />
+                <ToolbarButton onClick={toggleCodeBlock} isActive={editor.isActive('codeBlock')} icon={<Code size={18} />} />
+                <ToolbarButton onClick={insertMermaid} isActive={editor.isActive('mermaidCodeBlock')} icon={<GitBranch size={18} />} />
+                {/* Spacer to ensure last item isn't hidden by fade */}
+                <div className="w-4 shrink-0" />
+            </div>
+        </div>
+    );
+
     return (
         <div className="flex flex-col h-full bg-white relative">
-            {/* Toolbar - Sticky at bottom or top? Let's keep it at the bottom to match previous design, 
-                 or maybe a floating one? The previous design had it at the bottom.
-                 Let's assume this component fills the container provided by NoteEditor.
-             */}
+            {toolbarPosition === 'top' && Toolbar}
 
             <div className="flex-1 overflow-y-auto">
                 <EditorContent editor={editor} className="h-full" />
             </div>
 
-            {/* Toolbar */}
-            <div className="px-4 py-3 bg-white border-t border-gray-100 flex items-center gap-2 overflow-x-auto shrink-0 pb-safe noscrollbar">
-                <ToolbarButton onClick={toggleH1} isActive={editor.isActive('heading', { level: 1 })} icon={<Heading1 size={18} />} />
-                <ToolbarButton onClick={toggleH2} isActive={editor.isActive('heading', { level: 2 })} icon={<Heading2 size={18} />} />
-                <div className="w-px h-6 bg-gray-200 mx-1" />
-                <ToolbarButton onClick={toggleBold} isActive={editor.isActive('bold')} icon={<Bold size={18} />} />
-                <ToolbarButton onClick={toggleItalic} isActive={editor.isActive('italic')} icon={<Italic size={18} />} />
-                <div className="w-px h-6 bg-gray-200 mx-1" />
-                <ToolbarButton onClick={toggleBulletList} isActive={editor.isActive('bulletList')} icon={<List size={18} />} />
-                <ToolbarButton onClick={toggleOrderedList} isActive={editor.isActive('orderedList')} icon={<ListOrdered size={18} />} />
-                <ToolbarButton onClick={toggleTaskList} isActive={editor.isActive('taskList')} icon={<CheckSquare size={18} />} />
-                <div className="w-px h-6 bg-gray-200 mx-1" />
-                <ToolbarButton onClick={toggleBlockquote} isActive={editor.isActive('blockquote')} icon={<Quote size={18} />} />
-                <ToolbarButton onClick={toggleCodeBlock} isActive={editor.isActive('codeBlock')} icon={<Code size={18} />} />
-                <ToolbarButton onClick={insertMermaid} isActive={editor.isActive('mermaidCodeBlock')} icon={<GitBranch size={18} />} />
-            </div>
+            {toolbarPosition === 'bottom' && Toolbar}
         </div>
     );
 };

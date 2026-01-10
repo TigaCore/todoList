@@ -1,0 +1,79 @@
+{
+    "common": {
+        "save": "Save",
+        "cancel": "Cancel",
+        "confirm": "Confirm",
+        "delete": "Delete",
+        "edit": "Edit",
+        "done": "Done",
+        "loading": "Loading...",
+        "error": "Error",
+        "success": "Success"
+    },
+    "tabs": {
+        "tasks": "Tasks",
+        "notes": "Notes",
+        "settings": "Settings"
+    },
+    "filter": {
+        "all": "All Tasks",
+        "today": "Today",
+        "upcoming": "Upcoming",
+        "completed": "Completed"
+    },
+    "settings": {
+        "title": "Settings",
+        "account": "Account",
+        "appearance": "Appearance",
+        "data": "Data",
+        "about": "About",
+        "nickname": "Nickname",
+        "email": "Email",
+        "avatar": "Avatar",
+        "changeAvatar": "Change Avatar",
+        "changePassword": "Change Password",
+        "currentPassword": "Current Password",
+        "newPassword": "New Password",
+        "confirmPassword": "Confirm Password",
+        "passwordChanged": "Password changed successfully",
+        "passwordMismatch": "Passwords do not match",
+        "wrongPassword": "Current password is incorrect",
+        "theme": "Theme",
+        "language": "Language",
+        "exportData": "Export Data",
+        "exportDesc": "Export all tasks and notes as JSON",
+        "exporting": "Exporting...",
+        "exported": "Export successful",
+        "version": "Version",
+        "logout": "Sign Out",
+        "logoutConfirm": "Are you sure you want to sign out?"
+    },
+    "theme": {
+        "light": "Light",
+        "dark": "Dark",
+        "system": "System"
+    },
+    "language": {
+        "zh": "中文",
+        "en": "English"
+    },
+    "sidebar": {
+        "allTasks": "All Tasks",
+        "today": "Today",
+        "upcoming": "Upcoming",
+        "completed": "Completed",
+        "settings": "Settings",
+        "signOut": "Sign Out"
+    },
+    "tasks": {
+        "addTask": "Add Task",
+        "noTasks": "No tasks yet",
+        "dueDate": "Due Date",
+        "reminder": "Reminder"
+    },
+    "notes": {
+        "addNote": "Add Note",
+        "noNotes": "No notes yet",
+        "untitled": "Untitled"
+    }
+}

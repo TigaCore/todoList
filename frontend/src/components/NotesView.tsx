@@ -43,16 +43,17 @@ const NotesView: React.FC<NotesViewProps> = ({ notes, onNoteClick }) => {
             {displayNotes.map((note, index) => (
                 <motion.div
                     key={note.id}
-                    initial={{ opacity: 0, scale: 0.9, y: 20 }}
-                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
                     transition={{
                         type: "spring",
                         stiffness: 350,
-                        damping: 25,
-                        delay: index * 0.05
+                        damping: 28,
+                        mass: 0.8,
+                        delay: Math.min(index * 0.05, 0.3)
                     }}
                     onClick={() => onNoteClick(note)}
-                    className="bg-white rounded-xl p-4 shadow-sm border border-gray-100/50 hover:shadow-md hover:border-indigo-100 transition-all cursor-pointer flex flex-col h-48 active:scale-95 group"
+                    className="glass-card rounded-xl p-4 shadow-sm hover:shadow-md transition-all cursor-pointer flex flex-col h-48 active:scale-95 group"
                 >
                     <div className="flex items-start justify-between mb-2">
                         <h3 className={`font-semibold text-gray-800 line-clamp-2 leading-tight ${note.is_completed ? 'line-through text-gray-400' : ''}`}>
