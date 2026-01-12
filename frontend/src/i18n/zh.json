@@ -74,6 +74,61 @@
     "notes": {
         "addNote": "添加笔记",
         "noNotes": "暂无笔记",
-        "untitled": "无标题"
+        "untitled": "无标题",
+        "noContent": "无内容",
+        "hasNotes": "有笔记"
+    },
+    "editor": {
+        "edit": "编辑",
+        "source": "源码",
+        "save": "保存",
+        "done": "完成",
+        "markdownSource": "Markdown 源码",
+        "startWriting": "开始写作...",
+        "shortcuts": "快捷键",
+        "keyboardShortcuts": "键盘快捷键",
+        "pressEscToClose": "按 ESC 关闭提示"
+    },
+    "timeline": {
+        "title": "时间线",
+        "activities": "活动",
+        "noActivities": "暂无活动",
+        "activityHistory": "您的活动历史",
+        "today": "今天",
+        "yesterday": "昨天",
+        "dayStarted": "开始新的一天",
+        "dayEnded": "结束这一天",
+        "created": "创建了 \"{title}\"",
+        "completed": "完成了 \"{title}\"",
+        "unchecked": "取消完成 \"{title}\"",
+        "updated": "更新了 \"{title}\"",
+        "deleted": "删除了 \"{title}\"",
+        "activity": "活动于 \"{title}\"",
+        "unknownTask": "未知任务",
+        "summaryCompleted": "{count} 已完成",
+        "summaryCreated": "{count} 已创建",
+        "summaryUpdated": "{count} 已更新",
+        "startCreating": "开始创建任务以查看时间线！"
+    },
+    "datePicker": {
+        "date": "日期",
+        "time": "时间",
+        "setReminder": "设置提醒",
+        "setDueDate": "设置截止日期",
+        "done": "完成",
+        "today": "今天",
+        "tomorrow": "明天",
+        "nextWeek": "下周"
+    },
+    "toast": {
+        "addTaskFailed": "添加任务失败，请重试",
+        "waitForTaskCreation": "请等待任务创建完成后再删除",
+        "taskDeleted": "任务已删除",
+        "deleteFailed": "删除失败，请重试",
+        "saveNoteFailed": "保存笔记失败，请重试",
+        "updateDateFailed": "更新日期失败，请重试"
+    },
+    "confirm": {
+        "deleteTask": "确定要删除这个任务吗？"
     }
 }

@@ -1,8 +1,10 @@
 import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format, isToday, isYesterday } from 'date-fns';
+import { zhCN, enUS } from 'date-fns/locale';
 import { X, CheckCircle2, Circle, PenLine, Trash2, PlusCircle, StickyNote, Loader2, Sun, Moon } from 'lucide-react';
 import api from '../api/client';
+import { useLanguage } from '../contexts/LanguageContext';
 
 interface ActivityLog {
     id: number;
@@ -58,6 +60,8 @@ const formatLocalTime = (timestamp: string): string => {
 };
 
 const TimelineDrawer: React.FC<TimelineDrawerProps> = ({ isOpen, onClose, todos, onOpenTodo }) => {
+    const { t, language } = useLanguage();
+    const locale = language === 'zh' ? zhCN : enUS;
     const [activities, setActivities] = useState<ActivityLog[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -113,9 +117,9 @@ const TimelineDrawer: React.FC<TimelineDrawerProps> = ({ isOpen, onClose, todos,
                 updated: logs.filter(l => l.action_type === 'UPDATE_CONTENT').length,
             };
 
-            let displayDate = format(localDate, 'EEEE, MMM d');
-            if (isToday(localDate)) displayDate = 'Today';
-            else if (isYesterday(localDate)) displayDate = 'Yesterday';
+            let displayDate = format(localDate, language === 'zh' ? 'M月d日 EEEE' : 'EEEE, MMM d', { locale });
+            if (isToday(localDate)) displayDate = t('timeline.today');
+            else if (isYesterday(localDate)) displayDate = t('timeline.yesterday');
 
             return {
                 date: dateKey,
@@ -124,7 +128,7 @@ const TimelineDrawer: React.FC<TimelineDrawerProps> = ({ isOpen, onClose, todos,
                 summary,
             };
         }).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-    }, [activities]);
+    }, [activities, language, locale, t]);
 
     const getIconWithBg = (type: string) => {
         switch (type) {
@@ -168,14 +172,14 @@ const TimelineDrawer: React.FC<TimelineDrawerProps> = ({ isOpen, onClose, todos,
     };
 
     const getDescription = (log: ActivityLog) => {
-        const title = log.metadata_Snapshot?.title || 'Unknown Task';
+        const title = log.metadata_Snapshot?.title || t('timeline.unknownTask');
         switch (log.action_type) {
-            case 'CREATE': return `Created "${title}"`;
-            case 'COMPLETE': return `Completed "${title}"`;
-            case 'UNCOMPLETE': return `Unchecked "${title}"`;
-            case 'UPDATE_CONTENT': return `Updated "${title}"`;
-            case 'DELETE': return `Deleted "${title}"`;
-            default: return `Activity on "${title}"`;
+            case 'CREATE': return t('timeline.created').replace('{title}', title);
+            case 'COMPLETE': return t('timeline.completed').replace('{title}', title);
+            case 'UNCOMPLETE': return t('timeline.unchecked').replace('{title}', title);
+            case 'UPDATE_CONTENT': return t('timeline.updated').replace('{title}', title);
+            case 'DELETE': return t('timeline.deleted').replace('{title}', title);
+            default: return t('timeline.activity').replace('{title}', title);
         }
     };
 
@@ -191,10 +195,10 @@ const TimelineDrawer: React.FC<TimelineDrawerProps> = ({ isOpen, onClose, todos,
 
     const getSummaryText = (summary: DayGroup['summary']) => {
         const parts = [];
-        if (summary.completed > 0) parts.push(`${summary.completed} Completed`);
-        if (summary.created > 0) parts.push(`${summary.created} Created`);
-        if (summary.updated > 0) parts.push(`${summary.updated} Updated`);
-        return parts.join(' · ') || 'No activities';
+        if (summary.completed > 0) parts.push(t('timeline.summaryCompleted').replace('{count}', String(summary.completed)));
+        if (summary.created > 0) parts.push(t('timeline.summaryCreated').replace('{count}', String(summary.created)));
+        if (summary.updated > 0) parts.push(t('timeline.summaryUpdated').replace('{count}', String(summary.updated)));
+        return parts.join(' · ') || t('timeline.noActivities');
     };
 
     return (
@@ -226,8 +230,8 @@ const TimelineDrawer: React.FC<TimelineDrawerProps> = ({ isOpen, onClose, todos,
                         {/* Header */}
                         <div className="p-5 pt-safe border-b border-gray-100/50 dark:border-gray-700/50 flex items-center justify-between bg-gradient-to-r from-indigo-50/80 to-purple-50/80 dark:from-indigo-950/50 dark:to-purple-950/50">
                             <div>
-                                <h2 className="font-bold text-xl text-gray-800 dark:text-gray-100">Timeline</h2>
-                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Your activity history</p>
+                                <h2 className="font-bold text-xl text-gray-800 dark:text-gray-100">{t('timeline.title')}</h2>
+                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{t('timeline.activityHistory')}</p>
                             </div>
                             <button
                                 onClick={onClose}
@@ -246,8 +250,8 @@ const TimelineDrawer: React.FC<TimelineDrawerProps> = ({ isOpen, onClose, todos,
                             ) : activities.length === 0 ? (
                                 <div className="text-center py-20 text-gray-400">
                                     <StickyNote size={40} className="mx-auto mb-3 opacity-50" />
-                                    <p>No activities yet.</p>
-                                    <p className="text-sm mt-1">Start creating tasks to see your timeline!</p>
+                                    <p>{t('timeline.noActivities')}</p>
+                                    <p className="text-sm mt-1">{t('timeline.startCreating')}</p>
                                 </div>
                             ) : (
                                 groupedActivities.map((group) => (
@@ -269,7 +273,7 @@ const TimelineDrawer: React.FC<TimelineDrawerProps> = ({ isOpen, onClose, todos,
                                                     <div className="p-2 rounded-xl bg-amber-100 dark:bg-amber-900/50">
                                                         <Sun size={18} className="text-amber-500" />
                                                     </div>
-                                                    <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Day Started</p>
+                                                    <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{t('timeline.dayStarted')}</p>
                                                 </div>
                                             </div>
 
@@ -313,7 +317,7 @@ const TimelineDrawer: React.FC<TimelineDrawerProps> = ({ isOpen, onClose, todos,
                                                     <div className="p-2 rounded-xl bg-indigo-100 dark:bg-indigo-900/50">
                                                         <Moon size={18} className="text-indigo-500" />
                                                     </div>
-                                                    <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Day Ended</p>
+                                                    <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{t('timeline.dayEnded')}</p>
                                                 </div>
                                             </div>
                                         </div>

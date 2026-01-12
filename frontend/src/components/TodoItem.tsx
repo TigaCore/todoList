@@ -2,6 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Check, Trash2, FileText, Calendar, Bell } from 'lucide-react';
 import { format } from 'date-fns';
+import { useLanguage } from '../contexts/LanguageContext';
 
 interface Todo {
     id: number;
@@ -23,6 +24,7 @@ interface TodoItemProps {
 }
 
 const TodoItem = React.forwardRef<HTMLDivElement, TodoItemProps>(({ todo, index = 0, onToggle, onDelete, onOpenNotes, onOpenDatePicker }, ref) => {
+    const { t } = useLanguage();
     // Stagger delay: each item delays by 0.05s, max 0.3s
     const staggerDelay = Math.min(index * 0.05, 0.3);
 
@@ -84,7 +86,7 @@ const TodoItem = React.forwardRef<HTMLDivElement, TodoItemProps>(({ todo, index 
                         {todo.content && (
                             <span className="flex items-center text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/30 border border-amber-100 dark:border-amber-800 px-2 py-0.5 rounded-full">
                                 <FileText size={12} className="mr-1" />
-                                has notes
+                                {t('notes.hasNotes')}
                             </span>
                         )}
                     </div>

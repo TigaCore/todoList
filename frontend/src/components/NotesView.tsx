@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { StickyNote } from 'lucide-react';
+import { useLanguage } from '../contexts/LanguageContext';
 
 interface Todo {
     id: number;
@@ -18,6 +19,7 @@ interface NotesViewProps {
 }
 
 const NotesView: React.FC<NotesViewProps> = ({ notes, onNoteClick }) => {
+    const { t } = useLanguage();
     // Filter to show only items that have content effectively acting as "Notes"
     // Or just show all items as cards? Let's show all for now, maybe filter by "has content" later if user desires.
     // Ideally, "Notes" are things that are NOT just checkboxes. 
@@ -33,7 +35,7 @@ const NotesView: React.FC<NotesViewProps> = ({ notes, onNoteClick }) => {
                 <div className="w-24 h-24 bg-gray-50 dark:bg-gray-800 rounded-2xl flex items-center justify-center mb-4">
                     <StickyNote size={40} className="text-gray-300 dark:text-gray-600" />
                 </div>
-                <p>No notes found</p>
+                <p>{t('notes.noNotes')}</p>
             </div>
         );
     }
@@ -63,7 +65,7 @@ const NotesView: React.FC<NotesViewProps> = ({ notes, onNoteClick }) => {
 
                     <div className="flex-1 overflow-hidden">
                         <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-6 leading-relaxed whitespace-pre-line">
-                            {stripMarkdown(note.content || 'No content')}
+                            {note.content ? stripMarkdown(note.content) : t('notes.noContent')}
                         </p>
                     </div>
 

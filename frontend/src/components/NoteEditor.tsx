@@ -1,36 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { X, Maximize2, Minimize2, Code, Edit3, Keyboard } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import TiptapEditor from './TiptapEditor';
-
-// Keyboard shortcuts data
-const shortcuts = [
-    {
-        category: '文本格式', items: [
-            { keys: ['⌘', 'B'], desc: '粗体' },
-            { keys: ['⌘', 'I'], desc: '斜体' },
-            { keys: ['⌘', 'U'], desc: '下划线' },
-            { keys: ['⌘', 'E'], desc: '行内代码' },
-            { keys: ['⌘', '⇧', 'X'], desc: '删除线' },
-        ]
-    },
-    {
-        category: '段落', items: [
-            { keys: ['⌘', '⌥', '1-6'], desc: '标题级别' },
-            { keys: ['⌘', '⇧', '7'], desc: '有序列表' },
-            { keys: ['⌘', '⇧', '8'], desc: '无序列表' },
-            { keys: ['⌘', '⇧', '9'], desc: '引用块' },
-            { keys: ['⌘', '⌥', 'C'], desc: '代码块' },
-        ]
-    },
-    {
-        category: '编辑', items: [
-            { keys: ['⌘', 'Z'], desc: '撤销' },
-            { keys: ['⌘', '⇧', 'Z'], desc: '重做' },
-            { keys: ['⌘', 'A'], desc: '全选' },
-        ]
-    },
-];
+import { useLanguage } from '../contexts/LanguageContext';
 
 interface Todo {
     id: number;
@@ -52,6 +24,7 @@ interface NoteEditorProps {
 type ViewMode = 'edit' | 'source';
 
 const NoteEditor: React.FC<NoteEditorProps> = ({ isOpen, note, onSave, onClose }) => {
+    const { t, language } = useLanguage();
     const [content, setContent] = useState(note?.content || '');
     const [isFullscreen, setIsFullscreen] = useState(false);
     const [viewMode, setViewMode] = useState<ViewMode>('edit');
@@ -59,6 +32,38 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ isOpen, note, onSave, onClose }
     const shortcutsRef = useRef<HTMLDivElement>(null);
     // Key to force TipTap re-render when switching modes
     const [tiptapKey, setTiptapKey] = useState(0);
+
+    // Keyboard shortcuts data with i18n
+    const shortcuts = useMemo(() => {
+        const isZh = language === 'zh';
+        return [
+            {
+                category: isZh ? '文本格式' : 'Text Format', items: [
+                    { keys: ['⌘', 'B'], desc: isZh ? '粗体' : 'Bold' },
+                    { keys: ['⌘', 'I'], desc: isZh ? '斜体' : 'Italic' },
+                    { keys: ['⌘', 'U'], desc: isZh ? '下划线' : 'Underline' },
+                    { keys: ['⌘', 'E'], desc: isZh ? '行内代码' : 'Inline Code' },
+                    { keys: ['⌘', '⇧', 'X'], desc: isZh ? '删除线' : 'Strikethrough' },
+                ]
+            },
+            {
+                category: isZh ? '段落' : 'Paragraph', items: [
+                    { keys: ['⌘', '⌥', '1-6'], desc: isZh ? '标题级别' : 'Heading Level' },
+                    { keys: ['⌘', '⇧', '7'], desc: isZh ? '有序列表' : 'Ordered List' },
+                    { keys: ['⌘', '⇧', '8'], desc: isZh ? '无序列表' : 'Unordered List' },
+                    { keys: ['⌘', '⇧', '9'], desc: isZh ? '引用块' : 'Blockquote' },
+                    { keys: ['⌘', '⌥', 'C'], desc: isZh ? '代码块' : 'Code Block' },
+                ]
+            },
+            {
+                category: isZh ? '编辑' : 'Editing', items: [
+                    { keys: ['⌘', 'Z'], desc: isZh ? '撤销' : 'Undo' },
+                    { keys: ['⌘', '⇧', 'Z'], desc: isZh ? '重做' : 'Redo' },
+                    { keys: ['⌘', 'A'], desc: isZh ? '全选' : 'Select All' },
+                ]
+            },
+        ];
+    }, [language]);
 
     // Close shortcuts popover when clicking outside
     useEffect(() => {
@@ -120,10 +125,10 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ isOpen, note, onSave, onClose }
                     ? 'bg-white/80 dark:bg-gray-700 text-gray-800 dark:text-gray-100 shadow-sm'
                     : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-white/30 dark:hover:bg-gray-700/50'
                     }`}
-                title="Rich Editor"
+                title={t('editor.edit')}
             >
                 <Edit3 size={14} />
-                <span className="hidden sm:inline">Edit</span>
+                <span className="hidden sm:inline">{t('editor.edit')}</span>
             </button>
             <button
                 onClick={() => handleViewModeChange('source')}
@@ -131,10 +136,10 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ isOpen, note, onSave, onClose }
                     ? 'bg-white/80 dark:bg-gray-700 text-gray-800 dark:text-gray-100 shadow-sm'
                     : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-white/30 dark:hover:bg-gray-700/50'
                     }`}
-                title="Markdown Source"
+                title={t('editor.source')}
             >
                 <Code size={14} />
-                <span className="hidden sm:inline">Source</span>
+                <span className="hidden sm:inline">{t('editor.source')}</span>
             </button>
         </div>
     );
@@ -166,7 +171,7 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ isOpen, note, onSave, onClose }
                             onClick={handleSave}
                             className="btn-primary px-4 py-1.5 text-sm font-medium rounded-full"
                         >
-                            Done
+                            {t('editor.done')}
                         </button>
                     </div>
                 </div>

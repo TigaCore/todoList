@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Picker from 'react-mobile-picker';
 import { X, Calendar, Clock } from 'lucide-react';
 import { format, addDays, setHours, setMinutes } from 'date-fns';
+import { useLanguage } from '../contexts/LanguageContext';
 
 interface DateTimePickerProps {
     isOpen: boolean;
@@ -12,6 +13,7 @@ interface DateTimePickerProps {
 }
 
 const DateTimePicker: React.FC<DateTimePickerProps> = ({ isOpen, onClose, onSelect, initialDate }) => {
+    const { t } = useLanguage();
     const now = new Date();
     const initial = initialDate || now;
     const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 768);
@@ -55,9 +57,9 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({ isOpen, onClose, onSele
     });
 
     const quickOptions = [
-        { label: 'Today', getDate: () => now },
-        { label: 'Tomorrow', getDate: () => addDays(now, 1) },
-        { label: 'Next Week', getDate: () => addDays(now, 7) },
+        { label: t('datePicker.today'), getDate: () => now },
+        { label: t('datePicker.tomorrow'), getDate: () => addDays(now, 1) },
+        { label: t('datePicker.nextWeek'), getDate: () => addDays(now, 7) },
     ];
 
     const handleQuickSelect = (getDate: () => Date) => {
@@ -111,12 +113,12 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({ isOpen, onClose, onSele
                                 >
                                     <X size={24} />
                                 </button>
-                                <h3 className="font-semibold text-gray-800">Set Due Date</h3>
+                                <h3 className="font-semibold text-gray-800 dark:text-gray-100">{t('datePicker.setDueDate')}</h3>
                                 <button
                                     onClick={handleConfirm}
                                     className="btn-primary px-4 py-1.5 text-sm font-medium rounded-full"
                                 >
-                                    Done
+                                    {t('datePicker.done')}
                                 </button>
                             </div>
 
@@ -137,10 +139,10 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({ isOpen, onClose, onSele
                             <div className="px-4 py-6 bg-white/30">
                                 <div className="flex items-center justify-center gap-1 mb-4">
                                     <Calendar size={18} className="text-gray-400" />
-                                    <span className="text-sm text-gray-500">Date</span>
+                                    <span className="text-sm text-gray-500 dark:text-gray-400">{t('datePicker.date')}</span>
                                     <span className="mx-4 text-gray-300">|</span>
                                     <Clock size={18} className="text-gray-400" />
-                                    <span className="text-sm text-gray-500">Time</span>
+                                    <span className="text-sm text-gray-500 dark:text-gray-400">{t('datePicker.time')}</span>
                                 </div>
 
                                 <Picker

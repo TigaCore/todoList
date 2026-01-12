@@ -74,6 +74,61 @@
     "notes": {
         "addNote": "Add Note",
         "noNotes": "No notes yet",
-        "untitled": "Untitled"
+        "untitled": "Untitled",
+        "noContent": "No content",
+        "hasNotes": "has notes"
+    },
+    "editor": {
+        "edit": "Edit",
+        "source": "Source",
+        "save": "Save",
+        "done": "Done",
+        "markdownSource": "Markdown Source",
+        "startWriting": "Start writing...",
+        "shortcuts": "Shortcuts",
+        "keyboardShortcuts": "Keyboard Shortcuts",
+        "pressEscToClose": "Press ESC to close"
+    },
+    "timeline": {
+        "title": "Timeline",
+        "activities": "Activities",
+        "noActivities": "No activities",
+        "activityHistory": "Your activity history",
+        "today": "Today",
+        "yesterday": "Yesterday",
+        "dayStarted": "Day Started",
+        "dayEnded": "Day Ended",
+        "created": "Created \"{title}\"",
+        "completed": "Completed \"{title}\"",
+        "unchecked": "Unchecked \"{title}\"",
+        "updated": "Updated \"{title}\"",
+        "deleted": "Deleted \"{title}\"",
+        "activity": "Activity on \"{title}\"",
+        "unknownTask": "Unknown Task",
+        "summaryCompleted": "{count} Completed",
+        "summaryCreated": "{count} Created",
+        "summaryUpdated": "{count} Updated",
+        "startCreating": "Start creating tasks to see your timeline!"
+    },
+    "datePicker": {
+        "date": "Date",
+        "time": "Time",
+        "setReminder": "Set Reminder",
+        "setDueDate": "Set Due Date",
+        "done": "Done",
+        "today": "Today",
+        "tomorrow": "Tomorrow",
+        "nextWeek": "Next Week"
+    },
+    "toast": {
+        "addTaskFailed": "Failed to add task, please try again",
+        "waitForTaskCreation": "Please wait for task to be created before deleting",
+        "taskDeleted": "Task deleted",
+        "deleteFailed": "Failed to delete, please try again",
+        "saveNoteFailed": "Failed to save note, please try again",
+        "updateDateFailed": "Failed to update date, please try again"
+    },
+    "confirm": {
+        "deleteTask": "Are you sure you want to delete this task?"
     }
 }

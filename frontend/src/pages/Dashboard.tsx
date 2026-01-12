@@ -192,7 +192,7 @@ const Dashboard = () => {
             // Restore the title for the user to retry
             setTitle(tempTitle);
             setIsInputOpen(true);
-            showToast('error', '添加任务失败，请重试');
+            showToast('error', t('toast.addTaskFailed'));
         } finally {
             setIsAddingTodo(false);
         }
@@ -219,11 +219,11 @@ const Dashboard = () => {
     const handleDelete = async (id: number) => {
         // Don't allow deleting tasks with temporary IDs (still being created)
         if (id < 0) {
-            showToast('warning', '请等待任务创建完成后再删除');
+            showToast('warning', t('toast.waitForTaskCreation'));
             return;
         }
 
-        showConfirm('确定要删除这个任务吗？', async () => {
+        showConfirm(t('confirm.deleteTask'), async () => {
             closeConfirm();
 
             // Optimistic update - immediately remove from list
@@ -232,12 +232,12 @@ const Dashboard = () => {
 
             try {
                 await api.delete(`/todos/${id}`);
-                showToast('success', '任务已删除');
+                showToast('success', t('toast.taskDeleted'));
             } catch (error) {
                 console.error('Error deleting todo:', error);
                 // Rollback on error - restore the deleted todo
                 setTodos(previousTodos);
-                showToast('error', '删除失败，请重试');
+                showToast('error', t('toast.deleteFailed'));
             }
         });
     };
@@ -273,7 +273,7 @@ const Dashboard = () => {
                 // Rollback
                 setTodos(previousTodos);
                 setEditingNote(noteToSave);
-                showToast('error', '保存笔记失败，请重试');
+                showToast('error', t('toast.saveNoteFailed'));
             }
         } else {
             // Update existing Note - optimistic update
@@ -291,7 +291,7 @@ const Dashboard = () => {
                 // Rollback
                 setTodos(previousTodos);
                 setEditingNote(noteToSave);
-                showToast('error', '保存笔记失败，请重试');
+                showToast('error', t('toast.saveNoteFailed'));
             }
         }
     };
@@ -334,7 +334,7 @@ const Dashboard = () => {
             console.error('Error updating date:', error);
             // Rollback on error
             setTodos(previousTodos);
-            showToast('error', '更新日期失败，请重试');
+            showToast('error', t('toast.updateDateFailed'));
         }
     };
 
@@ -403,7 +403,7 @@ const Dashboard = () => {
                     className="p-2 hover:bg-white/60 dark:hover:bg-gray-700/60 rounded-xl transition-colors text-gray-600 dark:text-gray-300 flex items-center gap-2"
                 >
                     <History size={22} />
-                    <span className="text-sm font-medium">Timeline</span>
+                    <span className="text-sm font-medium">{t('timeline.title')}</span>
                 </button>
             </div>
 
