@@ -144,5 +144,12 @@
     },
     "confirm": {
         "deleteTask": "Are you sure you want to delete this task?"
+    },
+    "embeddedTask": {
+        "title": "Embedded Tasks",
+        "from": "from",
+        "jumpToDoc": "Jump to document",
+        "noTasks": "No embedded tasks",
+        "updateFailed": "Failed to update task status"
     }
 }

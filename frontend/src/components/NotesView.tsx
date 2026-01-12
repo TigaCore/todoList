@@ -9,6 +9,7 @@ interface Todo {
     description?: string;
     content?: string;
     is_completed: boolean;
+    is_document?: boolean;
     due_date?: string;
     reminder_at?: string;
 }
@@ -20,14 +21,10 @@ interface NotesViewProps {
 
 const NotesView: React.FC<NotesViewProps> = ({ notes, onNoteClick }) => {
     const { t } = useLanguage();
-    // Filter to show only items that have content effectively acting as "Notes"
-    // Or just show all items as cards? Let's show all for now, maybe filter by "has content" later if user desires.
-    // Ideally, "Notes" are things that are NOT just checkboxes. 
-    // For now, let's treat every task as a potential note.
 
-    // Optional: Filter empty descriptions?
-    // const displayNotes = notes.filter(n => n.content && n.content.trim().length > 0);
-    const displayNotes = notes;
+    // Only show standalone documents (is_document=true)
+    // Tasks with attached notes are edited by clicking the task, not shown here
+    const displayNotes = notes.filter(n => n.is_document === true);
 
     if (displayNotes.length === 0) {
         return (

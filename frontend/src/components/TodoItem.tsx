@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Check, Trash2, FileText, Calendar, Bell } from 'lucide-react';
+import { Check, Trash2, FileText, Calendar, Bell, Link2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { useLanguage } from '../contexts/LanguageContext';
 
@@ -21,9 +21,23 @@ interface TodoItemProps {
     onDelete: (id: number) => void;
     onOpenNotes: (todo: Todo) => void;
     onOpenDatePicker: (todo: Todo) => void;
+    // Embedded task props
+    isEmbedded?: boolean;
+    sourceDocTitle?: string;
+    onJumpToDoc?: () => void;
 }
 
-const TodoItem = React.forwardRef<HTMLDivElement, TodoItemProps>(({ todo, index = 0, onToggle, onDelete, onOpenNotes, onOpenDatePicker }, ref) => {
+const TodoItem = React.forwardRef<HTMLDivElement, TodoItemProps>(({
+    todo,
+    index = 0,
+    onToggle,
+    onDelete,
+    onOpenNotes,
+    onOpenDatePicker,
+    isEmbedded = false,
+    sourceDocTitle,
+    onJumpToDoc
+}, ref) => {
     const { t } = useLanguage();
     // Stagger delay: each item delays by 0.05s, max 0.3s
     const staggerDelay = Math.min(index * 0.05, 0.3);
@@ -53,7 +67,7 @@ const TodoItem = React.forwardRef<HTMLDivElement, TodoItemProps>(({ todo, index 
                 scale: 0.98,
                 transition: { type: "spring", stiffness: 400, damping: 25 }
             }}
-            onClick={() => onOpenNotes(todo)}
+            onClick={() => isEmbedded && onJumpToDoc ? onJumpToDoc() : onOpenNotes(todo)}
             className={`glass-card p-4 rounded-xl group cursor-pointer ${todo.is_completed ? 'opacity-60 grayscale-[0.5]' : ''}`}
         >
             <div className="flex items-center gap-4">
@@ -83,10 +97,15 @@ const TodoItem = React.forwardRef<HTMLDivElement, TodoItemProps>(({ todo, index 
                                 {format(new Date(todo.due_date), 'MMM d, H:mm')}
                             </span>
                         )}
-                        {todo.content && (
-                            <span className="flex items-center text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/30 border border-amber-100 dark:border-amber-800 px-2 py-0.5 rounded-full">
-                                <FileText size={12} className="mr-1" />
-                                {t('notes.hasNotes')}
+                        {!isEmbedded && todo.content && (
+                            <span className="flex items-center justify-center w-6 h-6 text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/30 border border-amber-100 dark:border-amber-800 rounded-full" title={t('notes.hasNotes')}>
+                                <FileText size={12} />
+                            </span>
+                        )}
+                        {isEmbedded && sourceDocTitle && (
+                            <span className="flex items-center text-xs text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-900/30 border border-violet-100 dark:border-violet-800 px-2 py-0.5 rounded-full">
+                                <Link2 size={12} className="mr-1" />
+                                {sourceDocTitle}
                             </span>
                         )}
                     </div>
@@ -94,13 +113,25 @@ const TodoItem = React.forwardRef<HTMLDivElement, TodoItemProps>(({ todo, index 
 
                 {/* Actions */}
                 <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button
-                        onClick={(e) => { e.stopPropagation(); onOpenNotes(todo); }}
-                        className="p-2 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-                        title="Edit Notes"
-                    >
-                        <FileText size={18} />
-                    </button>
+                    {isEmbedded && onJumpToDoc && (
+                        <button
+                            onClick={(e) => { e.stopPropagation(); onJumpToDoc(); }}
+                            className="p-2 text-gray-400 hover:text-violet-600 dark:hover:text-violet-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                            title={t('embeddedTask.jumpToDoc')}
+                        >
+                            <FileText size={18} />
+                        </button>
+                    )}
+
+                    {!isEmbedded && (
+                        <button
+                            onClick={(e) => { e.stopPropagation(); onOpenNotes(todo); }}
+                            className="p-2 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                            title="Edit Notes"
+                        >
+                            <FileText size={18} />
+                        </button>
+                    )}
 
                     <button
                         onClick={(e) => { e.stopPropagation(); onOpenDatePicker(todo); }}
@@ -110,12 +141,14 @@ const TodoItem = React.forwardRef<HTMLDivElement, TodoItemProps>(({ todo, index 
                         <Bell size={18} />
                     </button>
 
-                    <button
-                        onClick={(e) => { e.stopPropagation(); onDelete(todo.id); }}
-                        className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors"
-                    >
-                        <Trash2 size={18} />
-                    </button>
+                    {!isEmbedded && (
+                        <button
+                            onClick={(e) => { e.stopPropagation(); onDelete(todo.id); }}
+                            className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors"
+                        >
+                            <Trash2 size={18} />
+                        </button>
+                    )}
                 </div>
             </div>
         </motion.div>
@@ -125,3 +158,4 @@ const TodoItem = React.forwardRef<HTMLDivElement, TodoItemProps>(({ todo, index 
 TodoItem.displayName = 'TodoItem';
 
 export default TodoItem;
+

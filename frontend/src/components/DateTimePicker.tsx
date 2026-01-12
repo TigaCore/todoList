@@ -137,49 +137,59 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({ isOpen, onClose, onSele
 
                             {/* Picker Area */}
                             <div className="px-4 py-6 bg-white/30">
-                                <div className="flex items-center justify-center gap-1 mb-4">
-                                    <Calendar size={18} className="text-gray-400" />
-                                    <span className="text-sm text-gray-500 dark:text-gray-400">{t('datePicker.date')}</span>
-                                    <span className="mx-4 text-gray-300">|</span>
-                                    <Clock size={18} className="text-gray-400" />
-                                    <span className="text-sm text-gray-500 dark:text-gray-400">{t('datePicker.time')}</span>
+                                {/* Section Labels */}
+                                <div className="flex items-center justify-center mb-4">
+                                    <div className="flex items-center gap-1.5 px-4 py-1.5 bg-indigo-50 dark:bg-indigo-900/30 rounded-l-full border-r border-indigo-100 dark:border-indigo-800">
+                                        <Calendar size={16} className="text-indigo-500" />
+                                        <span className="text-sm font-medium text-indigo-600 dark:text-indigo-400">{t('datePicker.date')}</span>
+                                    </div>
+                                    <div className="flex items-center gap-1.5 px-4 py-1.5 bg-orange-50 dark:bg-orange-900/30 rounded-r-full">
+                                        <Clock size={16} className="text-orange-500" />
+                                        <span className="text-sm font-medium text-orange-600 dark:text-orange-400">{t('datePicker.time')}</span>
+                                    </div>
                                 </div>
 
-                                <Picker
-                                    value={pickerValue}
-                                    onChange={setPickerValue}
-                                    wheelMode="natural"
-                                    height={160}
-                                >
-                                    <Picker.Column name="month">
-                                        {months.map(m => (
-                                            <Picker.Item key={m.value} value={m.value}>
-                                                {m.label}
-                                            </Picker.Item>
-                                        ))}
-                                    </Picker.Column>
-                                    <Picker.Column name="day">
-                                        {days.map(d => (
-                                            <Picker.Item key={d.value} value={d.value}>
-                                                {d.label}
-                                            </Picker.Item>
-                                        ))}
-                                    </Picker.Column>
-                                    <Picker.Column name="hour">
-                                        {hours.map(h => (
-                                            <Picker.Item key={h.value} value={h.value}>
-                                                {h.label}
-                                            </Picker.Item>
-                                        ))}
-                                    </Picker.Column>
-                                    <Picker.Column name="minute">
-                                        {minutes.map(m => (
-                                            <Picker.Item key={m.value} value={m.value}>
-                                                {m.label}
-                                            </Picker.Item>
-                                        ))}
-                                    </Picker.Column>
-                                </Picker>
+                                {/* Picker with visual separator */}
+                                <div className="relative">
+                                    {/* Vertical divider between date and time */}
+                                    <div className="absolute left-1/2 top-0 bottom-0 w-px bg-gradient-to-b from-transparent via-gray-300 dark:via-gray-600 to-transparent z-10" style={{ transform: 'translateX(-50%)' }} />
+
+                                    <Picker
+                                        value={pickerValue}
+                                        onChange={setPickerValue}
+                                        wheelMode="natural"
+                                        height={160}
+                                    >
+                                        <Picker.Column name="month">
+                                            {months.map(m => (
+                                                <Picker.Item key={m.value} value={m.value}>
+                                                    {m.label}
+                                                </Picker.Item>
+                                            ))}
+                                        </Picker.Column>
+                                        <Picker.Column name="day">
+                                            {days.map(d => (
+                                                <Picker.Item key={d.value} value={d.value}>
+                                                    {d.label}
+                                                </Picker.Item>
+                                            ))}
+                                        </Picker.Column>
+                                        <Picker.Column name="hour">
+                                            {hours.map(h => (
+                                                <Picker.Item key={h.value} value={h.value}>
+                                                    {h.label}
+                                                </Picker.Item>
+                                            ))}
+                                        </Picker.Column>
+                                        <Picker.Column name="minute">
+                                            {minutes.map(m => (
+                                                <Picker.Item key={m.value} value={m.value}>
+                                                    {m.label}
+                                                </Picker.Item>
+                                            ))}
+                                        </Picker.Column>
+                                    </Picker>
+                                </div>
                             </div>
 
                             {/* Safe area padding for iOS - only on mobile */}

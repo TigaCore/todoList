@@ -17,7 +17,7 @@ interface Todo {
 interface NoteEditorProps {
     isOpen: boolean;
     note: Todo | null;
-    onSave: (content: string) => void;
+    onSave: (content: string, title?: string) => void;
     onClose: () => void;
 }
 
@@ -26,12 +26,19 @@ type ViewMode = 'edit' | 'source';
 const NoteEditor: React.FC<NoteEditorProps> = ({ isOpen, note, onSave, onClose }) => {
     const { t, language } = useLanguage();
     const [content, setContent] = useState(note?.content || '');
+    const [title, setTitle] = useState(note?.title || '');
     const [isFullscreen, setIsFullscreen] = useState(false);
     const [viewMode, setViewMode] = useState<ViewMode>('edit');
     const [showShortcuts, setShowShortcuts] = useState(false);
     const shortcutsRef = useRef<HTMLDivElement>(null);
     // Key to force TipTap re-render when switching modes
     const [tiptapKey, setTiptapKey] = useState(0);
+
+    // Extract first H1 heading from markdown content
+    const extractH1FromContent = (md: string): string | null => {
+        const match = md.match(/^#\s+(.+)$/m);
+        return match ? match[1].trim() : null;
+    };
 
     // Keyboard shortcuts data with i18n
     const shortcuts = useMemo(() => {
@@ -78,10 +85,11 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ isOpen, note, onSave, onClose }
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, [showShortcuts]);
 
-    // Update content when note changes
+    // Update content and title when note changes
     useEffect(() => {
         if (note) {
             setContent(note.content || '');
+            setTitle(note.title || '');
             setTiptapKey(prev => prev + 1); // Force TipTap to reinitialize
         }
     }, [note]);
@@ -110,7 +118,12 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ isOpen, note, onSave, onClose }
     };
 
     const handleSave = () => {
-        onSave(content);
+        // Determine final title: custom title > H1 from content > default
+        let finalTitle = title.trim();
+        if (!finalTitle) {
+            finalTitle = extractH1FromContent(content) || 'Untitled';
+        }
+        onSave(content, finalTitle);
         onClose();
     };
 
@@ -155,9 +168,13 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ isOpen, note, onSave, onClose }
                         <X size={24} />
                     </button>
 
-                    <div className="flex-1 text-center font-medium text-gray-700 dark:text-gray-200 mx-4 truncate">
-                        {note.title}
-                    </div>
+                    <input
+                        type="text"
+                        value={title}
+                        onChange={(e) => setTitle(e.target.value)}
+                        placeholder={extractH1FromContent(content) || t('notes.untitled')}
+                        className="flex-1 text-center font-medium text-gray-700 dark:text-gray-200 mx-4 bg-transparent border-none outline-none focus:ring-0 placeholder-gray-400 dark:placeholder-gray-500"
+                    />
 
                     <div className="flex items-center gap-2">
                         <button
@@ -227,9 +244,13 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ isOpen, note, onSave, onClose }
                                         >
                                             <Minimize2 size={20} />
                                         </button>
-                                        <h1 className="font-semibold text-gray-800 dark:text-gray-100 truncate max-w-md">
-                                            {note.title}
-                                        </h1>
+                                        <input
+                                            type="text"
+                                            value={title}
+                                            onChange={(e) => setTitle(e.target.value)}
+                                            placeholder={extractH1FromContent(content) || t('notes.untitled')}
+                                            className="font-semibold text-gray-800 dark:text-gray-100 max-w-md bg-transparent border-none outline-none focus:ring-0 placeholder-gray-400 dark:placeholder-gray-500"
+                                        />
                                     </div>
 
                                     <div className="flex items-center gap-3">

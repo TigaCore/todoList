@@ -16,14 +16,22 @@ import { LocalNotifications } from '@capacitor/local-notifications';
 import { isToday, parseISO, format } from 'date-fns';
 import { useLanguage } from '../contexts/LanguageContext';
 
+interface EmbeddedTask {
+    line_index: number;
+    text: string;
+    is_completed: boolean;
+}
+
 interface Todo {
     id: number;
     title: string;
     description?: string;
     content?: string;
     is_completed: boolean;
+    is_document?: boolean;
     due_date?: string;
     reminder_at?: string;
+    embedded_tasks?: EmbeddedTask[];
 }
 
 interface User {
@@ -136,10 +144,27 @@ const Dashboard = () => {
             }
 
             // Schedule new timer
+            // Schedule new timer
             const timerId = setTimeout(() => {
-                new Notification("Task Reminder", {
-                    body: task.title,
-                    icon: '/vite.svg' // Assuming default vite icon exists, or we can omit
+                let body = task.title;
+
+                // If this is a document with embedded tasks, list the incomplete tasks
+                if (task.embedded_tasks && task.embedded_tasks.length > 0) {
+                    const incompleteTasks = task.embedded_tasks.filter(t => !t.is_completed);
+                    if (incompleteTasks.length > 0) {
+                        body = incompleteTasks.map(t => t.text).join('\n');
+                        // If too many, truncate
+                        if (incompleteTasks.length > 3) {
+                            const othersCount = incompleteTasks.length - 3;
+                            const firstThree = incompleteTasks.slice(0, 3).map(t => t.text).join('\n');
+                            body = `${firstThree}\n...and ${othersCount} more`;
+                        }
+                    }
+                }
+
+                new Notification(t('toast.reminder'), {
+                    body: body,
+                    icon: '/pwa-192x192.png' // Use PWA icon
                 });
                 // Play a sound if desired, or just notification
             }, delay);
@@ -242,29 +267,32 @@ const Dashboard = () => {
         });
     };
 
-    const handleSaveNote = async (content: string) => {
+    const handleSaveNote = async (content: string, title?: string) => {
         if (!editingNote) return;
 
         const previousTodos = todos;
         const noteToSave = editingNote;
+        const finalTitle = title || editingNote.title || 'Untitled';
 
         if (editingNote.id === 0) {
-            // Create new Note - optimistic update
+            // Create new Note or Document - optimistic update
             const tempId = -Date.now();
             const optimisticNote: Todo = {
                 id: tempId,
-                title: editingNote.title || 'Untitled Note',
+                title: finalTitle,
                 content: content,
-                is_completed: false
+                is_completed: false,
+                is_document: editingNote.is_document || false
             };
             setTodos([optimisticNote, ...todos]);
             setEditingNote(null);
 
             try {
                 const response = await api.post<Todo>('/todos/', {
-                    title: noteToSave.title || 'Untitled Note',
+                    title: finalTitle,
                     content: content,
-                    is_completed: false
+                    is_completed: false,
+                    is_document: noteToSave.is_document || false
                 });
                 // Replace temp note with server response
                 setTodos(prev => prev.map(t => t.id === tempId ? response.data : t));
@@ -277,12 +305,13 @@ const Dashboard = () => {
             }
         } else {
             // Update existing Note - optimistic update
-            setTodos(prev => prev.map(t => t.id === editingNote.id ? { ...t, content } : t));
+            setTodos(prev => prev.map(t => t.id === editingNote.id ? { ...t, content, title: finalTitle } : t));
             setEditingNote(null);
 
             try {
                 const response = await api.put<Todo>(`/todos/${noteToSave.id}`, {
-                    content
+                    content,
+                    title: finalTitle
                 });
                 // Update with server response
                 setTodos(prev => prev.map(t => t.id === noteToSave.id ? response.data : t));
@@ -338,12 +367,70 @@ const Dashboard = () => {
         }
     };
 
+    const handleEmbeddedTaskToggle = async (todoId: number, lineIndex: number, completed: boolean) => {
+        // Optimistic update
+        const previousTodos = todos;
+        setTodos(prev => prev.map(todo => {
+            if (todo.id === todoId && todo.embedded_tasks) {
+                const updatedTasks = todo.embedded_tasks.map(task =>
+                    task.line_index === lineIndex ? { ...task, is_completed: completed } : task
+                );
+                return { ...todo, embedded_tasks: updatedTasks };
+            }
+            return todo;
+        }));
+
+        try {
+            const response = await api.patch<Todo>(`/todos/${todoId}/embedded-task`, {
+                line_index: lineIndex,
+                is_completed: completed
+            });
+            // Update with server response
+            setTodos(prev => prev.map(t => t.id === todoId ? response.data : t));
+        } catch (error) {
+            console.error('Error updating embedded task:', error);
+            setTodos(previousTodos);
+            showToast('error', t('embeddedTask.updateFailed'));
+        }
+    };
+
+    const handleJumpToDoc = (todoId: number, lineIndex: number) => {
+        const todo = todos.find(t => t.id === todoId);
+        if (todo) {
+            // Store lineIndex for scrolling after editor opens
+            console.log(`Jump to line ${lineIndex} in todo ${todoId}`);
+            setEditingNote(todo);
+            // TODO: implement scroll to lineIndex in editor
+        }
+    };
+
+    // Collect all embedded tasks and convert to Todo-like objects
+    const embeddedTasksAsTodos = todos.flatMap(todo =>
+        (todo.embedded_tasks || []).map(task => ({
+            // Use negative ID to avoid conflicts: -(todoId * 10000 + lineIndex)
+            id: -(todo.id * 10000 + task.line_index),
+            title: task.text,
+            is_completed: task.is_completed,
+            // Include source todo's due_date for reminder indicator
+            due_date: todo.due_date,
+            reminder_at: todo.reminder_at,
+            // Mark as embedded with metadata
+            _isEmbedded: true,
+            _sourceTodoId: todo.id,
+            _sourceLineIndex: task.line_index,
+            _sourceDocTitle: todo.title
+        }))
+    ) as (Todo & { _isEmbedded: boolean; _sourceTodoId: number; _sourceLineIndex: number; _sourceDocTitle: string })[];
+
     const handleLogout = () => {
         localStorage.removeItem('token');
         navigate('/login');
     };
 
     const filteredTodos = todos.filter(todo => {
+        // Exclude standalone documents from task list - they only show in Notes tab
+        if (todo.is_document) return false;
+
         if (filter === 'completed') return todo.is_completed;
         if (!todo.is_completed) {
             if (filter === 'today') {
@@ -354,6 +441,19 @@ const Dashboard = () => {
             }
         }
         return filter === 'all';
+    });
+
+    // Filter embedded tasks similarly (only show in 'all' or 'completed' filters for now)
+    const filteredEmbeddedTasks = embeddedTasksAsTodos.filter(task => {
+        if (filter === 'completed') return task.is_completed;
+        return filter === 'all';
+    });
+
+    // Combine regular todos with embedded tasks and sort
+    // Sort logic: Uncompleted first, then Completed
+    const combinedTasks = [...filteredTodos, ...filteredEmbeddedTasks].sort((a, b) => {
+        if (a.is_completed === b.is_completed) return 0;
+        return a.is_completed ? 1 : -1;
     });
 
     const getFilterTitle = () => {
@@ -430,19 +530,45 @@ const Dashboard = () => {
                         }}
                         className="space-y-3 pb-20 origin-top"
                     >
-                        {filteredTodos.map((todo, index) => (
-                            <TodoItem
-                                key={todo.id}
-                                todo={todo}
-                                index={index}
-                                onToggle={handleToggle}
-                                onDelete={handleDelete}
-                                onOpenNotes={(t) => setEditingNote(t)}
-                                onOpenDatePicker={(t) => setDatePickerTodo(t)}
-                            />
-                        ))}
+                        {combinedTasks.map((task, index) => {
+                            const isEmbedded = '_isEmbedded' in task && task._isEmbedded;
 
-                        {filteredTodos.length === 0 && (
+                            if (isEmbedded) {
+                                const embeddedTask = task as typeof task & { _sourceTodoId: number; _sourceLineIndex: number; _sourceDocTitle: string };
+                                return (
+                                    <TodoItem
+                                        key={task.id}
+                                        todo={task}
+                                        index={index}
+                                        onToggle={() => handleEmbeddedTaskToggle(embeddedTask._sourceTodoId, embeddedTask._sourceLineIndex, !task.is_completed)}
+                                        onDelete={() => { }}
+                                        onOpenNotes={() => handleJumpToDoc(embeddedTask._sourceTodoId, embeddedTask._sourceLineIndex)}
+                                        onOpenDatePicker={() => {
+                                            // Find the source todo for setting reminder
+                                            const sourceTodo = todos.find(t => t.id === embeddedTask._sourceTodoId);
+                                            if (sourceTodo) setDatePickerTodo(sourceTodo);
+                                        }}
+                                        isEmbedded={true}
+                                        sourceDocTitle={embeddedTask._sourceDocTitle}
+                                        onJumpToDoc={() => handleJumpToDoc(embeddedTask._sourceTodoId, embeddedTask._sourceLineIndex)}
+                                    />
+                                );
+                            }
+
+                            return (
+                                <TodoItem
+                                    key={task.id}
+                                    todo={task}
+                                    index={index}
+                                    onToggle={handleToggle}
+                                    onDelete={handleDelete}
+                                    onOpenNotes={(t) => setEditingNote(t)}
+                                    onOpenDatePicker={(t) => setDatePickerTodo(t)}
+                                />
+                            );
+                        })}
+
+                        {combinedTasks.length === 0 && (
                             <motion.div
                                 initial={{ opacity: 0, scale: 0.9, y: 20 }}
                                 animate={{
@@ -591,11 +717,12 @@ const Dashboard = () => {
                             className="glass-fab w-14 h-14 text-white rounded-full active:scale-95 transition-all flex items-center justify-center pointer-events-auto border-2 border-white/20"
                             onClick={() => {
                                 if (activeTab === 'notes') {
-                                    // Open Note Editor directly
+                                    // Open Note Editor directly for new document
                                     setEditingNote({
                                         id: 0,
                                         title: '',
                                         is_completed: false,
+                                        is_document: true,  // This is a standalone document
                                         content: ''
                                     } as Todo);
                                 } else {

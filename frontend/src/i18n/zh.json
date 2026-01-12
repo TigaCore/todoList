@@ -144,5 +144,12 @@
     },
     "confirm": {
         "deleteTask": "确定要删除这个任务吗？"
+    },
+    "embeddedTask": {
+        "title": "文档内嵌任务",
+        "from": "来自",
+        "jumpToDoc": "跳转到文档",
+        "noTasks": "暂无内嵌任务",
+        "updateFailed": "更新任务状态失败"
     }
 }

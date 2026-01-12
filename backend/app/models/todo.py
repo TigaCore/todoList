@@ -11,6 +11,7 @@ class Todo(Base):
     description = Column(Text, nullable=True)
     content = Column(Text, nullable=True)
     is_completed = Column(Boolean, default=False)
+    is_document = Column(Boolean, default=False)  # True = standalone document, False = task
     due_date = Column(DateTime, nullable=True)
     reminder_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
@@ -19,3 +20,4 @@ class Todo(Base):
     user_id = Column(Integer, ForeignKey("users.id"))
     
     owner = relationship("app.models.user.User", backref="todos")
+
