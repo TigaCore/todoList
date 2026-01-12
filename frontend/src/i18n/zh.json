@@ -87,7 +87,21 @@
         "startWriting": "开始写作...",
         "shortcuts": "快捷键",
         "keyboardShortcuts": "键盘快捷键",
-        "pressEscToClose": "按 ESC 关闭提示"
+        "pressEscToClose": "按 ESC 关闭提示",
+        "toolbar": {
+            "heading1": "一级标题",
+            "heading2": "二级标题",
+            "heading3": "三级标题",
+            "bold": "粗体",
+            "italic": "斜体",
+            "bulletList": "无序列表",
+            "orderedList": "有序列表",
+            "taskList": "任务列表",
+            "blockquote": "引用",
+            "codeBlock": "代码块",
+            "mermaid": "Mermaid 图表",
+            "horizontalRule": "分割线"
+        }
     },
     "timeline": {
         "title": "时间线",

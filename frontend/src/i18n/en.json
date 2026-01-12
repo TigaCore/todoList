@@ -87,7 +87,21 @@
         "startWriting": "Start writing...",
         "shortcuts": "Shortcuts",
         "keyboardShortcuts": "Keyboard Shortcuts",
-        "pressEscToClose": "Press ESC to close"
+        "pressEscToClose": "Press ESC to close",
+        "toolbar": {
+            "heading1": "Heading 1",
+            "heading2": "Heading 2",
+            "heading3": "Heading 3",
+            "bold": "Bold",
+            "italic": "Italic",
+            "bulletList": "Bullet List",
+            "orderedList": "Ordered List",
+            "taskList": "Task List",
+            "blockquote": "Blockquote",
+            "codeBlock": "Code Block",
+            "mermaid": "Mermaid Diagram",
+            "horizontalRule": "Horizontal Rule"
+        }
     },
     "timeline": {
         "title": "Timeline",
