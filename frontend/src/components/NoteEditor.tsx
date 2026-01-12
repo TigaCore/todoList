@@ -5,25 +5,31 @@ import TiptapEditor from './TiptapEditor';
 
 // Keyboard shortcuts data
 const shortcuts = [
-    { category: '文本格式', items: [
-        { keys: ['⌘', 'B'], desc: '粗体' },
-        { keys: ['⌘', 'I'], desc: '斜体' },
-        { keys: ['⌘', 'U'], desc: '下划线' },
-        { keys: ['⌘', 'E'], desc: '行内代码' },
-        { keys: ['⌘', '⇧', 'X'], desc: '删除线' },
-    ]},
-    { category: '段落', items: [
-        { keys: ['⌘', '⌥', '1-6'], desc: '标题级别' },
-        { keys: ['⌘', '⇧', '7'], desc: '有序列表' },
-        { keys: ['⌘', '⇧', '8'], desc: '无序列表' },
-        { keys: ['⌘', '⇧', '9'], desc: '引用块' },
-        { keys: ['⌘', '⌥', 'C'], desc: '代码块' },
-    ]},
-    { category: '编辑', items: [
-        { keys: ['⌘', 'Z'], desc: '撤销' },
-        { keys: ['⌘', '⇧', 'Z'], desc: '重做' },
-        { keys: ['⌘', 'A'], desc: '全选' },
-    ]},
+    {
+        category: '文本格式', items: [
+            { keys: ['⌘', 'B'], desc: '粗体' },
+            { keys: ['⌘', 'I'], desc: '斜体' },
+            { keys: ['⌘', 'U'], desc: '下划线' },
+            { keys: ['⌘', 'E'], desc: '行内代码' },
+            { keys: ['⌘', '⇧', 'X'], desc: '删除线' },
+        ]
+    },
+    {
+        category: '段落', items: [
+            { keys: ['⌘', '⌥', '1-6'], desc: '标题级别' },
+            { keys: ['⌘', '⇧', '7'], desc: '有序列表' },
+            { keys: ['⌘', '⇧', '8'], desc: '无序列表' },
+            { keys: ['⌘', '⇧', '9'], desc: '引用块' },
+            { keys: ['⌘', '⌥', 'C'], desc: '代码块' },
+        ]
+    },
+    {
+        category: '编辑', items: [
+            { keys: ['⌘', 'Z'], desc: '撤销' },
+            { keys: ['⌘', '⇧', 'Z'], desc: '重做' },
+            { keys: ['⌘', 'A'], desc: '全选' },
+        ]
+    },
 ];
 
 interface Todo {
@@ -111,8 +117,8 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ isOpen, note, onSave, onClose }
             <button
                 onClick={() => handleViewModeChange('edit')}
                 className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-all ${viewMode === 'edit'
-                    ? 'bg-white/80 text-gray-800 shadow-sm'
-                    : 'text-gray-500 hover:text-gray-700 hover:bg-white/30'
+                    ? 'bg-white/80 dark:bg-gray-700 text-gray-800 dark:text-gray-100 shadow-sm'
+                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-white/30 dark:hover:bg-gray-700/50'
                     }`}
                 title="Rich Editor"
             >
@@ -122,8 +128,8 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ isOpen, note, onSave, onClose }
             <button
                 onClick={() => handleViewModeChange('source')}
                 className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-all ${viewMode === 'source'
-                    ? 'bg-white/80 text-gray-800 shadow-sm'
-                    : 'text-gray-500 hover:text-gray-700 hover:bg-white/30'
+                    ? 'bg-white/80 dark:bg-gray-700 text-gray-800 dark:text-gray-100 shadow-sm'
+                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-white/30 dark:hover:bg-gray-700/50'
                     }`}
                 title="Markdown Source"
             >
@@ -139,19 +145,19 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ isOpen, note, onSave, onClose }
             {/* Normal mode (non-fullscreen) */}
             <div className={`flex flex-col max-h-full h-full glass-modal sm:rounded-2xl overflow-hidden ${isFullscreen ? 'invisible' : ''}`}>
                 {/* Header */}
-                <div className="flex items-center justify-between px-4 py-3 bg-white/50 border-b border-white/30 shrink-0">
-                    <button onClick={onClose} className="p-2 -ml-2 text-gray-400 hover:text-gray-600 rounded-xl hover:bg-white/50 transition-colors">
+                <div className="flex items-center justify-between px-4 py-3 bg-white/50 dark:bg-gray-900/70 border-b border-white/30 dark:border-gray-700/50 shrink-0">
+                    <button onClick={onClose} className="p-2 -ml-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-xl hover:bg-white/50 dark:hover:bg-gray-700/50 transition-colors">
                         <X size={24} />
                     </button>
 
-                    <div className="flex-1 text-center font-medium text-gray-700 mx-4 truncate">
+                    <div className="flex-1 text-center font-medium text-gray-700 dark:text-gray-200 mx-4 truncate">
                         {note.title}
                     </div>
 
                     <div className="flex items-center gap-2">
                         <button
                             onClick={() => setIsFullscreen(true)}
-                            className="p-2 text-gray-400 hover:text-gray-600 rounded-xl hover:bg-white/50 transition-colors"
+                            className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-xl hover:bg-white/50 dark:hover:bg-gray-700/50 transition-colors"
                             title="Fullscreen"
                         >
                             <Maximize2 size={20} />
@@ -166,7 +172,7 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ isOpen, note, onSave, onClose }
                 </div>
 
                 {/* Content Area */}
-                <div className="flex-1 overflow-hidden bg-white/30">
+                <div className="flex-1 overflow-hidden bg-white/30 dark:bg-gray-800/30">
                     <TiptapEditor
                         key={`normal-${tiptapKey}`}
                         initialContent={content}
@@ -188,7 +194,7 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ isOpen, note, onSave, onClose }
                             transition={{ duration: 0.2 }}
                             className="fixed inset-0 z-[60]"
                             style={{
-                                background: 'linear-gradient(135deg, #e0e7ff 0%, #f0f5ff 25%, #faf5ff 50%, #f0f5ff 75%, #e0e7ff 100%)',
+                                background: 'var(--fullscreen-bg, linear-gradient(135deg, #e0e7ff 0%, #f0f5ff 25%, #faf5ff 50%, #f0f5ff 75%, #e0e7ff 100%))'
                             }}
                         />
                         {/* Fullscreen content */}
@@ -207,16 +213,16 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ isOpen, note, onSave, onClose }
                         >
                             <div className="flex flex-col w-full max-w-5xl h-full max-h-[calc(100vh-2rem)] glass-modal rounded-2xl overflow-hidden">
                                 {/* Header */}
-                                <div className="flex items-center justify-between px-4 py-3 bg-white/50 border-b border-white/30 shrink-0">
+                                <div className="flex items-center justify-between px-4 py-3 bg-white/50 dark:bg-gray-800/50 border-b border-white/30 dark:border-gray-700/30 shrink-0">
                                     <div className="flex items-center gap-3">
                                         <button
                                             onClick={() => setIsFullscreen(false)}
-                                            className="p-2 text-gray-400 hover:text-gray-600 rounded-xl hover:bg-white/50 transition-colors"
+                                            className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-xl hover:bg-white/50 dark:hover:bg-gray-700/50 transition-colors"
                                             title="Exit Fullscreen (ESC)"
                                         >
                                             <Minimize2 size={20} />
                                         </button>
-                                        <h1 className="font-semibold text-gray-800 truncate max-w-md">
+                                        <h1 className="font-semibold text-gray-800 dark:text-gray-100 truncate max-w-md">
                                             {note.title}
                                         </h1>
                                     </div>
@@ -228,11 +234,10 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ isOpen, note, onSave, onClose }
                                         <div className="relative" ref={shortcutsRef}>
                                             <button
                                                 onClick={() => setShowShortcuts(!showShortcuts)}
-                                                className={`p-2 rounded-xl transition-colors ${
-                                                    showShortcuts
-                                                        ? 'bg-white/60 text-indigo-600'
-                                                        : 'text-gray-400 hover:text-gray-600 hover:bg-white/50'
-                                                }`}
+                                                className={`p-2 rounded-xl transition-colors ${showShortcuts
+                                                    ? 'bg-white/60 dark:bg-gray-700 text-indigo-600 dark:text-indigo-400'
+                                                    : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-white/50 dark:hover:bg-gray-700/50'
+                                                    }`}
                                                 title="快捷键"
                                             >
                                                 <Keyboard size={18} />
@@ -248,25 +253,25 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ isOpen, note, onSave, onClose }
                                                         transition={{ type: "spring", stiffness: 400, damping: 25 }}
                                                         className="absolute top-full right-0 mt-2 w-72 glass-modal rounded-xl p-4 shadow-xl z-10"
                                                     >
-                                                        <h3 className="text-sm font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                                                        <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-100 mb-3 flex items-center gap-2">
                                                             <Keyboard size={14} />
                                                             键盘快捷键
                                                         </h3>
                                                         <div className="space-y-4">
                                                             {shortcuts.map((group) => (
                                                                 <div key={group.category}>
-                                                                    <div className="text-xs font-medium text-gray-500 mb-2">
+                                                                    <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">
                                                                         {group.category}
                                                                     </div>
                                                                     <div className="space-y-1.5">
                                                                         {group.items.map((shortcut, idx) => (
                                                                             <div key={idx} className="flex items-center justify-between text-sm">
-                                                                                <span className="text-gray-600">{shortcut.desc}</span>
+                                                                                <span className="text-gray-600 dark:text-gray-300">{shortcut.desc}</span>
                                                                                 <div className="flex items-center gap-0.5">
                                                                                     {shortcut.keys.map((key, keyIdx) => (
                                                                                         <kbd
                                                                                             key={keyIdx}
-                                                                                            className="px-1.5 py-0.5 bg-gray-100/80 rounded text-xs font-mono text-gray-700 border border-gray-200/50 min-w-[22px] text-center"
+                                                                                            className="px-1.5 py-0.5 bg-gray-100/80 dark:bg-gray-700 rounded text-xs font-mono text-gray-700 dark:text-gray-300 border border-gray-200/50 dark:border-gray-600 min-w-[22px] text-center"
                                                                                         >
                                                                                             {key}
                                                                                         </kbd>
@@ -278,7 +283,7 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ isOpen, note, onSave, onClose }
                                                                 </div>
                                                             ))}
                                                         </div>
-                                                        <div className="mt-3 pt-3 border-t border-gray-200/50 text-xs text-gray-400 text-center">
+                                                        <div className="mt-3 pt-3 border-t border-gray-200/50 dark:border-gray-600/50 text-xs text-gray-400 text-center">
                                                             按 ESC 关闭提示
                                                         </div>
                                                     </motion.div>
@@ -296,7 +301,7 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ isOpen, note, onSave, onClose }
                                         </button>
                                         <button
                                             onClick={onClose}
-                                            className="p-2 text-gray-400 hover:text-gray-600 rounded-xl hover:bg-white/50 transition-colors"
+                                            className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-xl hover:bg-white/50 dark:hover:bg-gray-700/50 transition-colors"
                                         >
                                             <X size={20} />
                                         </button>
@@ -304,55 +309,54 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ isOpen, note, onSave, onClose }
                                 </div>
 
                                 {/* Content */}
-                                <div className="flex-1 overflow-hidden flex bg-white/30 relative">
-                                <AnimatePresence mode="wait" initial={false}>
-                                    {/* Edit Mode - TipTap Rich Editor */}
-                                    {viewMode === 'edit' && (
-                                        <motion.div
-                                            key="edit"
-                                            initial={{ opacity: 0, scale: 0.98 }}
-                                            animate={{ opacity: 1, scale: 1 }}
-                                            exit={{ opacity: 0, scale: 0.98 }}
-                                            transition={{ duration: 0.15 }}
-                                            className="absolute inset-0 flex"
-                                        >
-                                            <TiptapEditor
-                                                key={`fullscreen-${tiptapKey}`}
-                                                initialContent={content}
-                                                onUpdate={setContent}
-                                                centered={true}
-                                                toolbarPosition="top"
-                                            />
-                                        </motion.div>
-                                    )}
+                                <div className="flex-1 overflow-hidden flex bg-white/30 dark:bg-gray-800/30 relative">
+                                    <AnimatePresence mode="wait" initial={false}>
+                                        {/* Edit Mode - TipTap Rich Editor */}
+                                        {viewMode === 'edit' && (
+                                            <motion.div
+                                                key="edit"
+                                                initial={{ opacity: 0, scale: 0.98 }}
+                                                animate={{ opacity: 1, scale: 1 }}
+                                                exit={{ opacity: 0, scale: 0.98 }}
+                                                transition={{ duration: 0.15 }}
+                                                className="absolute inset-0 flex w-full"
+                                            >
+                                                <TiptapEditor
+                                                    key={`fullscreen-${tiptapKey}`}
+                                                    initialContent={content}
+                                                    onUpdate={setContent}
+                                                    toolbarPosition="top"
+                                                />
+                                            </motion.div>
+                                        )}
 
-                                    {/* Source Mode - Raw Markdown */}
-                                    {viewMode === 'source' && (
-                                        <motion.div
-                                            key="source"
-                                            initial={{ opacity: 0, scale: 0.98 }}
-                                            animate={{ opacity: 1, scale: 1 }}
-                                            exit={{ opacity: 0, scale: 0.98 }}
-                                            transition={{ duration: 0.15 }}
-                                            className="absolute inset-0 flex flex-col"
-                                        >
-                                            <div className="px-3 py-1.5 bg-white/30 border-b border-white/30 text-xs font-medium text-gray-500 shrink-0 flex items-center gap-2">
-                                                <Code size={12} />
-                                                Markdown Source
-                                            </div>
-                                            <textarea
-                                                value={content}
-                                                onChange={(e) => setContent(e.target.value)}
-                                                className="flex-1 w-full resize-none bg-transparent font-mono text-sm p-4 focus:outline-none"
-                                                placeholder="Write your markdown here..."
-                                                spellCheck={false}
-                                            />
-                                        </motion.div>
-                                    )}
-                                </AnimatePresence>
+                                        {/* Source Mode - Raw Markdown */}
+                                        {viewMode === 'source' && (
+                                            <motion.div
+                                                key="source"
+                                                initial={{ opacity: 0, scale: 0.98 }}
+                                                animate={{ opacity: 1, scale: 1 }}
+                                                exit={{ opacity: 0, scale: 0.98 }}
+                                                transition={{ duration: 0.15 }}
+                                                className="absolute inset-0 flex flex-col"
+                                            >
+                                                <div className="px-3 py-1.5 bg-white/30 dark:bg-gray-800/30 border-b border-white/30 dark:border-gray-700/30 text-xs font-medium text-gray-500 dark:text-gray-400 shrink-0 flex items-center gap-2">
+                                                    <Code size={12} />
+                                                    Markdown Source
+                                                </div>
+                                                <textarea
+                                                    value={content}
+                                                    onChange={(e) => setContent(e.target.value)}
+                                                    className="flex-1 w-full resize-none bg-transparent font-mono text-sm p-4 focus:outline-none text-gray-800 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500"
+                                                    placeholder="Write your markdown here..."
+                                                    spellCheck={false}
+                                                />
+                                            </motion.div>
+                                        )}
+                                    </AnimatePresence>
+                                </div>
                             </div>
-                        </div>
-                    </motion.div>
+                        </motion.div>
                     </>
                 )}
             </AnimatePresence>

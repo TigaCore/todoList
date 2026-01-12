@@ -29,9 +29,9 @@ const NotesView: React.FC<NotesViewProps> = ({ notes, onNoteClick }) => {
 
     if (displayNotes.length === 0) {
         return (
-            <div className="flex flex-col items-center justify-center py-20 text-gray-400">
-                <div className="w-24 h-24 bg-gray-50 rounded-2xl flex items-center justify-center mb-4">
-                    <StickyNote size={40} className="text-gray-300" />
+            <div className="flex flex-col items-center justify-center py-20 text-gray-400 dark:text-gray-500">
+                <div className="w-24 h-24 bg-gray-50 dark:bg-gray-800 rounded-2xl flex items-center justify-center mb-4">
+                    <StickyNote size={40} className="text-gray-300 dark:text-gray-600" />
                 </div>
                 <p>No notes found</p>
             </div>
@@ -56,18 +56,18 @@ const NotesView: React.FC<NotesViewProps> = ({ notes, onNoteClick }) => {
                     className="glass-card rounded-xl p-4 shadow-sm hover:shadow-md transition-all cursor-pointer flex flex-col h-48 active:scale-95 group"
                 >
                     <div className="flex items-start justify-between mb-2">
-                        <h3 className={`font-semibold text-gray-800 line-clamp-2 leading-tight ${note.is_completed ? 'line-through text-gray-400' : ''}`}>
+                        <h3 className={`font-semibold text-gray-800 dark:text-gray-100 line-clamp-2 leading-tight ${note.is_completed ? 'line-through text-gray-400 dark:text-gray-500' : ''}`}>
                             {note.title}
                         </h3>
                     </div>
 
                     <div className="flex-1 overflow-hidden">
-                        <p className="text-xs text-gray-500 line-clamp-6 leading-relaxed whitespace-pre-line">
+                        <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-6 leading-relaxed whitespace-pre-line">
                             {stripMarkdown(note.content || 'No content')}
                         </p>
                     </div>
 
-                    <div className="mt-3 pt-3 border-t border-gray-50 flex items-center justify-between text-xs text-gray-400">
+                    <div className="mt-3 pt-3 border-t border-gray-50 dark:border-gray-700 flex items-center justify-between text-xs text-gray-400 dark:text-gray-500">
                         <span>{new Date(note.due_date || Date.now()).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span>
                     </div>
                 </motion.div>

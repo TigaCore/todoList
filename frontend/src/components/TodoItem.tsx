@@ -59,14 +59,14 @@ const TodoItem = React.forwardRef<HTMLDivElement, TodoItemProps>(({ todo, index 
                     onClick={(e) => { e.stopPropagation(); onToggle(todo.id, todo.is_completed); }}
                     className={`flex-shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-300 ${todo.is_completed
                         ? 'bg-indigo-500 border-indigo-500 text-white shadow-sm scale-110'
-                        : 'border-gray-300 hover:border-indigo-400 hover:bg-indigo-50'
+                        : 'border-gray-300 dark:border-gray-500 hover:border-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30'
                         }`}
                 >
                     {todo.is_completed && <Check size={14} strokeWidth={3} />}
                 </button>
 
                 <div className="flex-1 min-w-0">
-                    <h3 className={`font-medium text-gray-800 truncate transition-all ${todo.is_completed ? 'line-through text-gray-400' : ''}`}>
+                    <h3 className={`font-medium text-gray-800 dark:text-gray-100 truncate transition-all ${todo.is_completed ? 'line-through text-gray-400 dark:text-gray-500' : ''}`}>
                         {todo.title}
                     </h3>
 
@@ -74,15 +74,15 @@ const TodoItem = React.forwardRef<HTMLDivElement, TodoItemProps>(({ todo, index 
                     <div className="flex items-center gap-3 mt-1.5 flex-wrap">
                         {todo.due_date && (
                             <span className={`flex items-center text-xs px-2 py-0.5 rounded-full border ${new Date(todo.due_date) < new Date() && !todo.is_completed
-                                ? 'text-rose-600 bg-rose-50 border-rose-100'
-                                : 'text-gray-500 bg-gray-50 border-gray-100'
+                                ? 'text-rose-600 bg-rose-50 dark:bg-rose-900/30 border-rose-100 dark:border-rose-800'
+                                : 'text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-700/50 border-gray-100 dark:border-gray-600'
                                 }`}>
                                 <Calendar size={12} className="mr-1" />
                                 {format(new Date(todo.due_date), 'MMM d, H:mm')}
                             </span>
                         )}
                         {todo.content && (
-                            <span className="flex items-center text-xs text-amber-600 bg-amber-50 border border-amber-100 px-2 py-0.5 rounded-full">
+                            <span className="flex items-center text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/30 border border-amber-100 dark:border-amber-800 px-2 py-0.5 rounded-full">
                                 <FileText size={12} className="mr-1" />
                                 has notes
                             </span>
@@ -94,7 +94,7 @@ const TodoItem = React.forwardRef<HTMLDivElement, TodoItemProps>(({ todo, index 
                 <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                     <button
                         onClick={(e) => { e.stopPropagation(); onOpenNotes(todo); }}
-                        className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-gray-100 rounded-lg transition-colors"
+                        className="p-2 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
                         title="Edit Notes"
                     >
                         <FileText size={18} />
@@ -102,7 +102,7 @@ const TodoItem = React.forwardRef<HTMLDivElement, TodoItemProps>(({ todo, index 
 
                     <button
                         onClick={(e) => { e.stopPropagation(); onOpenDatePicker(todo); }}
-                        className="p-2 text-gray-400 hover:text-orange-500 hover:bg-gray-100 rounded-lg transition-colors"
+                        className="p-2 text-gray-400 hover:text-orange-500 dark:hover:text-orange-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
                         title="Set Reminder"
                     >
                         <Bell size={18} />
@@ -110,7 +110,7 @@ const TodoItem = React.forwardRef<HTMLDivElement, TodoItemProps>(({ todo, index 
 
                     <button
                         onClick={(e) => { e.stopPropagation(); onDelete(todo.id); }}
-                        className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                        className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors"
                     >
                         <Trash2 size={18} />
                     </button>

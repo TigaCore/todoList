@@ -26,7 +26,6 @@ interface TiptapEditorProps {
     initialContent: string;
     onUpdate: (content: string) => void;
     placeholder?: string;
-    centered?: boolean; // Center content for fullscreen mode
     toolbarPosition?: 'top' | 'bottom'; // Toolbar position
 }
 
@@ -34,7 +33,6 @@ const TiptapEditor: React.FC<TiptapEditorProps> = ({
     initialContent,
     onUpdate,
     placeholder = "Start writing...",
-    centered = false,
     toolbarPosition = 'bottom'
 }) => {
     const editor = useEditor({
@@ -59,9 +57,7 @@ const TiptapEditor: React.FC<TiptapEditorProps> = ({
         content: initialContent,
         editorProps: {
             attributes: {
-                class: `prose prose-indigo prose-sm sm:prose-base focus:outline-none min-h-[200px] px-4 py-3 ${
-                    centered ? 'max-w-3xl mx-auto' : 'max-w-none'
-                }`,
+                class: `prose prose-indigo dark:prose-invert prose-sm sm:prose-base focus:outline-none min-h-[200px] px-4 py-3 w-full max-w-none`,
                 spellcheck: 'false',
             },
         },
@@ -99,47 +95,35 @@ const TiptapEditor: React.FC<TiptapEditorProps> = ({
     const insertMermaid = () => editor.chain().focus().insertContent('```mermaid\ngraph TD\n    A[Start] --> B[End]\n```\n').run();
 
     const Toolbar = (
-        <div className={`relative shrink-0 ${
-            toolbarPosition === 'top'
-                ? 'border-b border-gray-100'
-                : 'border-t border-gray-100'
-        }`}>
-            {/* Right scroll fade indicator - always visible to hint more content */}
-            <div
-                className="absolute right-0 top-0 bottom-0 w-8 pointer-events-none z-10"
-                style={{
-                    background: 'linear-gradient(to left, rgba(255,255,255,1) 0%, rgba(255,255,255,0.8) 30%, rgba(255,255,255,0) 100%)'
-                }}
-            />
-
-            <div className={`px-4 py-3 bg-white flex items-center gap-2 overflow-x-auto noscrollbar ${
-                toolbarPosition === 'bottom' ? 'pb-safe' : ''
+        <div className={`relative shrink-0 ${toolbarPosition === 'top'
+            ? 'border-b border-gray-100 dark:border-gray-700'
+            : 'border-t border-gray-100 dark:border-gray-700'
             }`}>
+            <div className={`px-4 py-3 bg-white dark:bg-gray-800 flex items-center gap-2 overflow-x-auto noscrollbar ${toolbarPosition === 'bottom' ? 'pb-safe' : ''
+                }`}>
                 <ToolbarButton onClick={toggleH1} isActive={editor.isActive('heading', { level: 1 })} icon={<Heading1 size={18} />} />
                 <ToolbarButton onClick={toggleH2} isActive={editor.isActive('heading', { level: 2 })} icon={<Heading2 size={18} />} />
-                <div className="w-px h-6 bg-gray-200 mx-1 shrink-0" />
+                <div className="w-px h-6 bg-gray-200 dark:bg-gray-600 mx-1 shrink-0" />
                 <ToolbarButton onClick={toggleBold} isActive={editor.isActive('bold')} icon={<Bold size={18} />} />
                 <ToolbarButton onClick={toggleItalic} isActive={editor.isActive('italic')} icon={<Italic size={18} />} />
-                <div className="w-px h-6 bg-gray-200 mx-1 shrink-0" />
+                <div className="w-px h-6 bg-gray-200 dark:bg-gray-600 mx-1 shrink-0" />
                 <ToolbarButton onClick={toggleBulletList} isActive={editor.isActive('bulletList')} icon={<List size={18} />} />
                 <ToolbarButton onClick={toggleOrderedList} isActive={editor.isActive('orderedList')} icon={<ListOrdered size={18} />} />
                 <ToolbarButton onClick={toggleTaskList} isActive={editor.isActive('taskList')} icon={<CheckSquare size={18} />} />
-                <div className="w-px h-6 bg-gray-200 mx-1 shrink-0" />
+                <div className="w-px h-6 bg-gray-200 dark:bg-gray-600 mx-1 shrink-0" />
                 <ToolbarButton onClick={toggleBlockquote} isActive={editor.isActive('blockquote')} icon={<Quote size={18} />} />
                 <ToolbarButton onClick={toggleCodeBlock} isActive={editor.isActive('codeBlock')} icon={<Code size={18} />} />
                 <ToolbarButton onClick={insertMermaid} isActive={editor.isActive('mermaidCodeBlock')} icon={<GitBranch size={18} />} />
-                {/* Spacer to ensure last item isn't hidden by fade */}
-                <div className="w-4 shrink-0" />
             </div>
         </div>
     );
 
     return (
-        <div className="flex flex-col h-full bg-white relative">
+        <div className="flex flex-col h-full w-full bg-white dark:bg-gray-800 relative">
             {toolbarPosition === 'top' && Toolbar}
 
-            <div className="flex-1 overflow-y-auto">
-                <EditorContent editor={editor} className="h-full" />
+            <div className="flex-1 overflow-y-auto w-full">
+                <EditorContent editor={editor} className="h-full w-full" />
             </div>
 
             {toolbarPosition === 'bottom' && Toolbar}
@@ -157,8 +141,8 @@ const ToolbarButton: React.FC<ToolbarButtonProps> = ({ onClick, isActive, icon }
     <button
         onClick={onClick}
         className={`p-2 rounded-lg transition-colors flex-shrink-0 ${isActive
-            ? 'bg-indigo-100 text-indigo-600'
-            : 'text-gray-400 hover:bg-gray-50 hover:text-gray-600'
+            ? 'bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400'
+            : 'text-gray-400 dark:text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-600 dark:hover:text-gray-300'
             }`}
     >
         {icon}
