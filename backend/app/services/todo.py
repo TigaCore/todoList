@@ -65,12 +65,17 @@ def update_todo(db: Session, db_todo: Todo, todo_update: TodoUpdate):
     return db_todo
 
 def delete_todo(db: Session, db_todo: Todo):
-    # Log Activity before delete
+    # First, nullify all activity_log references to this todo to prevent FK violation
+    db.query(ActivityLog).filter(ActivityLog.todo_id == db_todo.id).update(
+        {ActivityLog.todo_id: None}
+    )
+    
+    # Log Activity for the delete (with todo_id as None since we're deleting)
     log = ActivityLog(
         user_id=db_todo.user_id,
-        todo_id=db_todo.id, # Keep the ID even if item is deleted
+        todo_id=None,  # Set to None since todo is being deleted
         action_type="DELETE",
-        metadata_Snapshot={"title": db_todo.title}
+        metadata_Snapshot={"title": db_todo.title, "deleted_todo_id": db_todo.id}
     )
     db.add(log)
     

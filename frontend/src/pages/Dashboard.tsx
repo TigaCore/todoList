@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api/client';
 import { Plus, Search, Menu, PenLine, Maximize2, History } from 'lucide-react';
@@ -10,6 +10,8 @@ import DateTimePicker from '../components/DateTimePicker';
 import BottomNav, { Tab } from '../components/BottomNav';
 import NotesView from '../components/NotesView';
 import TimelineDrawer from '../components/TimelineDrawer';
+import Toast, { ToastMessage, ToastType } from '../components/Toast';
+import ConfirmDialog from '../components/ConfirmDialog';
 import { LocalNotifications } from '@capacitor/local-notifications';
 import { isToday, parseISO, format } from 'date-fns';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -41,6 +43,7 @@ const Dashboard = () => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [isInputOpen, setIsInputOpen] = useState(false);
     const [isTimelineOpen, setIsTimelineOpen] = useState(false);
+    const [isAddingTodo, setIsAddingTodo] = useState(false);
 
     // Bottom Navigation State
     const [activeTab, setActiveTab] = useState<Tab>('tasks');
@@ -51,8 +54,41 @@ const Dashboard = () => {
     // Date Picker State
     const [datePickerTodo, setDatePickerTodo] = useState<Todo | null>(null);
 
+    // Toast State
+    const [toasts, setToasts] = useState<ToastMessage[]>([]);
+
+    // Confirm Dialog State
+    const [confirmDialog, setConfirmDialog] = useState<{
+        isOpen: boolean;
+        message: string;
+        onConfirm: () => void;
+    }>({ isOpen: false, message: '', onConfirm: () => { } });
+
     // Web Notification Timers
     const notificationTimers = useRef<{ [key: number]: NodeJS.Timeout }>({});
+
+    // Toast Helper Functions
+    const showToast = useCallback((type: ToastType, message: string) => {
+        const id = Date.now().toString();
+        setToasts(prev => [...prev, { id, type, message }]);
+        // Auto dismiss after 3 seconds
+        setTimeout(() => {
+            setToasts(prev => prev.filter(t => t.id !== id));
+        }, 3000);
+    }, []);
+
+    const dismissToast = useCallback((id: string) => {
+        setToasts(prev => prev.filter(t => t.id !== id));
+    }, []);
+
+    // Confirm Dialog Helper
+    const showConfirm = useCallback((message: string, onConfirm: () => void) => {
+        setConfirmDialog({ isOpen: true, message, onConfirm });
+    }, []);
+
+    const closeConfirm = useCallback(() => {
+        setConfirmDialog({ isOpen: false, message: '', onConfirm: () => { } });
+    }, []);
 
     useEffect(() => {
         fetchTodos();
@@ -126,73 +162,152 @@ const Dashboard = () => {
 
     const handleAddTodo = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!title.trim()) return;
+        if (!title.trim() || isAddingTodo) return;
+
+        const tempTitle = title;
+        const tempId = -Date.now(); // Temporary negative ID to avoid conflicts
+        const optimisticTodo: Todo = {
+            id: tempId,
+            title: tempTitle,
+            is_completed: false
+        };
+
+        // Optimistic update - immediately show the new task
+        setTodos([optimisticTodo, ...todos]);
+        setTitle('');
+        setIsInputOpen(false);
+        setIsAddingTodo(true);
+
         try {
             const response = await api.post<Todo>('/todos/', {
-                title,
+                title: tempTitle,
                 is_completed: false
             });
-            setTodos([response.data, ...todos]);
-            setTitle('');
-            setIsInputOpen(false); // Close input on mobile after add
+            // Replace the temporary todo with the real one from the server
+            setTodos(prev => prev.map(t => t.id === tempId ? response.data : t));
         } catch (error) {
             console.error('Error adding todo:', error);
+            // Rollback - remove the optimistic todo
+            setTodos(prev => prev.filter(t => t.id !== tempId));
+            // Restore the title for the user to retry
+            setTitle(tempTitle);
+            setIsInputOpen(true);
+            showToast('error', '添加任务失败，请重试');
+        } finally {
+            setIsAddingTodo(false);
         }
     };
 
     const handleToggle = async (id: number, currentStatus: boolean) => {
+        // Optimistic update - immediately toggle the status
+        const previousTodos = todos;
+        setTodos(prev => prev.map(t => t.id === id ? { ...t, is_completed: !currentStatus } : t));
+
         try {
             const response = await api.put<Todo>(`/todos/${id}`, {
                 is_completed: !currentStatus
             });
-            setTodos(todos.map(t => t.id === id ? response.data : t));
+            // Update with server response to ensure data consistency
+            setTodos(prev => prev.map(t => t.id === id ? response.data : t));
         } catch (error) {
             console.error('Error toggling todo:', error);
+            // Rollback on error
+            setTodos(previousTodos);
         }
     };
 
     const handleDelete = async (id: number) => {
-        if (!confirm('Are you sure?')) return;
-        try {
-            await api.delete(`/todos/${id}`);
-            setTodos(todos.filter(t => t.id !== id));
-        } catch (error) {
-            console.error('Error deleting todo:', error);
+        // Don't allow deleting tasks with temporary IDs (still being created)
+        if (id < 0) {
+            showToast('warning', '请等待任务创建完成后再删除');
+            return;
         }
+
+        showConfirm('确定要删除这个任务吗？', async () => {
+            closeConfirm();
+
+            // Optimistic update - immediately remove from list
+            const previousTodos = todos;
+            setTodos(prev => prev.filter(t => t.id !== id));
+
+            try {
+                await api.delete(`/todos/${id}`);
+                showToast('success', '任务已删除');
+            } catch (error) {
+                console.error('Error deleting todo:', error);
+                // Rollback on error - restore the deleted todo
+                setTodos(previousTodos);
+                showToast('error', '删除失败，请重试');
+            }
+        });
     };
 
     const handleSaveNote = async (content: string) => {
         if (!editingNote) return;
 
-        try {
-            if (editingNote.id === 0) {
-                // Create new Note
+        const previousTodos = todos;
+        const noteToSave = editingNote;
+
+        if (editingNote.id === 0) {
+            // Create new Note - optimistic update
+            const tempId = -Date.now();
+            const optimisticNote: Todo = {
+                id: tempId,
+                title: editingNote.title || 'Untitled Note',
+                content: content,
+                is_completed: false
+            };
+            setTodos([optimisticNote, ...todos]);
+            setEditingNote(null);
+
+            try {
                 const response = await api.post<Todo>('/todos/', {
-                    title: editingNote.title || 'Untitled Note', // Default title if empty
+                    title: noteToSave.title || 'Untitled Note',
                     content: content,
                     is_completed: false
                 });
-                setTodos([response.data, ...todos]);
-            } else {
-                // Update existing Note
-                const response = await api.put<Todo>(`/todos/${editingNote.id}`, {
+                // Replace temp note with server response
+                setTodos(prev => prev.map(t => t.id === tempId ? response.data : t));
+            } catch (error) {
+                console.error('Error saving note:', error);
+                // Rollback
+                setTodos(previousTodos);
+                setEditingNote(noteToSave);
+                showToast('error', '保存笔记失败，请重试');
+            }
+        } else {
+            // Update existing Note - optimistic update
+            setTodos(prev => prev.map(t => t.id === editingNote.id ? { ...t, content } : t));
+            setEditingNote(null);
+
+            try {
+                const response = await api.put<Todo>(`/todos/${noteToSave.id}`, {
                     content
                 });
-                setTodos(todos.map(t => t.id === editingNote.id ? response.data : t));
+                // Update with server response
+                setTodos(prev => prev.map(t => t.id === noteToSave.id ? response.data : t));
+            } catch (error) {
+                console.error('Error saving note:', error);
+                // Rollback
+                setTodos(previousTodos);
+                setEditingNote(noteToSave);
+                showToast('error', '保存笔记失败，请重试');
             }
-            setEditingNote(null);
-        } catch (error) {
-            console.error('Error saving note:', error);
         }
     };
 
     const handleUpdateDate = async (id: number, dateStr: string) => {
+        // Optimistic update - immediately update the date
+        const previousTodos = todos;
+        setTodos(prev => prev.map(t => t.id === id ? { ...t, due_date: dateStr, reminder_at: dateStr } : t));
+
         try {
             const response = await api.put<Todo>(`/todos/${id}`, {
                 due_date: dateStr,
                 reminder_at: dateStr
             });
-            setTodos(todos.map(t => t.id === id ? response.data : t));
+            // Update with server response
+            setTodos(prev => prev.map(t => t.id === id ? response.data : t));
 
             const date = new Date(dateStr);
             if (date > new Date()) {
@@ -217,6 +332,9 @@ const Dashboard = () => {
             }
         } catch (error) {
             console.error('Error updating date:', error);
+            // Rollback on error
+            setTodos(previousTodos);
+            showToast('error', '更新日期失败，请重试');
         }
     };
 
@@ -594,6 +712,18 @@ const Dashboard = () => {
                 onClose={() => setIsTimelineOpen(false)}
                 todos={todos}
                 onOpenTodo={(todo) => setEditingNote(todo)}
+            />
+
+            {/* Toast Notifications */}
+            <Toast toasts={toasts} onDismiss={dismissToast} />
+
+            {/* Confirm Dialog */}
+            <ConfirmDialog
+                isOpen={confirmDialog.isOpen}
+                message={confirmDialog.message}
+                onConfirm={confirmDialog.onConfirm}
+                onCancel={closeConfirm}
+                type="danger"
             />
         </div >
     );
