@@ -4,25 +4,38 @@
 
 set -e
 
+# 1. Config & User Detection
 APP_ROOT=$(pwd)
-USER=$(whoami)
+if [ -n "$SUDO_USER" ]; then
+    SERVICE_USER=$SUDO_USER
+else
+    SERVICE_USER=$(whoami)
+fi
 LOG_DIR="$APP_ROOT/logs/backend"
 
 echo "🛠️  Setting up Production Environment..."
+echo "👤 Service will run as: $SERVICE_USER"
 
-# 1. Check permissions
+# 2. Check permissions
 if [ "$EUID" -ne 0 ]; then
   echo "❌ Please run as root (use sudo)"
   exit 1
 fi
 
-# 2. Create Log Directory
+# 3. Create Log Directory
 echo "📂 Creating log directory..."
 mkdir -p $LOG_DIR
-chown -R $USER:$USER $LOG_DIR
+mkdir -p "$APP_ROOT/logs/nginx"
+
+# Set permissions for backend logs
+chown -R $SERVICE_USER:$SERVICE_USER $LOG_DIR
 chmod 755 $LOG_DIR
 
-# 3. Create Systemd Service File
+# Set permissions for Nginx logs
+chown -R www-data:www-data "$APP_ROOT/logs/nginx"
+chmod 755 "$APP_ROOT/logs/nginx"
+
+# 4. Create Systemd Service File
 echo "⚙️  Creating Systemd Service..."
 cat > /etc/systemd/system/todolist-backend.service <<EOF
 [Unit]
@@ -30,11 +43,15 @@ Description=TodoList Backend API Service
 After=network.target
 
 [Service]
-User=$USER
+User=$SERVICE_USER
 WorkingDirectory=$APP_ROOT/backend
-# Use uv if available, otherwise assume virtualenv or system python
-# Trying to detect correct python path
-ExecStart=/bin/bash -c 'if [ -f "$APP_ROOT/backend/uv.lock" ]; then $HOME/.cargo/bin/uv run python main.py; else source venv/bin/activate && python main.py; fi'
+# Dynamic uv detection
+ExecStart=/bin/bash -c 'if [ -f "$APP_ROOT/backend/uv.lock" ]; then \\
+    if [ -f "\$HOME/.cargo/bin/uv" ]; then UV_BIN="\$HOME/.cargo/bin/uv"; \\
+    elif [ -f "\$HOME/.local/bin/uv" ]; then UV_BIN="\$HOME/.local/bin/uv"; \\
+    else UV_BIN="uv"; fi; \\
+    \$UV_BIN run python main.py; \\
+else source venv/bin/activate && python main.py; fi'
 Restart=always
 RestartSec=5
 
