@@ -11,14 +11,18 @@ const getBaseUrl = () => {
     const platform = Capacitor.getPlatform();
 
     // 2. Android Emulator specific address (maps to host localhost)
-    // Note: If testing on a physical device, you MUST set VITE_API_URL to your computer's LAN IP
     if (platform === 'android') {
         return 'http://10.0.2.2:8000/api';
     }
 
-    // 3. Web: Use the current hostname being accessed (supporting localhost and local network IP)
-    const hostname = window.location.hostname;
-    return `http://${hostname}:8000/api`;
+    // 3. Web: Use relative path to leverage Vite proxy
+    if (platform === 'web') {
+        return '/api';
+    }
+
+    // 4. iOS or other native platforms (fallback)
+    // For physical devices, VITE_API_URL should be set
+    return 'http://localhost:8000/api';
 };
 
 const api = axios.create({
