@@ -6,8 +6,9 @@
 set -e
 
 # Config
+APP_ROOT=$(pwd)
 APP_DIR="/var/www/todo-app"
-LOG_DIR="logs/deploy"
+LOG_DIR="$APP_ROOT/logs/deploy"
 DATE=$(date +%Y-%m-%d_%H-%M-%S)
 LOG_FILE="$LOG_DIR/deploy_$DATE.log"
 
@@ -26,11 +27,11 @@ echo "🔄 [1/3] Updating Backend..." | tee -a $LOG_FILE
 echo "   Checking backend dependencies..." | tee -a $LOG_FILE
 cd backend
 if command -v uv &> /dev/null; then
-    uv sync >> ../$LOG_FILE 2>&1
+    uv sync >> $LOG_FILE 2>&1
 elif [ -f "requirements.txt" ]; then
     # Assume venv exists if not using uv
     source venv/bin/activate 2>/dev/null || true
-    pip install -r requirements.txt >> ../$LOG_FILE 2>&1
+    pip install -r requirements.txt >> $LOG_FILE 2>&1
 fi
 cd ..
 
@@ -47,7 +48,7 @@ fi
 # ------------------------------------------------------------------
 echo "🏗️  [2/3] Building Frontend..." | tee -a $LOG_FILE
 cd frontend
-if npm install && npm run build >> ../$LOG_FILE 2>&1; then
+if npm install && npm run build >> $LOG_FILE 2>&1; then
     echo "✅ Frontend Build Successful" | tee -a $LOG_FILE
 else
     echo "❌ Frontend Build Failed" | tee -a $LOG_FILE
