@@ -17,12 +17,16 @@ A modern, responsive Todo List application with a Python FastAPI backend and a R
 
 *   `backend/` - Python FastAPI application.
 *   `frontend/` - React Vite application.
-*   `logs/` - Logs for backend and deployment.
-*   `scripts`
-    *   `setup_dev.sh` - Development environment setup.
-    *   `start_app.sh` - Start development servers.
-    *   `setup_prod.sh` - Production environment setup.
-    *   `deploy_app.sh` - One-click deployment script.
+*   `logs/` - Logs for backend, nginx, and deployment.
+
+### Scripts
+| Script | Purpose | When to Use |
+|--------|---------|-------------|
+| `setup_dev.sh` | Install Python/npm dependencies | First clone or dependency updates |
+| `start_app.sh` | Start dev servers (frontend + backend) | Local development |
+| `setup_prod.sh` | Create Systemd service & log config | **Once per server** |
+| `deploy_app.sh` | Build frontend + restart backend | **Every code update** |
+| `start_backend.sh` | Backend startup (called by Systemd) | Automatic, don't run manually |
 
 ---
 
