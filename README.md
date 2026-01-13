@@ -17,71 +17,110 @@ A modern, responsive Todo List application with a Python FastAPI backend and a R
 
 *   `backend/` - Python FastAPI application.
 *   `frontend/` - React Vite application.
-*   `start_app.sh` - Script to launch both backend and frontend.
-*   `setup_dev.sh` - Script to configure the development environment.
+*   `logs/` - Logs for backend and deployment.
+*   `scripts`
+    *   `setup_dev.sh` - Development environment setup.
+    *   `start_app.sh` - Start development servers.
+    *   `setup_prod.sh` - Production environment setup.
+    *   `deploy_app.sh` - One-click deployment script.
 
-## 🚀 Getting Started
+---
 
-### Prerequisites
+## 🛠️ Development Workflow
 
-*   Python 3.12+
-*   Node.js & npm
+Run this locally on your machine for development.
 
-### One-Click Setup
-
-For new developers, we provide a setup script to configure everything automatically:
-
+### 1. Initial Setup
 ```bash
-# 1. Clone the repository
 git clone <repository-url>
 cd todoList
 
-# 2. Run the setup script
+# Install dependencies for both backend (venv) and frontend (npm)
 ./setup_dev.sh
 ```
 
-This script will:
-*   Create a Python virtual environment (`backend/venv`).
-*   Install backend dependencies.
-*   Install frontend node modules.
-
-### Running the App
-
-To start both the backend and frontend servers:
-
+### 2. Run Application
+Start both Backend (8000) and Frontend (5173) with hot-reload:
 ```bash
 ./start_app.sh
 ```
+- **Frontend**: http://localhost:5173
+- **Backend**: http://localhost:8000
 
-*   **Frontend**: http://localhost:5173
-*   **Backend**: http://localhost:8000
+---
 
-## Development
+## 🚀 Production Deployment Workflow
 
-*   **Backend**: 
-    *   Navigate to `backend/`.
-    *   Activate venv: `source venv/bin/activate`.
-    *   Run individually: `uvicorn main:app --reload`.
-*   **Frontend**:
-    *   Navigate to `frontend/`.
-    *   Run individually: `npm run dev`.
+Run this on your Linux server (e.g., Ubuntu).
 
-## Mobile App Build & Repackaging
+### 1. Initial Server Setup (One-time)
+After cloning the repo, run these scripts to configure the environment:
 
-This project uses Capacitor to package the web app as a native mobile application.
+```bash
+# 1. Install dependencies
+./setup_dev.sh
 
-To repackage the app (e.g., after making code changes), run the following commands:
+# 2. Configure System Services (Systemd, Logrotate, Log dirs)
+# This creates /etc/systemd/system/todolist-backend.service
+sudo ./setup_prod.sh
+```
+
+### 2. Configure Nginx
+Create or update your Nginx config (e.g., `/etc/nginx/sites-available/default`):
+
+```nginx
+server {
+    listen 80;
+    server_name _; 
+
+    root /var/www/todo-app;
+    index index.html;
+
+    # Frontend Logs
+    access_log /home/ubuntu/todoList/logs/nginx/access.log;
+    error_log /home/ubuntu/todoList/logs/nginx/error.log;
+
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+
+    # API Proxy (Forward /api to Backend)
+    location /api {
+        proxy_pass http://localhost:8000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+}
+```
+Then restart Nginx: `sudo systemctl restart nginx`
+
+### 3. Deploy / Update
+Whenever you pull new code or want to redeploy (Frontend build + Backend restart), runs:
+
+```bash
+./deploy_app.sh
+```
+This script acts as the single source of truth for deployment. It will:
+1. Update backend dependencies.
+2. Restart the Systemd backend service.
+3. Build the frontend and copy files to `/var/www/todo-app`.
+4. Log everything to `logs/deploy/`.
+
+---
+
+## 📱 Mobile App Build
 
 ```bash
 cd frontend
-npm run build      # Build the React web assets
-npx cap sync       # Sync the built assets to Android/iOS projects
+npm run build
+npx cap sync
+npx cap open android  # or ios
 ```
 
-After syncing, you can open the native IDEs to build the final binary:
-
-- **Android**: `npx cap open android`
-- **iOS**: `npx cap open ios`
+## Logs Location
+- **Backend**: `logs/backend/server.log` (Rotated daily)
+- **Frontend**: `logs/nginx/access.log` (Rotated daily)
+- **Deployment**: `logs/deploy/`
 
 ## License
 
