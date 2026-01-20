@@ -1,112 +1,98 @@
 #!/bin/bash
 
-# setup_prod.sh - One-time setup for Systemd Service & Logrotate
+# setup_prod.sh - 生产环境初始化脚本
+# 用途：配置 Nginx 和日志目录
 
 set -e
 
-# 1. Config & User Detection
 APP_ROOT=$(pwd)
-if [ -n "$SUDO_USER" ]; then
-    SERVICE_USER=$SUDO_USER
-    SERVICE_USER_HOME=$(getent passwd "$SUDO_USER" | cut -d: -f6)
-else
-    SERVICE_USER=$(whoami)
-    SERVICE_USER_HOME=$HOME
-fi
-LOG_DIR="$APP_ROOT/logs/backend"
+NGINX_CONF="/etc/nginx/sites-available/todo-app"
+APP_DIR="/var/www/todo-app"
 
-echo "🛠️  Setting up Production Environment..."
-echo "👤 Service will run as: $SERVICE_USER (Home: $SERVICE_USER_HOME)"
-echo "📁 App Root: $APP_ROOT"
+echo "================================================"
+echo "🛠️  Tiga Todo - 生产环境配置"
+echo "================================================"
 
-# 2. Check permissions
+# 检查 root 权限
 if [ "$EUID" -ne 0 ]; then
-  echo "❌ Please run as root (use sudo)"
+  echo "❌ 请使用 root 权限运行 (sudo ./setup_prod.sh)"
   exit 1
 fi
 
-# 3. Create Log Directories
-echo "📂 Creating log directories..."
-mkdir -p "$LOG_DIR"
+# 1. 创建日志目录
+echo "📂 [1/3] 创建日志目录..."
 mkdir -p "$APP_ROOT/logs/nginx"
 mkdir -p "$APP_ROOT/logs/deploy"
 
-# Set permissions for backend logs
-chown -R $SERVICE_USER:$SERVICE_USER "$LOG_DIR"
-chmod 755 "$LOG_DIR"
-
-# Set permissions for Nginx logs
+# 设置权限
 chown -R www-data:www-data "$APP_ROOT/logs/nginx"
 chmod 755 "$APP_ROOT/logs/nginx"
 
-# Set permissions for deploy logs
-chown -R $SERVICE_USER:$SERVICE_USER "$APP_ROOT/logs/deploy"
-chmod 755 "$APP_ROOT/logs/deploy"
+# 2. 创建 Web 根目录
+echo "📂 [2/3] 创建 Web 根目录..."
+mkdir -p "$APP_DIR"
+chown -R www-data:www-data "$APP_DIR"
+chmod 755 "$APP_DIR"
 
-# 4. Make start_backend.sh executable
-chmod +x "$APP_ROOT/start_backend.sh"
+# 3. 配置 Nginx
+echo "⚙️  [3/3] 配置 Nginx..."
 
-# 5. Create Systemd Service File
-echo "⚙️  Creating Systemd Service..."
-cat > /etc/systemd/system/todolist-backend.service <<EOF
-[Unit]
-Description=TodoList Backend API Service
-After=network.target
+# 检查 Nginx 是否安装
+if ! command -v nginx &> /dev/null; then
+    echo "⚠️  Nginx 未安装，正在安装..."
+    apt-get update && apt-get install -y nginx
+fi
 
-[Service]
-Type=simple
-User=$SERVICE_USER
-WorkingDirectory=$APP_ROOT
-ExecStart=$APP_ROOT/start_backend.sh
-Restart=always
-RestartSec=5
+# 写入 Nginx 配置
+cat > "$NGINX_CONF" <<EOF
+server {
+    listen 80;
+    server_name _;  # 替换为你的域名
 
-# Logging
-StandardOutput=append:$LOG_DIR/server.log
-StandardError=append:$LOG_DIR/server.log
+    root $APP_DIR;
+    index index.html;
 
-[Install]
-WantedBy=multi-user.target
-EOF
+    # Gzip 压缩
+    gzip on;
+    gzip_types text/plain text/css application/json application/javascript text/xml application/xml application/xml+rss text/javascript;
 
-# Reload Daemon
-systemctl daemon-reload
-echo "✅ Service file created at /etc/systemd/system/todolist-backend.service"
+    # 前端路由支持 (SPA)
+    location / {
+        try_files \$uri \$uri/ /index.html;
+    }
 
-# 6. Configure Logrotate
-echo "📜 Configuring Logrotate..."
-cat > /etc/logrotate.d/todolist-backend <<EOF
-$LOG_DIR/server.log {
-    daily
-    missingok
-    rotate 14
-    compress
-    delaycompress
-    notifempty
-    create 0644 $SERVICE_USER $SERVICE_USER
-    copytruncate
-    dateext
+    # 静态资源缓存
+    location /assets/ {
+        expires 1y;
+        add_header Cache-Control "public, no-transform";
+    }
+
+    # 禁止访问隐藏文件
+    location ~ /\. {
+        deny all;
+    }
+
+    # 日志
+    access_log $APP_ROOT/logs/nginx/access.log;
+    error_log $APP_ROOT/logs/nginx/error.log;
 }
 EOF
 
-echo "✅ Logrotate config created at /etc/logrotate.d/todolist-backend"
+# 启用站点
+ln -sf "$NGINX_CONF" /etc/nginx/sites-enabled/
 
-# 7. Enable and Start Service
-echo "🚀 Starting Service..."
-systemctl enable todolist-backend
-systemctl restart todolist-backend
-
-# Brief wait then check status
-sleep 2
-if systemctl is-active --quiet todolist-backend; then
-    echo "✅ Service is running!"
+# 测试并重载 Nginx
+if nginx -t; then
+    systemctl reload nginx
+    echo "✅ Nginx 配置已更新并重载"
 else
-    echo "⚠️  Service may have failed to start. Check logs:"
-    echo "   journalctl -u todolist-backend -n 20"
+    echo "❌ Nginx 配置测试失败，请手动检查"
 fi
 
-echo "------------------------------------------------"
-echo "🎉 Setup Complete!"
-echo "   - Service Status: systemctl status todolist-backend"
-echo "   - View Logs: tail -f $LOG_DIR/server.log"
-echo "------------------------------------------------"
+echo ""
+echo "================================================"
+echo "🎉 配置完成！"
+echo "   - Web 目录: $APP_DIR"
+echo "   - Nginx 配置: $NGINX_CONF"
+echo "   - 访问日志: logs/nginx/access.log"
+echo "================================================"

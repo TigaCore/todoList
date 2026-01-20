@@ -1,131 +1,129 @@
-# Tiga Todo List App
+# Tiga Todo
 
-A modern, responsive Todo List application with a Python FastAPI backend and a React (Vite) frontend.
+一个现代化的待办事项应用，支持 Markdown 文档、实时同步、多端适配。
 
-![App Screenshot](frontend/public/icon-512.png) 
-*(Note: Replace with actual screenshot path if available)*
+## ✨ 特性
 
-## Features
+- **Supabase 后端** - 实时数据同步、用户认证、PostgreSQL 数据库
+- **React + Vite 前端** - 快速构建、热更新、TypeScript 支持
+- **Glassmorphism UI** - 现代玻璃态设计，支持深色模式
+- **PWA 支持** - 可安装为桌面/移动应用
+- **移动端原生** - 通过 Capacitor 构建 iOS/Android 应用
+- **Markdown 文档** - 支持在文档中创建任务，自动同步到任务列表
+- **本地通知** - 任务提醒功能
 
-*   **FastAPI Backend**: Robust and fast API handling.
-*   **React Frontend**: interactive UI with smooth animations (Framer Motion).
-*   **Mobile-First Design**: Optimized for mobile experience with touch-friendly interactions.
-*   **PWA Support**: Installable on mobile devices.
-*   **Local Notifications**: Task reminders using Capacitor.
+## 📁 项目结构
 
-## Project Structure
+```
+todoList/
+├── frontend/          # React + Vite 前端应用
+│   ├── src/
+│   │   ├── api/       # Supabase 客户端配置
+│   │   ├── components/# UI 组件
+│   │   ├── pages/     # 页面组件
+│   │   ├── contexts/  # React Context (主题、语言)
+│   │   └── utils/     # 工具函数
+├── docs/              # 开发日志和设计文档
+├── logs/              # 部署和 Nginx 日志
+└── deploy_app.sh      # 部署脚本
+```
 
-*   `backend/` - Python FastAPI application.
-*   `frontend/` - React Vite application.
-*   `logs/` - Logs for backend, nginx, and deployment.
+## 🛠️ 脚本与工作流
 
-### Scripts
-| Script | Purpose | When to Use |
-|--------|---------|-------------|
-| `setup_dev.sh` | Install Python/npm dependencies | First clone or dependency updates |
-| `start_app.sh` | Start dev servers (frontend + backend) | Local development |
-| `setup_prod.sh` | Create Systemd service & log config | **Once per server** |
-| `deploy_app.sh` | Build frontend + restart backend | **Every code update** |
-| `start_backend.sh` | Backend startup (called by Systemd) | Automatic, don't run manually |
+项目分为开发环境（Dev）和生产环境（Prod），请根据场景选择对应的脚本：
+
+| 场景 | 初始化脚本 | 启动/部署脚本 | 用途 |
+|------|------------|---------------|------|
+| **开发环境** | `setup_dev.sh` | `dev_app.sh` | 本地开发，启动前端热更新服务器 |
+| **生产环境** | `setup_prod.sh` | `deploy_app.sh` | 服务器部署，配置 Nginx 并发布代码 |
 
 ---
 
-## 🛠️ Development Workflow
+## 🚀 开发环境 (Development)
 
-Run this locally on your machine for development.
+适用于本地开发调试。
 
-### 1. Initial Setup
+### 1. 初始化依赖
+
+首次克隆项目或依赖更新后运行：
+
 ```bash
-git clone <repository-url>
-cd todoList
-
-# Install dependencies for both backend (venv) and frontend (npm)
 ./setup_dev.sh
 ```
 
-### 2. Run Application
-Start both Backend (8000) and Frontend (5173) with hot-reload:
-```bash
-./start_app.sh
+### 2. 配置 Supabase
+
+在 `frontend/` 目录下创建 `.env` 文件：
+
+```env
+VITE_SUPABASE_URL=your_supabase_project_url
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
 ```
-- **Frontend**: http://localhost:5173
-- **Backend**: http://localhost:8000
+
+### 3. 启动开发服务器
+
+```bash
+./dev_app.sh
+```
+
+访问 http://localhost:5173
 
 ---
 
-## 🚀 Production Deployment Workflow
+## ☁️ 生产环境 (Production)
 
-Run this on your Linux server (e.g., Ubuntu).
+适用于自有服务器部署 (Nginx)。
 
-### 1. Initial Server Setup (One-time)
-After cloning the repo, run these scripts to configure the environment:
+### 1. 服务器初始化 (Root)
+
+首次在服务器上部署时，运行初始化脚本以配置 Nginx 和日志目录：
 
 ```bash
-# 1. Install dependencies
-./setup_dev.sh
-
-# 2. Configure System Services (Systemd, Logrotate, Log dirs)
-# This creates /etc/systemd/system/todolist-backend.service
 sudo ./setup_prod.sh
 ```
 
-### 2. Configure Nginx
-Create or update your Nginx config (e.g., `/etc/nginx/sites-available/default`):
+这会自动：
+- 创建 `/var/www/todo-app` 目录
+- 配置 Nginx 站点 (`/etc/nginx/sites-available/todo-app`)
+- 设置日志目录 (`logs/nginx/`, `logs/deploy/`)
 
-```nginx
-server {
-    listen 80;
-    server_name _; 
+### 2. 发布更新
 
-    root /var/www/todo-app;
-    index index.html;
-
-    # Frontend Logs
-    access_log /home/ubuntu/todoList/logs/nginx/access.log;
-    error_log /home/ubuntu/todoList/logs/nginx/error.log;
-
-    location / {
-        try_files $uri $uri/ /index.html;
-    }
-
-    # API Proxy (Forward /api to Backend)
-    location /api {
-        proxy_pass http://localhost:8000;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-    }
-}
-```
-Then restart Nginx: `sudo systemctl restart nginx`
-
-### 3. Deploy / Update
-Whenever you pull new code or want to redeploy (Frontend build + Backend restart), runs:
+每次需要发布新版本时，只需运行：
 
 ```bash
 ./deploy_app.sh
 ```
-This script acts as the single source of truth for deployment. It will:
-1. Update backend dependencies.
-2. Restart the Systemd backend service.
-3. Build the frontend and copy files to `/var/www/todo-app`.
-4. Log everything to `logs/deploy/`.
+
+脚本会自动：
+1. 构建前端资源 (`npm run build`)
+2. 将构建产物复制到 `/var/www/todo-app`
+3. 记录部署日志到 `logs/deploy/`
 
 ---
 
-## 📱 Mobile App Build
+## 📱 构建移动应用
 
 ```bash
 cd frontend
+
+# 构建 Web 资源
 npm run build
+
+# 同步到原生项目
 npx cap sync
-npx cap open android  # or ios
+
+# 打开 IDE
+npx cap open android  # Android Studio
+npx cap open ios      # Xcode
 ```
 
-## Logs Location
-- **Backend**: `logs/backend/server.log` (Rotated daily)
-- **Frontend**: `logs/nginx/access.log` (Rotated daily)
-- **Deployment**: `logs/deploy/`
+---
 
-## License
+## 📝 开发日志
 
-[MIT](LICENSE)
+查看 `docs/` 目录获取完整的开发历史记录。
+
+## 📄 License
+
+MIT

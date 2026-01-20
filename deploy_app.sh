@@ -1,81 +1,65 @@
 #!/bin/bash
 
-# deploy_app.sh - Consolidated Production Deployment Script
-# Usage: ./deploy_app.sh
+# deploy_app.sh - 自有服务器部署脚本
+# 用途：构建前端并部署到 Nginx 目录
 
 set -e
 
-# Config
-APP_ROOT=$(pwd)
+# 配置
 APP_DIR="/var/www/todo-app"
-LOG_DIR="$APP_ROOT/logs/deploy"
+LOG_DIR="$(pwd)/logs/deploy"
 DATE=$(date +%Y-%m-%d_%H-%M-%S)
 LOG_FILE="$LOG_DIR/deploy_$DATE.log"
 
-# Create logs directory
-mkdir -p $LOG_DIR
+# 创建日志目录
+mkdir -p "$LOG_DIR"
 
-echo "------------------------------------------------" | tee -a $LOG_FILE
-echo "🚀 Starting Full Application Deployment at $(date)" | tee -a $LOG_FILE
-echo "------------------------------------------------" | tee -a $LOG_FILE
+echo "================================================" | tee -a "$LOG_FILE"
+echo "🚀 Tiga Todo - 服务器部署 $(date)" | tee -a "$LOG_FILE"
+echo "================================================" | tee -a "$LOG_FILE"
 
-# ------------------------------------------------------------------
-# 1. Backend Update
-# ------------------------------------------------------------------
-echo "🔄 [1/3] Updating Backend..." | tee -a $LOG_FILE
-
-echo "   Checking backend dependencies..." | tee -a $LOG_FILE
-cd backend
-if command -v uv &> /dev/null; then
-    uv sync >> $LOG_FILE 2>&1
-elif [ -f "requirements.txt" ]; then
-    # Assume venv exists if not using uv
-    source venv/bin/activate 2>/dev/null || true
-    pip install -r requirements.txt >> $LOG_FILE 2>&1
-fi
-cd ..
-
-echo "   Restarting Backend Service..." | tee -a $LOG_FILE
-if sudo systemctl restart todolist-backend; then
-    echo "✅ Backend Service Restarted" | tee -a $LOG_FILE
-else
-    echo "❌ Failed to restart backend service" | tee -a $LOG_FILE
-    exit 1
-fi
-
-# ------------------------------------------------------------------
-# 2. Frontend Build & Deploy
-# ------------------------------------------------------------------
-echo "🏗️  [2/3] Building Frontend..." | tee -a $LOG_FILE
+# 1. 构建前端
+echo "" | tee -a "$LOG_FILE"
+echo "🏗️  [1/2] 构建前端..." | tee -a "$LOG_FILE"
 cd frontend
-if npm install && npm run build >> $LOG_FILE 2>&1; then
-    echo "✅ Frontend Build Successful" | tee -a $LOG_FILE
+
+# 安装依赖并构建
+if npm install && npm run build >> "$LOG_FILE" 2>&1; then
+    echo "✅ 构建成功" | tee -a "$LOG_FILE"
 else
-    echo "❌ Frontend Build Failed" | tee -a $LOG_FILE
+    echo "❌ 构建失败，请检查日志" | tee -a "$LOG_FILE"
     exit 1
 fi
+
 cd ..
 
-echo "📂 [3/3] Deploying to Nginx ($APP_DIR)..." | tee -a $LOG_FILE
-# Create target directory if needed
+# 2. 部署到 Nginx
+echo "" | tee -a "$LOG_FILE"
+echo "📂 [2/2] 部署到 Nginx ($APP_DIR)..." | tee -a "$LOG_FILE"
+
+# 确保目标目录存在
 if [ ! -d "$APP_DIR" ]; then
-    sudo mkdir -p $APP_DIR
+    echo "⚠️  目标目录不存在，正在创建..." | tee -a "$LOG_FILE"
+    sudo mkdir -p "$APP_DIR"
 fi
 
-# Copy files
-if sudo cp -r frontend/dist/* $APP_DIR/; then
-    echo "✅ Files deployed successfully" | tee -a $LOG_FILE
+# 备份旧版本 (可选)
+# sudo mv $APP_DIR $APP_DIR.bak
+
+# 复制文件
+if sudo cp -r frontend/dist/* "$APP_DIR/"; then
+    echo "✅ 文件部署成功" | tee -a "$LOG_FILE"
 else
-    echo "❌ Failed to deploy files" | tee -a $LOG_FILE
+    echo "❌ 文件部署失败 (权限不足？)" | tee -a "$LOG_FILE"
     exit 1
 fi
 
-# Fix permissions
-sudo chown -R www-data:www-data $APP_DIR
-sudo chmod -R 755 $APP_DIR
+# 修复权限
+sudo chown -R www-data:www-data "$APP_DIR"
+sudo chmod -R 755 "$APP_DIR"
 
-echo "------------------------------------------------" | tee -a $LOG_FILE
-echo "🎉 Deployment Complete!" | tee -a $LOG_FILE
-echo "   - Backend Logs: tail -f logs/backend/server.log"
-echo "   - Frontend: http://$(curl -s ifconfig.me) or your domain"
-echo "------------------------------------------------" | tee -a $LOG_FILE
+echo "" | tee -a "$LOG_FILE"
+echo "================================================" | tee -a "$LOG_FILE"
+echo "🎉 部署完成！" | tee -a "$LOG_FILE"
+echo "   日志: $LOG_FILE" | tee -a "$LOG_FILE"
+echo "================================================" | tee -a "$LOG_FILE"

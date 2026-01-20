@@ -1,71 +1,45 @@
 #!/bin/bash
 
-# setup_dev.sh - One-click development environment setup
+# setup_dev.sh - 开发环境初始化脚本
+# 用途：首次克隆项目或依赖更新后运行
 
-set -e # Exit on error
+set -e
 
-echo "------------------------------------------------"
-echo "🛠️  Setting up Tiga Todo List Development Environment"
-echo "------------------------------------------------"
+echo "================================================"
+echo "🛠️  Tiga Todo - 开发环境配置"
+echo "================================================"
 
-# 1. Check Pre-requisites
-echo "🔍 Checking dependencies..."
-if ! command -v python3 &> /dev/null; then
-    echo "❌ Python 3 is required but not found."
+# 检查 Node.js
+echo "🔍 检查依赖..."
+if ! command -v node &> /dev/null; then
+    echo "❌ 未找到 Node.js，请先安装: https://nodejs.org/"
     exit 1
 fi
+
 if ! command -v npm &> /dev/null; then
-    echo "❌ npm is required but not found."
+    echo "❌ 未找到 npm，请先安装 Node.js"
     exit 1
 fi
-echo "✅ Dependencies found."
 
-# 2. Setup Backend
-echo "------------------------------------------------"
-echo "📦 Setting up Backend..."
-cd backend
+echo "✅ Node.js $(node -v) | npm $(npm -v)"
 
-# Check for uv
-if ! command -v uv &> /dev/null; then
-    echo "⚠️  uv is not installed. Installing uv..."
-    curl -LsSf https://astral.sh/uv/install.sh | sh
-    source $HOME/.cargo/env 2>/dev/null || true
-fi
-
-# Create venv and install dependencies using uv
-echo "   Syncing dependencies with uv..."
-if [ -f "uv.lock" ]; then
-    uv sync
-elif [ -f "pyproject.toml" ]; then
-    uv sync
-elif [ -f "requirements.txt" ]; then
-    uv venv
-    source .venv/bin/activate 2>/dev/null || source venv/bin/activate
-    uv pip install -r requirements.txt
-else
-    echo "⚠️  No dependency file found (pyproject.toml or requirements.txt)."
-fi
-
-cd ..
-echo "✅ Backend setup complete."
-
-# 3. Setup Frontend
-echo "------------------------------------------------"
-echo "🎨 Setting up Frontend..."
-cd frontend
-
-echo "   Installing npm packages..."
-npm install
-
-cd ..
-echo "✅ Frontend setup complete."
-
-echo "------------------------------------------------"
-echo "🎉 Setup Finished!"
+# 安装前端依赖
 echo ""
-echo "You can now run the app using:"
-echo "./start_app.sh"
-echo "------------------------------------------------"
+echo "📦 安装前端依赖..."
+cd frontend
+npm install
+cd ..
 
-# Make start script executable just in case
-chmod +x start_app.sh
+echo ""
+echo "================================================"
+echo "🎉 配置完成！"
+echo ""
+echo "启动开发服务器："
+echo "  ./dev_app.sh"
+echo ""
+echo "或手动启动："
+echo "  cd frontend && npm run dev"
+echo "================================================"
+
+# 确保启动脚本可执行
+chmod +x dev_app.sh deploy_app.sh 2>/dev/null || true
