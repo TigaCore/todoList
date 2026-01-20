@@ -1,88 +1,129 @@
-# Tiga Todo List App
+# Tiga Todo
 
-A modern, responsive Todo List application with a Python FastAPI backend and a React (Vite) frontend.
+一个现代化的待办事项应用，支持 Markdown 文档、实时同步、多端适配。
 
-![App Screenshot](frontend/public/icon-512.png) 
-*(Note: Replace with actual screenshot path if available)*
+## ✨ 特性
 
-## Features
+- **Supabase 后端** - 实时数据同步、用户认证、PostgreSQL 数据库
+- **React + Vite 前端** - 快速构建、热更新、TypeScript 支持
+- **Glassmorphism UI** - 现代玻璃态设计，支持深色模式
+- **PWA 支持** - 可安装为桌面/移动应用
+- **移动端原生** - 通过 Capacitor 构建 iOS/Android 应用
+- **Markdown 文档** - 支持在文档中创建任务，自动同步到任务列表
+- **本地通知** - 任务提醒功能
 
-*   **FastAPI Backend**: Robust and fast API handling.
-*   **React Frontend**: interactive UI with smooth animations (Framer Motion).
-*   **Mobile-First Design**: Optimized for mobile experience with touch-friendly interactions.
-*   **PWA Support**: Installable on mobile devices.
-*   **Local Notifications**: Task reminders using Capacitor.
+## 📁 项目结构
 
-## Project Structure
+```
+todoList/
+├── frontend/          # React + Vite 前端应用
+│   ├── src/
+│   │   ├── api/       # Supabase 客户端配置
+│   │   ├── components/# UI 组件
+│   │   ├── pages/     # 页面组件
+│   │   ├── contexts/  # React Context (主题、语言)
+│   │   └── utils/     # 工具函数
+├── docs/              # 开发日志和设计文档
+├── logs/              # 部署和 Nginx 日志
+└── deploy_app.sh      # 部署脚本
+```
 
-*   `backend/` - Python FastAPI application.
-*   `frontend/` - React Vite application.
-*   `start_app.sh` - Script to launch both backend and frontend.
-*   `setup_dev.sh` - Script to configure the development environment.
+## 🛠️ 脚本与工作流
 
-## 🚀 Getting Started
+项目分为开发环境（Dev）和生产环境（Prod），请根据场景选择对应的脚本：
 
-### Prerequisites
+| 场景 | 初始化脚本 | 启动/部署脚本 | 用途 |
+|------|------------|---------------|------|
+| **开发环境** | `setup_dev.sh` | `dev_app.sh` | 本地开发，启动前端热更新服务器 |
+| **生产环境** | `setup_prod.sh` | `deploy_app.sh` | 服务器部署，配置 Nginx 并发布代码 |
 
-*   Python 3.12+
-*   Node.js & npm
+---
 
-### One-Click Setup
+## 🚀 开发环境 (Development)
 
-For new developers, we provide a setup script to configure everything automatically:
+适用于本地开发调试。
+
+### 1. 初始化依赖
+
+首次克隆项目或依赖更新后运行：
 
 ```bash
-# 1. Clone the repository
-git clone <repository-url>
-cd todoList
-
-# 2. Run the setup script
 ./setup_dev.sh
 ```
 
-This script will:
-*   Create a Python virtual environment (`backend/venv`).
-*   Install backend dependencies.
-*   Install frontend node modules.
+### 2. 配置 Supabase
 
-### Running the App
+在 `frontend/` 目录下创建 `.env` 文件：
 
-To start both the backend and frontend servers:
-
-```bash
-./start_app.sh
+```env
+VITE_SUPABASE_URL=your_supabase_project_url
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
 ```
 
-*   **Frontend**: http://localhost:5173
-*   **Backend**: http://localhost:8000
+### 3. 启动开发服务器
 
-## Development
+```bash
+./dev_app.sh
+```
 
-*   **Backend**: 
-    *   Navigate to `backend/`.
-    *   Activate venv: `source venv/bin/activate`.
-    *   Run individually: `uvicorn main:app --reload`.
-*   **Frontend**:
-    *   Navigate to `frontend/`.
-    *   Run individually: `npm run dev`.
+访问 http://localhost:5173
 
-## Mobile App Build & Repackaging
+---
 
-This project uses Capacitor to package the web app as a native mobile application.
+## ☁️ 生产环境 (Production)
 
-To repackage the app (e.g., after making code changes), run the following commands:
+适用于自有服务器部署 (Nginx)。
+
+### 1. 服务器初始化 (Root)
+
+首次在服务器上部署时，运行初始化脚本以配置 Nginx 和日志目录：
+
+```bash
+sudo ./setup_prod.sh
+```
+
+这会自动：
+- 创建 `/var/www/todo-app` 目录
+- 配置 Nginx 站点 (`/etc/nginx/sites-available/todo-app`)
+- 设置日志目录 (`logs/nginx/`, `logs/deploy/`)
+
+### 2. 发布更新
+
+每次需要发布新版本时，只需运行：
+
+```bash
+./deploy_app.sh
+```
+
+脚本会自动：
+1. 构建前端资源 (`npm run build`)
+2. 将构建产物复制到 `/var/www/todo-app`
+3. 记录部署日志到 `logs/deploy/`
+
+---
+
+## 📱 构建移动应用
 
 ```bash
 cd frontend
-npm run build      # Build the React web assets
-npx cap sync       # Sync the built assets to Android/iOS projects
+
+# 构建 Web 资源
+npm run build
+
+# 同步到原生项目
+npx cap sync
+
+# 打开 IDE
+npx cap open android  # Android Studio
+npx cap open ios      # Xcode
 ```
 
-After syncing, you can open the native IDEs to build the final binary:
+---
 
-- **Android**: `npx cap open android`
-- **iOS**: `npx cap open ios`
+## 📝 开发日志
 
-## License
+查看 `docs/` 目录获取完整的开发历史记录。
 
-[MIT](LICENSE)
+## 📄 License
+
+MIT

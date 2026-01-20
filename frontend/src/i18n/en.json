@@ -1,0 +1,185 @@
+{
+    "common": {
+        "save": "Save",
+        "cancel": "Cancel",
+        "confirm": "Confirm",
+        "delete": "Delete",
+        "edit": "Edit",
+        "done": "Done",
+        "loading": "Loading...",
+        "error": "Error",
+        "success": "Success",
+        "insert": "Insert"
+    },
+    "tabs": {
+        "tasks": "Tasks",
+        "notes": "Notes",
+        "settings": "Settings"
+    },
+    "filter": {
+        "all": "All Tasks",
+        "today": "Today",
+        "upcoming": "Upcoming",
+        "completed": "Completed"
+    },
+    "settings": {
+        "title": "Settings",
+        "account": "Account",
+        "appearance": "Appearance",
+        "data": "Data",
+        "about": "About",
+        "nickname": "Nickname",
+        "email": "Email",
+        "avatar": "Avatar",
+        "changeAvatar": "Change Avatar",
+        "changePassword": "Change Password",
+        "currentPassword": "Current Password",
+        "newPassword": "New Password",
+        "confirmPassword": "Confirm Password",
+        "passwordChanged": "Password changed successfully",
+        "passwordMismatch": "Passwords do not match",
+        "wrongPassword": "Current password is incorrect",
+        "theme": "Theme",
+        "language": "Language",
+        "exportData": "Export Data",
+        "exportDesc": "Export all tasks and notes as JSON",
+        "exporting": "Exporting...",
+        "exported": "Export successful",
+        "version": "Version",
+        "logout": "Sign Out",
+        "logoutConfirm": "Are you sure you want to sign out?"
+    },
+    "theme": {
+        "light": "Light",
+        "dark": "Dark",
+        "system": "System"
+    },
+    "language": {
+        "zh": "中文",
+        "en": "English"
+    },
+    "sidebar": {
+        "allTasks": "All Tasks",
+        "today": "Today",
+        "upcoming": "Upcoming",
+        "completed": "Completed",
+        "settings": "Settings",
+        "signOut": "Sign Out"
+    },
+    "tasks": {
+        "addTask": "Add Task",
+        "noTasks": "No tasks yet",
+        "noTasksInFilter": "No tasks found in \"{filter}\"",
+        "inputPlaceholder": "What needs to be done?",
+        "openFullEditor": "Open Full Editor",
+        "editNotes": "Edit Notes",
+        "setReminder": "Set Reminder",
+        "jumpToDocument": "Jump to Document",
+        "dueDate": "Due Date",
+        "reminder": "Reminder"
+    },
+    "notes": {
+        "addNote": "Add Note",
+        "noNotes": "No notes yet",
+        "untitled": "Untitled",
+        "noContent": "No content",
+        "hasNotes": "has notes"
+    },
+    "editor": {
+        "edit": "Edit",
+        "source": "Source",
+        "save": "Save",
+        "done": "Done",
+        "markdownSource": "Markdown Source",
+        "startWriting": "Start writing...",
+        "shortcuts": "Shortcuts",
+        "keyboardShortcuts": "Keyboard Shortcuts",
+        "pressEscToClose": "Press ESC to close",
+        "toolbar": {
+            "heading1": "Heading 1",
+            "heading2": "Heading 2",
+            "heading3": "Heading 3",
+            "bold": "Bold",
+            "italic": "Italic",
+            "strikethrough": "Strikethrough",
+            "subscript": "Subscript",
+            "superscript": "Superscript",
+            "math": "Math Formula",
+            "link": "Link",
+            "bulletList": "Bullet List",
+            "orderedList": "Ordered List",
+            "taskList": "Task List",
+            "table": "Table",
+            "blockquote": "Blockquote",
+            "codeBlock": "Code Block",
+            "mermaid": "Mermaid Diagram",
+            "enterUrl": "Enter URL:",
+            "enterMath": "Enter LaTeX math expression:"
+        },
+        "tableDialog": {
+            "selectSize": "Select table size"
+        },
+        "dialog": {
+            "linkTitle": "Insert Link",
+            "linkPlaceholder": "https://example.com",
+            "mathTitle": "Insert Math Formula",
+            "mathPlaceholder": "x = \\frac{-b \\pm \\sqrt{b^2-4ac}}{2a}",
+            "invalidUrl": "Please enter a valid URL"
+        }
+    },
+    "timeline": {
+        "title": "Timeline",
+        "activities": "Activities",
+        "noActivities": "No activities",
+        "activityHistory": "Your activity history",
+        "today": "Today",
+        "yesterday": "Yesterday",
+        "dayStarted": "Day Started",
+        "dayEnded": "Day Ended",
+        "created": "Created \"{title}\"",
+        "completed": "Completed \"{title}\"",
+        "unchecked": "Unchecked \"{title}\"",
+        "updated": "Updated \"{title}\"",
+        "deleted": "Deleted \"{title}\"",
+        "activity": "Activity on \"{title}\"",
+        "unknownTask": "Unknown Task",
+        "summaryCompleted": "{count} Completed",
+        "summaryCreated": "{count} Created",
+        "summaryUpdated": "{count} Updated",
+        "startCreating": "Start creating tasks to see your timeline!"
+    },
+    "datePicker": {
+        "date": "Date",
+        "time": "Time",
+        "setReminder": "Set Reminder",
+        "setDueDate": "Set Due Date",
+        "done": "Done",
+        "today": "Today",
+        "tomorrow": "Tomorrow",
+        "nextWeek": "Next Week"
+    },
+    "toast": {
+        "addTaskFailed": "Failed to add task, please try again",
+        "waitForTaskCreation": "Please wait for task to be created before deleting",
+        "taskDeleted": "Task deleted",
+        "deleteFailed": "Failed to delete, please try again",
+        "saveNoteFailed": "Failed to save note, please try again",
+        "updateDateFailed": "Failed to update date, please try again"
+    },
+    "confirm": {
+        "deleteTask": "Are you sure you want to delete this task?"
+    },
+    "network": {
+        "online": "Back online, syncing...",
+        "offline": "You're offline. Changes will sync when connected."
+    },
+    "embeddedTask": {
+        "title": "Embedded Tasks",
+        "from": "from",
+        "jumpToDoc": "Jump to document",
+        "noTasks": "No embedded tasks",
+        "updateFailed": "Failed to update task status",
+        "tasksCount": "{completed}/{total} tasks completed",
+        "emptyState": "No tasks in this document"
+    }
+}

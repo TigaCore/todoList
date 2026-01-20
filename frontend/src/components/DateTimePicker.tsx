@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Picker from 'react-mobile-picker';
 import { X, Calendar, Clock } from 'lucide-react';
 import { format, addDays, setHours, setMinutes } from 'date-fns';
+import { useLanguage } from '../contexts/LanguageContext';
 
 interface DateTimePickerProps {
     isOpen: boolean;
@@ -12,6 +13,7 @@ interface DateTimePickerProps {
 }
 
 const DateTimePicker: React.FC<DateTimePickerProps> = ({ isOpen, onClose, onSelect, initialDate }) => {
+    const { t } = useLanguage();
     const now = new Date();
     const initial = initialDate || now;
     const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 768);
@@ -55,9 +57,9 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({ isOpen, onClose, onSele
     });
 
     const quickOptions = [
-        { label: 'Today', getDate: () => now },
-        { label: 'Tomorrow', getDate: () => addDays(now, 1) },
-        { label: 'Next Week', getDate: () => addDays(now, 7) },
+        { label: t('datePicker.today'), getDate: () => now },
+        { label: t('datePicker.tomorrow'), getDate: () => addDays(now, 1) },
+        { label: t('datePicker.nextWeek'), getDate: () => addDays(now, 7) },
     ];
 
     const handleQuickSelect = (getDate: () => Date) => {
@@ -88,7 +90,7 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({ isOpen, onClose, onSele
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50"
+                        className="glass-backdrop fixed inset-0 z-50"
                         onClick={onClose}
                     />
 
@@ -99,34 +101,34 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({ isOpen, onClose, onSele
                             animate={isDesktop ? { opacity: 1, scale: 1 } : { y: 0 }}
                             exit={isDesktop ? { opacity: 0, scale: 0.95 } : { y: '100%' }}
                             transition={{ type: 'spring', damping: 28, stiffness: 300 }}
-                            className="bg-white w-full pointer-events-auto overflow-hidden
+                            className="glass-modal w-full pointer-events-auto overflow-hidden
                                 rounded-t-3xl max-h-[80vh]
-                                md:rounded-2xl md:max-w-md md:max-h-[90vh] md:shadow-2xl"
+                                md:rounded-2xl md:max-w-md md:max-h-[90vh]"
                         >
                             {/* Header */}
-                            <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+                            <div className="flex items-center justify-between px-5 py-4 border-b border-white/30 bg-white/30">
                                 <button
                                     onClick={onClose}
-                                    className="p-2 -ml-2 text-gray-400 hover:text-gray-600 rounded-full"
+                                    className="p-2 -ml-2 text-gray-400 hover:text-gray-600 rounded-xl hover:bg-white/50 transition-colors"
                                 >
                                     <X size={24} />
                                 </button>
-                                <h3 className="font-semibold text-gray-800">Set Due Date</h3>
+                                <h3 className="font-semibold text-gray-800 dark:text-gray-100">{t('datePicker.setDueDate')}</h3>
                                 <button
                                     onClick={handleConfirm}
-                                    className="px-4 py-1.5 bg-indigo-500 text-white text-sm font-medium rounded-full hover:bg-indigo-600 transition-colors"
+                                    className="btn-primary px-4 py-1.5 text-sm font-medium rounded-full"
                                 >
-                                    Done
+                                    {t('datePicker.done')}
                                 </button>
                             </div>
 
                             {/* Quick Options */}
-                            <div className="px-5 py-4 flex gap-2 overflow-x-auto border-b border-gray-100">
+                            <div className="px-5 py-4 flex gap-2 overflow-x-auto border-b border-white/30">
                                 {quickOptions.map((opt) => (
                                     <button
                                         key={opt.label}
                                         onClick={() => handleQuickSelect(opt.getDate)}
-                                        className="px-4 py-2 bg-indigo-50 text-indigo-600 rounded-full text-sm font-medium whitespace-nowrap hover:bg-indigo-100 transition-colors"
+                                        className="px-4 py-2 bg-indigo-100/60 text-indigo-600 rounded-full text-sm font-medium whitespace-nowrap hover:bg-indigo-100 transition-colors"
                                     >
                                         {opt.label}
                                     </button>
@@ -134,50 +136,60 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({ isOpen, onClose, onSele
                             </div>
 
                             {/* Picker Area */}
-                            <div className="px-4 py-6">
-                                <div className="flex items-center justify-center gap-1 mb-4">
-                                    <Calendar size={18} className="text-gray-400" />
-                                    <span className="text-sm text-gray-500">Date</span>
-                                    <span className="mx-4 text-gray-300">|</span>
-                                    <Clock size={18} className="text-gray-400" />
-                                    <span className="text-sm text-gray-500">Time</span>
+                            <div className="px-4 py-6 bg-white/30">
+                                {/* Section Labels */}
+                                <div className="flex items-center justify-center mb-4">
+                                    <div className="flex items-center gap-1.5 px-4 py-1.5 bg-indigo-50 dark:bg-indigo-900/30 rounded-l-full border-r border-indigo-100 dark:border-indigo-800">
+                                        <Calendar size={16} className="text-indigo-500" />
+                                        <span className="text-sm font-medium text-indigo-600 dark:text-indigo-400">{t('datePicker.date')}</span>
+                                    </div>
+                                    <div className="flex items-center gap-1.5 px-4 py-1.5 bg-orange-50 dark:bg-orange-900/30 rounded-r-full">
+                                        <Clock size={16} className="text-orange-500" />
+                                        <span className="text-sm font-medium text-orange-600 dark:text-orange-400">{t('datePicker.time')}</span>
+                                    </div>
                                 </div>
 
-                                <Picker
-                                    value={pickerValue}
-                                    onChange={setPickerValue}
-                                    wheelMode="natural"
-                                    height={160}
-                                >
-                                    <Picker.Column name="month">
-                                        {months.map(m => (
-                                            <Picker.Item key={m.value} value={m.value}>
-                                                {m.label}
-                                            </Picker.Item>
-                                        ))}
-                                    </Picker.Column>
-                                    <Picker.Column name="day">
-                                        {days.map(d => (
-                                            <Picker.Item key={d.value} value={d.value}>
-                                                {d.label}
-                                            </Picker.Item>
-                                        ))}
-                                    </Picker.Column>
-                                    <Picker.Column name="hour">
-                                        {hours.map(h => (
-                                            <Picker.Item key={h.value} value={h.value}>
-                                                {h.label}
-                                            </Picker.Item>
-                                        ))}
-                                    </Picker.Column>
-                                    <Picker.Column name="minute">
-                                        {minutes.map(m => (
-                                            <Picker.Item key={m.value} value={m.value}>
-                                                {m.label}
-                                            </Picker.Item>
-                                        ))}
-                                    </Picker.Column>
-                                </Picker>
+                                {/* Picker with visual separator */}
+                                <div className="relative">
+                                    {/* Vertical divider between date and time */}
+                                    <div className="absolute left-1/2 top-0 bottom-0 w-px bg-gradient-to-b from-transparent via-gray-300 dark:via-gray-600 to-transparent z-10" style={{ transform: 'translateX(-50%)' }} />
+
+                                    <Picker
+                                        value={pickerValue}
+                                        onChange={setPickerValue}
+                                        wheelMode="natural"
+                                        height={160}
+                                    >
+                                        <Picker.Column name="month">
+                                            {months.map(m => (
+                                                <Picker.Item key={m.value} value={m.value}>
+                                                    {m.label}
+                                                </Picker.Item>
+                                            ))}
+                                        </Picker.Column>
+                                        <Picker.Column name="day">
+                                            {days.map(d => (
+                                                <Picker.Item key={d.value} value={d.value}>
+                                                    {d.label}
+                                                </Picker.Item>
+                                            ))}
+                                        </Picker.Column>
+                                        <Picker.Column name="hour">
+                                            {hours.map(h => (
+                                                <Picker.Item key={h.value} value={h.value}>
+                                                    {h.label}
+                                                </Picker.Item>
+                                            ))}
+                                        </Picker.Column>
+                                        <Picker.Column name="minute">
+                                            {minutes.map(m => (
+                                                <Picker.Item key={m.value} value={m.value}>
+                                                    {m.label}
+                                                </Picker.Item>
+                                            ))}
+                                        </Picker.Column>
+                                    </Picker>
+                                </div>
                             </div>
 
                             {/* Safe area padding for iOS - only on mobile */}

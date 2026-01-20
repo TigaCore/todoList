@@ -1,16 +1,8 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { StickyNote } from 'lucide-react';
-
-interface Todo {
-    id: number;
-    title: string;
-    description?: string;
-    content?: string;
-    is_completed: boolean;
-    due_date?: string;
-    reminder_at?: string;
-}
+import { StickyNote, CheckSquare } from 'lucide-react';
+import { useLanguage } from '../contexts/LanguageContext';
+import { Todo } from '../api/supabase';
 
 interface NotesViewProps {
     notes: Todo[];
@@ -18,22 +10,19 @@ interface NotesViewProps {
 }
 
 const NotesView: React.FC<NotesViewProps> = ({ notes, onNoteClick }) => {
-    // Filter to show only items that have content effectively acting as "Notes"
-    // Or just show all items as cards? Let's show all for now, maybe filter by "has content" later if user desires.
-    // Ideally, "Notes" are things that are NOT just checkboxes. 
-    // For now, let's treat every task as a potential note.
+    const { t } = useLanguage();
 
-    // Optional: Filter empty descriptions?
-    // const displayNotes = notes.filter(n => n.content && n.content.trim().length > 0);
-    const displayNotes = notes;
+    // Only show standalone documents (is_document=true)
+    // Tasks with attached notes are edited by clicking the task, not shown here
+    const displayNotes = notes.filter(n => n.is_document === true);
 
     if (displayNotes.length === 0) {
         return (
-            <div className="flex flex-col items-center justify-center py-20 text-gray-400">
-                <div className="w-24 h-24 bg-gray-50 rounded-2xl flex items-center justify-center mb-4">
-                    <StickyNote size={40} className="text-gray-300" />
+            <div className="flex flex-col items-center justify-center py-20 text-gray-400 dark:text-gray-500">
+                <div className="w-24 h-24 bg-gray-50 dark:bg-gray-800 rounded-2xl flex items-center justify-center mb-4">
+                    <StickyNote size={40} className="text-gray-300 dark:text-gray-600" />
                 </div>
-                <p>No notes found</p>
+                <p>{t('notes.noNotes')}</p>
             </div>
         );
     }
@@ -43,31 +32,41 @@ const NotesView: React.FC<NotesViewProps> = ({ notes, onNoteClick }) => {
             {displayNotes.map((note, index) => (
                 <motion.div
                     key={note.id}
-                    initial={{ opacity: 0, scale: 0.9, y: 20 }}
-                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
                     transition={{
                         type: "spring",
                         stiffness: 350,
-                        damping: 25,
-                        delay: index * 0.05
+                        damping: 28,
+                        mass: 0.8,
+                        delay: Math.min(index * 0.05, 0.3)
                     }}
                     onClick={() => onNoteClick(note)}
-                    className="bg-white rounded-xl p-4 shadow-sm border border-gray-100/50 hover:shadow-md hover:border-indigo-100 transition-all cursor-pointer flex flex-col h-48 active:scale-95 group"
+                    className="glass-card rounded-xl p-4 shadow-sm hover:shadow-md transition-all cursor-pointer flex flex-col h-48 active:scale-95 group"
                 >
                     <div className="flex items-start justify-between mb-2">
-                        <h3 className={`font-semibold text-gray-800 line-clamp-2 leading-tight ${note.is_completed ? 'line-through text-gray-400' : ''}`}>
+                        <h3 className={`font-semibold text-gray-800 dark:text-gray-100 line-clamp-2 leading-tight ${note.is_completed ? 'line-through text-gray-400 dark:text-gray-500' : ''}`}>
                             {note.title}
                         </h3>
                     </div>
 
                     <div className="flex-1 overflow-hidden">
-                        <p className="text-xs text-gray-500 line-clamp-6 leading-relaxed whitespace-pre-line">
-                            {stripMarkdown(note.content || 'No content')}
+                        <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-6 leading-relaxed whitespace-pre-line">
+                            {note.content ? stripMarkdown(note.content) : t('notes.noContent')}
                         </p>
                     </div>
 
-                    <div className="mt-3 pt-3 border-t border-gray-50 flex items-center justify-between text-xs text-gray-400">
+                    {/* Footer with embedded task stats if present */}
+                    <div className="mt-3 pt-3 border-t border-gray-50 dark:border-gray-700 flex items-center justify-between text-xs text-gray-400 dark:text-gray-500">
                         <span>{new Date(note.due_date || Date.now()).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span>
+                        {note.embedded_tasks && note.embedded_tasks.length > 0 && (
+                            <div className="flex items-center gap-1">
+                                <CheckSquare size={12} className="text-indigo-500" />
+                                <span className={note.embedded_tasks.every(t => t.is_completed) ? 'text-indigo-500' : ''}>
+                                    {note.embedded_tasks.filter(t => t.is_completed).length}/{note.embedded_tasks.length}
+                                </span>
+                            </div>
+                        )}
                     </div>
                 </motion.div>
             ))}

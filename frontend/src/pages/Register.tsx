@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import api from '../api/client';
+import { supabase } from '../api/supabase';
 import { motion } from 'framer-motion';
 import { ArrowRight, Mail, Lock, User } from 'lucide-react';
 
@@ -17,10 +17,31 @@ const Register = () => {
         setError('');
         setIsLoading(true);
         try {
-            await api.post('/users/register', { nickname, email, password });
-            navigate('/login');
+            const { error: authError } = await supabase.auth.signUp({
+                email,
+                password,
+                options: {
+                    data: {
+                        nickname,
+                    },
+                },
+            });
+
+            if (authError) {
+                throw authError;
+            }
+
+            // Check if email confirmation is required
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session) {
+                navigate('/');
+            } else {
+                // Email confirmation required
+                navigate('/login');
+            }
         } catch (err: any) {
-            setError(err.response?.data?.detail || 'Registration failed');
+            console.error('Registration error:', err);
+            setError(err.message || 'Registration failed');
         } finally {
             setIsLoading(false);
         }
@@ -55,9 +76,9 @@ const Register = () => {
                     className="text-center mb-10"
                 >
                     <motion.img
-                        src="/logo.png"
+                        src="/logo.svg"
                         alt="Tiga"
-                        className="h-16 w-auto mx-auto mb-4"
+                        className="h-20 w-auto mx-auto mb-6 drop-shadow-xl"
                         whileHover={{ scale: 1.05, rotate: -5 }}
                         transition={{ type: "spring", stiffness: 300 }}
                     />
@@ -108,6 +129,7 @@ const Register = () => {
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             required
+                            minLength={6}
                             className="w-full pl-12 pr-4 py-4 bg-white/80 backdrop-blur-sm border border-gray-200 rounded-2xl text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 transition-all"
                         />
                     </div>

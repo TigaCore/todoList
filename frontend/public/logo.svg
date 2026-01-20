@@ -1,0 +1,31 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- 淡雅靛青渐变，匹配页面配色 -->
+    <linearGradient id="softIndigo" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#818CF8"/>
+      <stop offset="100%" stop-color="#A78BFA"/>
+    </linearGradient>
+    
+    <!-- 高光渐变 -->
+    <linearGradient id="highlight" x1="50%" y1="0%" x2="50%" y2="50%">
+      <stop offset="0%" stop-color="white" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="white" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+
+  <!-- 主背景：iOS 超圆角 -->
+  <rect x="24" y="24" width="464" height="464" rx="104" fill="url(#softIndigo)"/>
+  
+  <!-- 玻璃高光效果 -->
+  <ellipse cx="256" cy="160" rx="180" ry="100" fill="url(#highlight)"/>
+  
+  <!-- 勾号：简洁有力 -->
+  <path 
+    d="M 152 268 L 220 344 L 360 184" 
+    stroke="white" 
+    stroke-width="52" 
+    stroke-linecap="round" 
+    stroke-linejoin="round"
+    fill="none"
+  />
+</svg>
