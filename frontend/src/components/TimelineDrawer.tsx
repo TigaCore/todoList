@@ -3,35 +3,25 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { format, isToday, isYesterday } from 'date-fns';
 import { zhCN, enUS } from 'date-fns/locale';
 import { X, CheckCircle2, Circle, PenLine, Trash2, PlusCircle, StickyNote, Loader2, Sun, Moon } from 'lucide-react';
-import api from '../api/client';
 import { useLanguage } from '../contexts/LanguageContext';
+import { Todo, PartialTodo } from '../api/supabase';
 
 interface ActivityLog {
     id: number;
     action_type: 'CREATE' | 'COMPLETE' | 'UNCOMPLETE' | 'UPDATE_CONTENT' | 'DELETE';
     todo_id: number | null;
-    metadata_Snapshot?: {
+    metadata_snapshot?: {
         title?: string;
         [key: string]: any;
     };
     timestamp: string;
 }
 
-interface Todo {
-    id: number;
-    title: string;
-    description?: string;
-    content?: string;
-    is_completed: boolean;
-    due_date?: string;
-    reminder_at?: string;
-}
-
 interface TimelineDrawerProps {
     isOpen: boolean;
     onClose: () => void;
     todos: Todo[];
-    onOpenTodo: (todo: Todo) => void;
+    onOpenTodo: (todo: PartialTodo) => void;
 }
 
 interface DayGroup {
@@ -47,8 +37,6 @@ interface DayGroup {
 
 // Helper function to parse timestamp and convert to local time
 const parseTimestamp = (timestamp: string): Date => {
-    // If timestamp ends with 'Z' or has no timezone, treat as UTC and convert to local
-    // If it already has timezone info, JavaScript Date will handle it
     const date = new Date(timestamp);
     return date;
 };
@@ -66,36 +54,40 @@ const TimelineDrawer: React.FC<TimelineDrawerProps> = ({ isOpen, onClose, todos,
     const [isLoading, setIsLoading] = useState(true);
     const scrollContainerRef = useRef<HTMLDivElement>(null);
 
+    // Generate activities from todos
     useEffect(() => {
         if (isOpen) {
-            fetchActivities();
+            generateActivities();
         }
-    }, [isOpen]);
+    }, [isOpen, todos]);
 
-    // Auto-scroll to bottom when activities load (to show most recent)
+    // Auto-scroll to bottom when activities load
     useEffect(() => {
         if (!isLoading && activities.length > 0 && scrollContainerRef.current) {
             scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
         }
     }, [isLoading, activities]);
 
-    const fetchActivities = async () => {
-        try {
-            setIsLoading(true);
-            const response = await api.get<ActivityLog[]>('/timeline/');
-            setActivities(response.data);
-        } catch (err) {
-            console.error('Failed to fetch timeline', err);
-        } finally {
-            setIsLoading(false);
-        }
+    const generateActivities = () => {
+        setIsLoading(true);
+
+        // Generate activity logs from todos
+        const logs: ActivityLog[] = todos.map((todo, index) => ({
+            id: index,
+            action_type: todo.is_completed ? 'COMPLETE' as const : 'CREATE' as const,
+            todo_id: todo.id,
+            metadata_snapshot: { title: todo.title },
+            timestamp: todo.created_at
+        }));
+
+        setActivities(logs);
+        setIsLoading(false);
     };
 
     const groupedActivities = useMemo((): DayGroup[] => {
         const groups: { [key: string]: ActivityLog[] } = {};
 
         activities.forEach(log => {
-            // Parse timestamp and get local date for grouping
             const localDate = parseTimestamp(log.timestamp);
             const key = format(localDate, 'yyyy-MM-dd');
             if (!groups[key]) groups[key] = [];
@@ -103,7 +95,6 @@ const TimelineDrawer: React.FC<TimelineDrawerProps> = ({ isOpen, onClose, todos,
         });
 
         return Object.entries(groups).map(([dateKey, logs]) => {
-            // Sort oldest first (top to bottom = oldest to newest)
             const sortedLogs = logs.sort((a, b) =>
                 parseTimestamp(a.timestamp).getTime() - parseTimestamp(b.timestamp).getTime()
             );
@@ -172,7 +163,7 @@ const TimelineDrawer: React.FC<TimelineDrawerProps> = ({ isOpen, onClose, todos,
     };
 
     const getDescription = (log: ActivityLog) => {
-        const title = log.metadata_Snapshot?.title || t('timeline.unknownTask');
+        const title = log.metadata_snapshot?.title || t('timeline.unknownTask');
         switch (log.action_type) {
             case 'CREATE': return t('timeline.created').replace('{title}', title);
             case 'COMPLETE': return t('timeline.completed').replace('{title}', title);

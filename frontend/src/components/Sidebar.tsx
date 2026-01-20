@@ -7,12 +7,12 @@ import {
 } from 'lucide-react';
 import { useLanguage, Language } from '../contexts/LanguageContext';
 import { useTheme, Theme } from '../contexts/ThemeContext';
-import api from '../api/client';
+import { supabase } from '../api/supabase';
 
 interface UserData {
-    id: number;
+    id: string;
     email: string;
-    nickname: string;
+    nickname?: string;
     avatar?: string;
 }
 
@@ -70,21 +70,45 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, onLogout, activeFilt
         const file = e.target.files?.[0];
         if (!file) return;
 
-        const reader = new FileReader();
-        reader.onload = async () => {
-            const base64 = reader.result as string;
-            try {
-                setIsSaving(true);
-                const response = await api.put('/users/me', { avatar: base64 });
-                onUserUpdate?.(response.data);
-                showMessage('success', t('common.success'));
-            } catch {
-                showMessage('error', t('common.error'));
-            } finally {
-                setIsSaving(false);
+        try {
+            setIsSaving(true);
+
+            // Upload avatar to Supabase Storage
+            const fileExt = file.name.split('.').pop();
+            const fileName = `${user?.id}-${Date.now()}.${fileExt}`;
+            const filePath = `avatars/${fileName}`;
+
+            const { error: uploadError } = await supabase.storage
+                .from('avatars')
+                .upload(filePath, file);
+
+            if (uploadError) {
+                throw uploadError;
             }
-        };
-        reader.readAsDataURL(file);
+
+            // Get public URL
+            const { data: { publicUrl } } = supabase.storage
+                .from('avatars')
+                .getPublicUrl(filePath);
+
+            // Update user metadata
+            const { error: updateError } = await supabase.auth.updateUser({
+                data: { avatar_url: publicUrl }
+            });
+
+            if (updateError) {
+                throw updateError;
+            }
+
+            // Notify parent
+            onUserUpdate?.({ ...user!, avatar: publicUrl });
+            showMessage('success', t('common.success'));
+        } catch (error) {
+            console.error('Error uploading avatar:', error);
+            showMessage('error', t('common.error'));
+        } finally {
+            setIsSaving(false);
+        }
     };
 
     const handleNicknameSave = async () => {
@@ -95,11 +119,19 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, onLogout, activeFilt
 
         try {
             setIsSaving(true);
-            const response = await api.put('/users/me', { nickname: nickname.trim() });
-            onUserUpdate?.(response.data);
+            const { error } = await supabase.auth.updateUser({
+                data: { nickname: nickname.trim() }
+            });
+
+            if (error) {
+                throw error;
+            }
+
+            onUserUpdate?.({ ...user!, nickname: nickname.trim() });
             setIsEditingNickname(false);
             showMessage('success', t('common.success'));
-        } catch {
+        } catch (error) {
+            console.error('Error updating nickname:', error);
             showMessage('error', t('common.error'));
         } finally {
             setIsSaving(false);
@@ -109,8 +141,18 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, onLogout, activeFilt
     const handleExport = async () => {
         try {
             setIsExporting(true);
-            const response = await api.get('/users/me/export');
-            const data = JSON.stringify(response.data, null, 2);
+
+            // Fetch all todos for export
+            const { data: todos, error } = await supabase
+                .from('todos')
+                .select('*')
+                .order('created_at', { ascending: false });
+
+            if (error) {
+                throw error;
+            }
+
+            const data = JSON.stringify(todos, null, 2);
             const blob = new Blob([data], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -121,7 +163,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, onLogout, activeFilt
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
             showMessage('success', t('settings.exported'));
-        } catch {
+        } catch (error) {
+            console.error('Error exporting data:', error);
             showMessage('error', t('common.error'));
         } finally {
             setIsExporting(false);
@@ -508,7 +551,6 @@ interface PasswordModalProps {
 }
 
 const PasswordModal: React.FC<PasswordModalProps> = ({ isOpen, onClose, onSuccess, t }) => {
-    const [currentPassword, setCurrentPassword] = useState('');
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [error, setError] = useState('');
@@ -530,31 +572,60 @@ const PasswordModal: React.FC<PasswordModalProps> = ({ isOpen, onClose, onSucces
 
         try {
             setIsLoading(true);
-            await api.put('/users/me/password', {
-                current_password: currentPassword,
-                new_password: newPassword,
-            });
-            setCurrentPassword('');
+
+            // Get current user email
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user?.email) {
+                throw new Error('No email found for user');
+            }
+
+            // Note: Supabase requires email verification or special flow for password changes
+            // For now, we'll use the reset password flow
+            const { error: resetError } = await supabase.auth.resetPasswordForEmail(
+                user.email,
+                {
+                    redirectTo: `${window.location.origin}/update-password`,
+                }
+            );
+
+            if (resetError) {
+                throw resetError;
+            }
+
             setNewPassword('');
             setConfirmPassword('');
+            showMessage('success', 'Password reset email sent. Please check your email.');
             onSuccess();
         } catch (err: any) {
-            if (err.response?.status === 400) {
-                setError(t('settings.wrongPassword'));
-            } else {
-                setError(t('common.error'));
-            }
+            console.error('Error changing password:', err);
+            setError(err.message || t('common.error'));
         } finally {
             setIsLoading(false);
         }
     };
 
     const handleClose = () => {
-        setCurrentPassword('');
         setNewPassword('');
         setConfirmPassword('');
         setError('');
         onClose();
+    };
+
+    // Get current user email
+    const [userEmail, setUserEmail] = useState('');
+    useEffect(() => {
+        supabase.auth.getUser().then(({ data: { user } }) => {
+            setUserEmail(user?.email || '');
+        });
+    }, []);
+
+    const showMessage = (type: 'success' | 'error', text: string) => {
+        // Use a toast or alert - for now just set error/success
+        if (type === 'error') {
+            setError(text);
+        } else {
+            alert(text);
+        }
     };
 
     return (
@@ -587,46 +658,11 @@ const PasswordModal: React.FC<PasswordModalProps> = ({ isOpen, onClose, onSucces
                                 </button>
                             </div>
 
+                            <div className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                                A password reset link will be sent to your email ({userEmail}).
+                            </div>
+
                             <form onSubmit={handleSubmit} className="space-y-4">
-                                <div>
-                                    <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">
-                                        {t('settings.currentPassword')}
-                                    </label>
-                                    <input
-                                        type="password"
-                                        value={currentPassword}
-                                        onChange={(e) => setCurrentPassword(e.target.value)}
-                                        className="w-full px-4 py-3 rounded-xl glass-input dark:text-gray-100"
-                                        required
-                                    />
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">
-                                        {t('settings.newPassword')}
-                                    </label>
-                                    <input
-                                        type="password"
-                                        value={newPassword}
-                                        onChange={(e) => setNewPassword(e.target.value)}
-                                        className="w-full px-4 py-3 rounded-xl glass-input dark:text-gray-100"
-                                        required
-                                    />
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">
-                                        {t('settings.confirmPassword')}
-                                    </label>
-                                    <input
-                                        type="password"
-                                        value={confirmPassword}
-                                        onChange={(e) => setConfirmPassword(e.target.value)}
-                                        className="w-full px-4 py-3 rounded-xl glass-input dark:text-gray-100"
-                                        required
-                                    />
-                                </div>
-
                                 {error && (
                                     <p className="text-red-500 text-sm">{error}</p>
                                 )}

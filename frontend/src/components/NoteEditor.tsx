@@ -1,29 +1,32 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { X, Maximize2, Minimize2, Code, Edit3, Keyboard } from 'lucide-react';
+import { X, Maximize2, Minimize2, Code, Edit3, Keyboard, Check, ChevronDown, ChevronUp } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import TiptapEditor from './TiptapEditor';
 import { useLanguage } from '../contexts/LanguageContext';
-
-interface Todo {
-    id: number;
-    title: string;
-    description?: string;
-    content?: string;
-    is_completed: boolean;
-    due_date?: string;
-    reminder_at?: string;
-}
+import { PartialTodo, EmbeddedTask } from '../api/supabase';
 
 interface NoteEditorProps {
     isOpen: boolean;
-    note: Todo | null;
+    note: PartialTodo | null;
     onSave: (content: string, title?: string) => void;
     onClose: () => void;
+    // Embedded task props
+    embeddedTasks?: EmbeddedTask[] | null;
+    onToggleEmbeddedTask?: (lineIndex: number, completed: boolean) => void;
+    onJumpToLine?: (lineIndex: number) => void;
 }
 
 type ViewMode = 'edit' | 'source';
 
-const NoteEditor: React.FC<NoteEditorProps> = ({ isOpen, note, onSave, onClose }) => {
+const NoteEditor: React.FC<NoteEditorProps> = ({
+    isOpen,
+    note,
+    onSave,
+    onClose,
+    embeddedTasks,
+    onToggleEmbeddedTask,
+    onJumpToLine
+}) => {
     const { t, language } = useLanguage();
     const [content, setContent] = useState(note?.content || '');
     const [title, setTitle] = useState(note?.title || '');
@@ -33,6 +36,8 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ isOpen, note, onSave, onClose }
     const shortcutsRef = useRef<HTMLDivElement>(null);
     // Key to force TipTap re-render when switching modes
     const [tiptapKey, setTiptapKey] = useState(0);
+    // Embedded tasks panel state
+    const [isEmbeddedTasksExpanded, setIsEmbeddedTasksExpanded] = useState(true);
 
     // Extract first H1 heading from markdown content
     const extractH1FromContent = (md: string): string | null => {
@@ -157,6 +162,80 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ isOpen, note, onSave, onClose }
         </div>
     );
 
+    // Embedded Tasks Panel Component
+    const EmbeddedTasksPanel = () => {
+        if (!embeddedTasks || embeddedTasks.length === 0) return null;
+
+        const completedCount = embeddedTasks.filter(t => t.is_completed).length;
+        const totalCount = embeddedTasks.length;
+
+        return (
+            <div className="border-t border-gray-100 dark:border-gray-700/50">
+                <button
+                    onClick={() => setIsEmbeddedTasksExpanded(!isEmbeddedTasksExpanded)}
+                    className="w-full flex items-center justify-between px-4 py-2.5 bg-gray-50/50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors"
+                >
+                    <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium text-gray-700 dark:text-gray-200">
+                            {t('embeddedTask.title')}
+                        </span>
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400">
+                            {completedCount}/{totalCount}
+                        </span>
+                    </div>
+                    {isEmbeddedTasksExpanded ? (
+                        <ChevronUp size={16} className="text-gray-400" />
+                    ) : (
+                        <ChevronDown size={16} className="text-gray-400" />
+                    )}
+                </button>
+
+                <AnimatePresence>
+                    {isEmbeddedTasksExpanded && (
+                        <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: 'auto', opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            transition={{ duration: 0.2 }}
+                            className="overflow-hidden"
+                        >
+                            <div className="max-h-48 overflow-y-auto p-2 space-y-1">
+                                {embeddedTasks.map((task) => (
+                                    <div
+                                        key={task.line_index}
+                                        onClick={() => onJumpToLine?.(task.line_index)}
+                                        className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700/50 cursor-pointer group transition-colors"
+                                    >
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                onToggleEmbeddedTask?.(task.line_index, !task.is_completed);
+                                            }}
+                                            className={`flex-shrink-0 w-4 h-4 rounded border-2 flex items-center justify-center transition-all ${
+                                                task.is_completed
+                                                    ? 'bg-indigo-500 border-indigo-500 text-white'
+                                                    : 'border-gray-300 dark:border-gray-500 group-hover:border-indigo-400'
+                                            }`}
+                                        >
+                                            {task.is_completed && <Check size={10} strokeWidth={3} />}
+                                        </button>
+                                        <span className={`flex-1 text-sm truncate transition-all ${
+                                            task.is_completed
+                                                ? 'text-gray-400 dark:text-gray-500 line-through'
+                                                : 'text-gray-700 dark:text-gray-200'
+                                        }`}>
+                                            {task.text || `Task at line ${task.line_index + 1}`}
+                                        </span>
+                                    </div>
+                                ))}
+                            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+            </div>
+        );
+    };
+
     // Render both normal mode and fullscreen overlay
     return (
         <>
@@ -201,6 +280,9 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ isOpen, note, onSave, onClose }
                         onUpdate={setContent}
                     />
                 </div>
+
+                {/* Embedded Tasks Panel */}
+                <EmbeddedTasksPanel />
             </div>
 
             {/* Fullscreen overlay */}
@@ -381,6 +463,9 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ isOpen, note, onSave, onClose }
                                         )}
                                     </AnimatePresence>
                                 </div>
+
+                                {/* Embedded Tasks Panel - Fullscreen */}
+                                <EmbeddedTasksPanel />
                             </div>
                         </motion.div>
                     </>

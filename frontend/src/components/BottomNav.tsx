@@ -11,7 +11,7 @@ interface BottomNavProps {
 
 const BottomNav: React.FC<BottomNavProps> = ({ activeTab, onTabChange }) => {
     return (
-        <div className="fixed bottom-0 left-0 right-0 z-10 pointer-events-none flex justify-center pb-4">
+        <div className="fixed bottom-0 left-0 right-0 z-10 pointer-events-none flex justify-center pb-safe">
             {/* Glass Panel */}
             <div className="glass-nav rounded-full px-6 py-2 flex items-center gap-8 pointer-events-auto mx-4 mb-2">
                 <NavButton

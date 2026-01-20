@@ -1,18 +1,8 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { StickyNote } from 'lucide-react';
+import { StickyNote, CheckSquare } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
-
-interface Todo {
-    id: number;
-    title: string;
-    description?: string;
-    content?: string;
-    is_completed: boolean;
-    is_document?: boolean;
-    due_date?: string;
-    reminder_at?: string;
-}
+import { Todo } from '../api/supabase';
 
 interface NotesViewProps {
     notes: Todo[];
@@ -66,8 +56,17 @@ const NotesView: React.FC<NotesViewProps> = ({ notes, onNoteClick }) => {
                         </p>
                     </div>
 
+                    {/* Footer with embedded task stats if present */}
                     <div className="mt-3 pt-3 border-t border-gray-50 dark:border-gray-700 flex items-center justify-between text-xs text-gray-400 dark:text-gray-500">
                         <span>{new Date(note.due_date || Date.now()).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span>
+                        {note.embedded_tasks && note.embedded_tasks.length > 0 && (
+                            <div className="flex items-center gap-1">
+                                <CheckSquare size={12} className="text-indigo-500" />
+                                <span className={note.embedded_tasks.every(t => t.is_completed) ? 'text-indigo-500' : ''}>
+                                    {note.embedded_tasks.filter(t => t.is_completed).length}/{note.embedded_tasks.length}
+                                </span>
+                            </div>
+                        )}
                     </div>
                 </motion.div>
             ))}

@@ -8,7 +8,8 @@
         "done": "完成",
         "loading": "加载中...",
         "error": "出错了",
-        "success": "成功"
+        "success": "成功",
+        "insert": "插入"
     },
     "tabs": {
         "tasks": "任务",
@@ -94,13 +95,30 @@
             "heading3": "三级标题",
             "bold": "粗体",
             "italic": "斜体",
+            "strikethrough": "删除线",
+            "subscript": "下标",
+            "superscript": "上标",
+            "math": "数学公式",
+            "link": "链接",
             "bulletList": "无序列表",
             "orderedList": "有序列表",
             "taskList": "任务列表",
+            "table": "表格",
             "blockquote": "引用",
             "codeBlock": "代码块",
             "mermaid": "Mermaid 图表",
-            "horizontalRule": "分割线"
+            "enterUrl": "请输入链接地址：",
+            "enterMath": "请输入 LaTeX 数学表达式："
+        },
+        "tableDialog": {
+            "selectSize": "选择表格尺寸"
+        },
+        "dialog": {
+            "linkTitle": "插入链接",
+            "linkPlaceholder": "https://example.com",
+            "mathTitle": "插入数学公式",
+            "mathPlaceholder": "x = \\frac{-b \\pm \\sqrt{b^2-4ac}}{2a}",
+            "invalidUrl": "请输入有效的链接地址"
         }
     },
     "timeline": {
@@ -145,11 +163,17 @@
     "confirm": {
         "deleteTask": "确定要删除这个任务吗？"
     },
+    "network": {
+        "online": "已恢复在线，正在同步...",
+        "offline": "您已离线。连接恢复后将自动同步。"
+    },
     "embeddedTask": {
         "title": "文档内嵌任务",
         "from": "来自",
         "jumpToDoc": "跳转到文档",
         "noTasks": "暂无内嵌任务",
-        "updateFailed": "更新任务状态失败"
+        "updateFailed": "更新任务状态失败",
+        "tasksCount": "{completed}/{total} 个任务已完成",
+        "emptyState": "此文档暂无任务"
     }
 }

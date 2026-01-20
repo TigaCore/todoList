@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import api from '../api/client';
+import { supabase, Todo, PartialTodo, DocTask } from '../api/supabase';
 import { Plus, Search, Menu, PenLine, Maximize2, History } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import TodoItem from '../components/TodoItem';
@@ -12,32 +12,33 @@ import NotesView from '../components/NotesView';
 import TimelineDrawer from '../components/TimelineDrawer';
 import Toast, { ToastMessage, ToastType } from '../components/Toast';
 import ConfirmDialog from '../components/ConfirmDialog';
+import { SkeletonList, SkeletonGrid } from '../components/Skeleton';
 import { LocalNotifications } from '@capacitor/local-notifications';
 import { isToday, parseISO, format } from 'date-fns';
 import { useLanguage } from '../contexts/LanguageContext';
+import { parseMarkdownTasks, updateMarkdownTask } from '../utils/markdownTasks';
 
-interface EmbeddedTask {
-    line_index: number;
-    text: string;
-    is_completed: boolean;
-}
+// Realtime event payload type
+type RealtimePayload = {
+    eventType: 'INSERT' | 'UPDATE' | 'DELETE';
+    new: Todo | null;
+    old: Todo | null;
+    schema: string;
+    table: string;
+    commit_timestamp: string;
+};
 
-interface Todo {
-    id: number;
-    title: string;
-    description?: string;
-    content?: string;
-    is_completed: boolean;
-    is_document?: boolean;
-    due_date?: string;
-    reminder_at?: string;
-    embedded_tasks?: EmbeddedTask[];
-}
+// EmbeddedTask type is now imported from supabase.ts
+// interface EmbeddedTask {
+//     line_index: number;
+//     text: string;
+//     is_completed: boolean;
+// }
 
 interface User {
-    id: number;
+    id: string;
     email: string;
-    nickname: string;
+    nickname?: string;
     avatar?: string;
 }
 
@@ -45,6 +46,7 @@ const Dashboard = () => {
     const navigate = useNavigate();
     const { t } = useLanguage();
     const [todos, setTodos] = useState<Todo[]>([]);
+    const [docTasks, setDocTasks] = useState<DocTask[]>([]);
     const [user, setUser] = useState<User | null>(null);
     const [title, setTitle] = useState('');
     const [filter, setFilter] = useState<'all' | 'today' | 'upcoming' | 'completed'>('all');
@@ -52,15 +54,16 @@ const Dashboard = () => {
     const [isInputOpen, setIsInputOpen] = useState(false);
     const [isTimelineOpen, setIsTimelineOpen] = useState(false);
     const [isAddingTodo, setIsAddingTodo] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
 
     // Bottom Navigation State
     const [activeTab, setActiveTab] = useState<Tab>('tasks');
 
     // Notes Editor State
-    const [editingNote, setEditingNote] = useState<Todo | null>(null);
+    const [editingNote, setEditingNote] = useState<PartialTodo | null>(null);
 
     // Date Picker State
-    const [datePickerTodo, setDatePickerTodo] = useState<Todo | null>(null);
+    const [datePickerTodo, setDatePickerTodo] = useState<PartialTodo | null>(null);
 
     // Toast State
     const [toasts, setToasts] = useState<ToastMessage[]>([]);
@@ -74,6 +77,10 @@ const Dashboard = () => {
 
     // Web Notification Timers
     const notificationTimers = useRef<{ [key: number]: NodeJS.Timeout }>({});
+
+    // Network Status
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const [, setIsOnline] = useState(true);
 
     // Toast Helper Functions
     const showToast = useCallback((type: ToastType, message: string) => {
@@ -98,20 +105,142 @@ const Dashboard = () => {
         setConfirmDialog({ isOpen: false, message: '', onConfirm: () => { } });
     }, []);
 
-    useEffect(() => {
-        fetchTodos();
-        fetchUser();
-        requestNotificationPermission();
+    // Realtime subscription ref
+    const realtimeChannel = useRef<any>(null);
+
+    // Parse document tasks from todos with content
+    const updateDocTasks = useCallback((todos: Todo[]) => {
+        const tasks: DocTask[] = [];
+        todos.forEach(todo => {
+            // Parse tasks from document content
+            if (todo.content) {
+                const parsedTasks = parseMarkdownTasks(todo.content);
+                parsedTasks.forEach(task => {
+                    tasks.push({
+                        docId: todo.id,
+                        docTitle: todo.title,
+                        lineIndex: task.lineIndex,
+                        text: task.text,
+                        isCompleted: task.isCompleted
+                    });
+                });
+            }
+        });
+        setDocTasks(tasks);
     }, []);
 
-    const fetchUser = async () => {
-        try {
-            const response = await api.get<User>('/users/me');
-            setUser(response.data);
-        } catch (error) {
-            console.error('Error fetching user:', error);
+    // Handle realtime changes from Supabase
+    const handleRealtimeChange = useCallback((payload: RealtimePayload) => {
+        switch (payload.eventType) {
+            case 'INSERT':
+                // Add new todo to the list
+                if (payload.new) {
+                    setTodos(prev => {
+                        const updated = [payload.new!, ...prev];
+                        updateDocTasks(updated);
+                        return updated;
+                    });
+                }
+                break;
+            case 'UPDATE':
+                // Update existing todo
+                if (payload.new) {
+                    setTodos(prev => {
+                        const updated = prev.map(t =>
+                            t.id === payload.new!.id ? payload.new! : t
+                        );
+                        updateDocTasks(updated);
+                        return updated;
+                    });
+                }
+                break;
+            case 'DELETE':
+                // Remove deleted todo
+                if (payload.old) {
+                    setTodos(prev => {
+                        const updated = prev.filter(t => t.id !== payload.old!.id);
+                        updateDocTasks(updated);
+                        return updated;
+                    });
+                }
+                break;
         }
-    };
+    }, [updateDocTasks]);
+
+    // Setup realtime subscription
+    const setupRealtimeSubscription = useCallback((userId: string) => {
+        console.log('Setting up realtime subscription for user:', userId);
+
+        // Clean up existing subscription if any
+        if (realtimeChannel.current) {
+            console.log('Removing existing realtime channel');
+            supabase.removeChannel(realtimeChannel.current);
+        }
+
+        const channel = supabase
+            .channel('todos-realtime')
+            .on('postgres_changes' as any, {
+                event: '*',
+                schema: 'public',
+                table: 'todos',
+                filter: `user_id=eq.${userId}`
+            }, (payload: RealtimePayload) => {
+                console.log('Realtime payload received:', payload.eventType, payload);
+                handleRealtimeChange(payload);
+            })
+            .subscribe((status) => {
+                console.log('Realtime subscription status:', status);
+                if (status === 'SUBSCRIBED') {
+                    console.log('Realtime subscription established successfully');
+                } else if (status === 'CHANNEL_ERROR') {
+                    console.error('Realtime subscription error');
+                } else if (status === 'CLOSED') {
+                    console.log('Realtime subscription closed');
+                }
+            });
+
+        realtimeChannel.current = channel;
+    }, [handleRealtimeChange]);
+
+    // Clean up realtime subscription
+    const cleanupRealtime = useCallback(() => {
+        if (realtimeChannel.current) {
+            supabase.removeChannel(realtimeChannel.current);
+            realtimeChannel.current = null;
+        }
+    }, []);
+
+    const fetchTodos = useCallback(async () => {
+        setIsLoading(true);
+        try {
+            const { data, error } = await supabase
+                .from('todos')
+                .select('*')
+                .order('created_at', { ascending: false });
+
+            if (error) {
+                console.error('Error fetching todos:', error);
+                console.error('Supabase error details:', {
+                    message: error.message,
+                    code: error.code,
+                    details: error.details,
+                    hint: error.hint
+                });
+                // If unauthorized, redirect to login
+                if (error.code === 'PGRST301' || error.message.includes('401') || error.message.includes('unauthorized')) {
+                    navigate('/login');
+                }
+            } else {
+                setTodos(data || []);
+                // Parse document tasks from todos
+                updateDocTasks(data || []);
+            }
+        } catch (error) {
+            console.error('Error fetching todos:', error);
+        } finally {
+            setIsLoading(false);
+        }
+    }, [navigate, updateDocTasks]);
 
     const requestNotificationPermission = async () => {
         // Request Web Notification permission parallely
@@ -125,6 +254,71 @@ const Dashboard = () => {
             console.log('Capacitor Notifications not supported');
         }
     };
+
+    // Get current user
+    const getCurrentUser = async () => {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user) {
+            setUser({
+                id: session.user.id,
+                email: session.user.email || '',
+                nickname: session.user.user_metadata.nickname,
+                avatar: session.user.user_metadata.avatar_url
+            });
+            // Setup realtime subscription
+            setupRealtimeSubscription(session.user.id);
+        }
+    };
+
+    useEffect(() => {
+        getCurrentUser();
+        fetchTodos();
+        requestNotificationPermission();
+
+        // Listen for auth state changes
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+            if (session?.user) {
+                setUser({
+                    id: session.user.id,
+                    email: session.user.email || '',
+                    nickname: session.user.user_metadata.nickname,
+                    avatar: session.user.user_metadata.avatar_url
+                });
+                // Setup realtime subscription for this user
+                setupRealtimeSubscription(session.user.id);
+            } else {
+                setUser(null);
+                cleanupRealtime();
+                navigate('/login');
+            }
+        });
+
+        // Network status listener
+        const handleOnline = () => {
+            setIsOnline(true);
+            showToast('success', t('network.online'));
+            // Refresh data when coming back online
+            fetchTodos();
+        };
+
+        const handleOffline = () => {
+            setIsOnline(false);
+            showToast('warning', t('network.offline'));
+        };
+
+        window.addEventListener('online', handleOnline);
+        window.addEventListener('offline', handleOffline);
+
+        // Check initial network status
+        setIsOnline(navigator.onLine);
+
+        return () => {
+            subscription.unsubscribe();
+            window.removeEventListener('online', handleOnline);
+            window.removeEventListener('offline', handleOffline);
+            cleanupRealtime();
+        };
+    }, [navigate, showToast, t, setupRealtimeSubscription, cleanupRealtime]);
 
     const scheduleWebNotification = async (task: Todo, date: Date) => {
         if (!('Notification' in window)) return;
@@ -143,7 +337,6 @@ const Dashboard = () => {
                 clearTimeout(notificationTimers.current[task.id]);
             }
 
-            // Schedule new timer
             // Schedule new timer
             const timerId = setTimeout(() => {
                 let body = task.title;
@@ -166,22 +359,9 @@ const Dashboard = () => {
                     body: body,
                     icon: '/pwa-192x192.png' // Use PWA icon
                 });
-                // Play a sound if desired, or just notification
             }, delay);
 
             notificationTimers.current[task.id] = timerId;
-        }
-    };
-
-    const fetchTodos = async () => {
-        try {
-            const response = await api.get<Todo[]>('/todos/');
-            setTodos(response.data);
-        } catch (error) {
-            console.error('Error fetching todos:', error);
-            if ((error as any).response?.status === 401) {
-                navigate('/login');
-            }
         }
     };
 
@@ -189,12 +369,22 @@ const Dashboard = () => {
         e.preventDefault();
         if (!title.trim() || isAddingTodo) return;
 
+        // Check if user is authenticated
+        if (!user?.id) {
+            console.error('User not authenticated, cannot add todo');
+            showToast('error', 'Please log in again to add tasks');
+            navigate('/login');
+            return;
+        }
+
         const tempTitle = title;
         const tempId = -Date.now(); // Temporary negative ID to avoid conflicts
         const optimisticTodo: Todo = {
             id: tempId,
+            user_id: user?.id || '',
             title: tempTitle,
-            is_completed: false
+            is_completed: false,
+            created_at: new Date().toISOString()
         };
 
         // Optimistic update - immediately show the new task
@@ -204,36 +394,65 @@ const Dashboard = () => {
         setIsAddingTodo(true);
 
         try {
-            const response = await api.post<Todo>('/todos/', {
-                title: tempTitle,
-                is_completed: false
-            });
+            const { data, error } = await supabase
+                .from('todos')
+                .insert([{
+                    title: tempTitle,
+                    is_completed: false,
+                    user_id: user?.id
+                }])
+                .select()
+                .single();
+
+            if (error) {
+                throw error;
+            }
+
             // Replace the temporary todo with the real one from the server
-            setTodos(prev => prev.map(t => t.id === tempId ? response.data : t));
-        } catch (error) {
+            setTodos(prev => prev.map(t => t.id === tempId ? data : t));
+        } catch (error: any) {
             console.error('Error adding todo:', error);
+            // Show detailed error from Supabase
+            const errorMessage = error.message || error.error_description || 'Failed to add task';
+            console.error('Supabase error details:', {
+                message: error.message,
+                code: error.code,
+                details: error.details,
+                hint: error.hint
+            });
             // Rollback - remove the optimistic todo
             setTodos(prev => prev.filter(t => t.id !== tempId));
             // Restore the title for the user to retry
             setTitle(tempTitle);
             setIsInputOpen(true);
-            showToast('error', t('toast.addTaskFailed'));
+            showToast('error', `${t('toast.addTaskFailed')}: ${errorMessage}`);
         } finally {
             setIsAddingTodo(false);
         }
     };
 
     const handleToggle = async (id: number, currentStatus: boolean) => {
+        // Don't toggle temp IDs
+        if (id < 0) return;
+
         // Optimistic update - immediately toggle the status
         const previousTodos = todos;
         setTodos(prev => prev.map(t => t.id === id ? { ...t, is_completed: !currentStatus } : t));
 
         try {
-            const response = await api.put<Todo>(`/todos/${id}`, {
-                is_completed: !currentStatus
-            });
+            const { data, error } = await supabase
+                .from('todos')
+                .update({ is_completed: !currentStatus })
+                .eq('id', id)
+                .select()
+                .single();
+
+            if (error) {
+                throw error;
+            }
+
             // Update with server response to ensure data consistency
-            setTodos(prev => prev.map(t => t.id === id ? response.data : t));
+            setTodos(prev => prev.map(t => t.id === id ? data : t));
         } catch (error) {
             console.error('Error toggling todo:', error);
             // Rollback on error
@@ -256,7 +475,15 @@ const Dashboard = () => {
             setTodos(prev => prev.filter(t => t.id !== id));
 
             try {
-                await api.delete(`/todos/${id}`);
+                const { error } = await supabase
+                    .from('todos')
+                    .delete()
+                    .eq('id', id);
+
+                if (error) {
+                    throw error;
+                }
+
                 showToast('success', t('toast.taskDeleted'));
             } catch (error) {
                 console.error('Error deleting todo:', error);
@@ -267,60 +494,105 @@ const Dashboard = () => {
         });
     };
 
-    const handleSaveNote = async (content: string, title?: string) => {
-        if (!editingNote) return;
+    const handleSaveNote = async (content: string, noteTitle?: string) => {
+        if (!editingNote || !user) return;
 
         const previousTodos = todos;
         const noteToSave = editingNote;
-        const finalTitle = title || editingNote.title || 'Untitled';
+        const finalTitle = noteTitle || editingNote.title || 'Untitled';
 
-        if (editingNote.id === 0) {
+        if (editingNote.id === 0 || editingNote.id < 0) {
             // Create new Note or Document - optimistic update
-            const tempId = -Date.now();
+            const tempId = editingNote.id;
             const optimisticNote: Todo = {
                 id: tempId,
+                user_id: user.id,
                 title: finalTitle,
                 content: content,
                 is_completed: false,
-                is_document: editingNote.is_document || false
+                is_document: editingNote.is_document || false,
+                created_at: new Date().toISOString()
             };
-            setTodos([optimisticNote, ...todos]);
+            const updatedTodos = [optimisticNote, ...todos];
+            setTodos(updatedTodos);
+            updateDocTasks(updatedTodos); // Update doc tasks immediately
             setEditingNote(null);
 
             try {
-                const response = await api.post<Todo>('/todos/', {
-                    title: finalTitle,
-                    content: content,
-                    is_completed: false,
-                    is_document: noteToSave.is_document || false
-                });
+                const { data, error } = await supabase
+                    .from('todos')
+                    .insert([{
+                        title: finalTitle,
+                        content: content,
+                        is_completed: false,
+                        is_document: editingNote.is_document || false,
+                        user_id: user.id
+                    }])
+                    .select()
+                    .single();
+
+                if (error) {
+                    throw error;
+                }
+
                 // Replace temp note with server response
-                setTodos(prev => prev.map(t => t.id === tempId ? response.data : t));
-            } catch (error) {
+                setTodos(prev => {
+                    const updated = prev.map(t => t.id === tempId ? data : t);
+                    updateDocTasks(updated);
+                    return updated;
+                });
+            } catch (error: any) {
                 console.error('Error saving note:', error);
+                console.error('Supabase error details:', {
+                    message: error.message,
+                    code: error.code,
+                    details: error.details,
+                    hint: error.hint
+                });
                 // Rollback
                 setTodos(previousTodos);
                 setEditingNote(noteToSave);
-                showToast('error', t('toast.saveNoteFailed'));
+                showToast('error', `${t('toast.saveNoteFailed')}: ${error.message || ''}`);
             }
         } else {
             // Update existing Note - optimistic update
-            setTodos(prev => prev.map(t => t.id === editingNote.id ? { ...t, content, title: finalTitle } : t));
+            setTodos(prev => {
+                const updated = prev.map(t => t.id === editingNote.id ? { ...t, content, title: finalTitle } : t);
+                updateDocTasks(updated); // Update doc tasks immediately
+                return updated;
+            });
             setEditingNote(null);
 
             try {
-                const response = await api.put<Todo>(`/todos/${noteToSave.id}`, {
-                    content,
-                    title: finalTitle
-                });
+                const { data, error } = await supabase
+                    .from('todos')
+                    .update({ content, title: finalTitle })
+                    .eq('id', noteToSave.id)
+                    .select()
+                    .single();
+
+                if (error) {
+                    throw error;
+                }
+
                 // Update with server response
-                setTodos(prev => prev.map(t => t.id === noteToSave.id ? response.data : t));
-            } catch (error) {
+                setTodos(prev => {
+                    const updated = prev.map(t => t.id === noteToSave.id ? data : t);
+                    updateDocTasks(updated);
+                    return updated;
+                });
+            } catch (error: any) {
                 console.error('Error saving note:', error);
+                console.error('Supabase error details:', {
+                    message: error.message,
+                    code: error.code,
+                    details: error.details,
+                    hint: error.hint
+                });
                 // Rollback
                 setTodos(previousTodos);
                 setEditingNote(noteToSave);
-                showToast('error', t('toast.saveNoteFailed'));
+                showToast('error', `${t('toast.saveNoteFailed')}: ${error.message || ''}`);
             }
         }
     };
@@ -331,17 +603,24 @@ const Dashboard = () => {
         setTodos(prev => prev.map(t => t.id === id ? { ...t, due_date: dateStr, reminder_at: dateStr } : t));
 
         try {
-            const response = await api.put<Todo>(`/todos/${id}`, {
-                due_date: dateStr,
-                reminder_at: dateStr
-            });
+            const { data, error } = await supabase
+                .from('todos')
+                .update({ due_date: dateStr, reminder_at: dateStr })
+                .eq('id', id)
+                .select()
+                .single();
+
+            if (error) {
+                throw error;
+            }
+
             // Update with server response
-            setTodos(prev => prev.map(t => t.id === id ? response.data : t));
+            setTodos(prev => prev.map(t => t.id === id ? data : t));
 
             const date = new Date(dateStr);
             if (date > new Date()) {
                 // Schedule Web Notification (Browser)
-                scheduleWebNotification(response.data, date);
+                scheduleWebNotification(data, date);
 
                 // Schedule Capacitor Notification (Mobile/Native)
                 try {
@@ -349,7 +628,7 @@ const Dashboard = () => {
                         notifications: [
                             {
                                 title: "Task Reminder",
-                                body: response.data.title,
+                                body: data.title,
                                 id: id,
                                 schedule: { at: date },
                             }
@@ -381,15 +660,63 @@ const Dashboard = () => {
         }));
 
         try {
-            const response = await api.patch<Todo>(`/todos/${todoId}/embedded-task`, {
-                line_index: lineIndex,
-                is_completed: completed
-            });
+            const { data, error } = await supabase
+                .from('todos')
+                .update({
+                    embedded_tasks: todos.find(t => t.id === todoId)?.embedded_tasks
+                })
+                .eq('id', todoId)
+                .select()
+                .single();
+
+            if (error) {
+                throw error;
+            }
+
             // Update with server response
-            setTodos(prev => prev.map(t => t.id === todoId ? response.data : t));
+            setTodos(prev => prev.map(t => t.id === todoId ? data : t));
         } catch (error) {
             console.error('Error updating embedded task:', error);
             setTodos(previousTodos);
+            showToast('error', t('embeddedTask.updateFailed'));
+        }
+    };
+
+    // Toggle document task (from markdown) and update document content
+    const handleDocTaskToggle = async (docId: number, lineIndex: number, completed: boolean) => {
+        const doc = todos.find(t => t.id === docId);
+        if (!doc?.content) return;
+
+        // Optimistic update - update the docTasks state
+        const previousDocTasks = docTasks;
+        setDocTasks(prev => prev.map(task =>
+            task.docId === docId && task.lineIndex === lineIndex
+                ? { ...task, isCompleted: completed }
+                : task
+        ));
+
+        try {
+            // Update the markdown content
+            const updatedContent = updateMarkdownTask(doc.content, lineIndex, completed);
+
+            // Update the document in database
+            const { data, error } = await supabase
+                .from('todos')
+                .update({ content: updatedContent })
+                .eq('id', docId)
+                .select()
+                .single();
+
+            if (error) {
+                throw error;
+            }
+
+            // Update the todo in state with server response
+            setTodos(prev => prev.map(t => t.id === docId ? data : t));
+        } catch (error) {
+            console.error('Error toggling document task:', error);
+            // Rollback on error
+            setDocTasks(previousDocTasks);
             showToast('error', t('embeddedTask.updateFailed'));
         }
     };
@@ -404,26 +731,10 @@ const Dashboard = () => {
         }
     };
 
-    // Collect all embedded tasks and convert to Todo-like objects
-    const embeddedTasksAsTodos = todos.flatMap(todo =>
-        (todo.embedded_tasks || []).map(task => ({
-            // Use negative ID to avoid conflicts: -(todoId * 10000 + lineIndex)
-            id: -(todo.id * 10000 + task.line_index),
-            title: task.text,
-            is_completed: task.is_completed,
-            // Include source todo's due_date for reminder indicator
-            due_date: todo.due_date,
-            reminder_at: todo.reminder_at,
-            // Mark as embedded with metadata
-            _isEmbedded: true,
-            _sourceTodoId: todo.id,
-            _sourceLineIndex: task.line_index,
-            _sourceDocTitle: todo.title
-        }))
-    ) as (Todo & { _isEmbedded: boolean; _sourceTodoId: number; _sourceLineIndex: number; _sourceDocTitle: string })[];
-
-    const handleLogout = () => {
-        localStorage.removeItem('token');
+    const handleLogout = async () => {
+        await supabase.auth.signOut();
+        localStorage.removeItem('supabase-token');
+        localStorage.removeItem('supabase-refresh-token');
         navigate('/login');
     };
 
@@ -443,17 +754,22 @@ const Dashboard = () => {
         return filter === 'all';
     });
 
-    // Filter embedded tasks similarly (only show in 'all' or 'completed' filters for now)
-    const filteredEmbeddedTasks = embeddedTasksAsTodos.filter(task => {
-        if (filter === 'completed') return task.is_completed;
-        return filter === 'all';
+    // Filter document tasks based on current filter
+    const filteredDocTasks = docTasks.filter(task => {
+        if (filter === 'completed') return task.isCompleted;
+        return !task.isCompleted || filter === 'all';
     });
 
-    // Combine regular todos with embedded tasks and sort
-    // Sort logic: Uncompleted first, then Completed
-    const combinedTasks = [...filteredTodos, ...filteredEmbeddedTasks].sort((a, b) => {
-        if (a.is_completed === b.is_completed) return 0;
-        return a.is_completed ? 1 : -1;
+    // Task list - standalone tasks + document tasks
+    // Map document tasks to TodoItem format
+    const taskList = [
+        ...filteredTodos,
+        ...filteredDocTasks
+    ].sort((a, b) => {
+        const aCompleted = 'is_completed' in a ? a.is_completed : a.isCompleted;
+        const bCompleted = 'is_completed' in b ? b.is_completed : b.isCompleted;
+        if (aCompleted === bCompleted) return 0;
+        return aCompleted ? 1 : -1;
     });
 
     const getFilterTitle = () => {
@@ -530,45 +846,10 @@ const Dashboard = () => {
                         }}
                         className="space-y-3 pb-20 origin-top"
                     >
-                        {combinedTasks.map((task, index) => {
-                            const isEmbedded = '_isEmbedded' in task && task._isEmbedded;
-
-                            if (isEmbedded) {
-                                const embeddedTask = task as typeof task & { _sourceTodoId: number; _sourceLineIndex: number; _sourceDocTitle: string };
-                                return (
-                                    <TodoItem
-                                        key={task.id}
-                                        todo={task}
-                                        index={index}
-                                        onToggle={() => handleEmbeddedTaskToggle(embeddedTask._sourceTodoId, embeddedTask._sourceLineIndex, !task.is_completed)}
-                                        onDelete={() => { }}
-                                        onOpenNotes={() => handleJumpToDoc(embeddedTask._sourceTodoId, embeddedTask._sourceLineIndex)}
-                                        onOpenDatePicker={() => {
-                                            // Find the source todo for setting reminder
-                                            const sourceTodo = todos.find(t => t.id === embeddedTask._sourceTodoId);
-                                            if (sourceTodo) setDatePickerTodo(sourceTodo);
-                                        }}
-                                        isEmbedded={true}
-                                        sourceDocTitle={embeddedTask._sourceDocTitle}
-                                        onJumpToDoc={() => handleJumpToDoc(embeddedTask._sourceTodoId, embeddedTask._sourceLineIndex)}
-                                    />
-                                );
-                            }
-
-                            return (
-                                <TodoItem
-                                    key={task.id}
-                                    todo={task}
-                                    index={index}
-                                    onToggle={handleToggle}
-                                    onDelete={handleDelete}
-                                    onOpenNotes={(t) => setEditingNote(t)}
-                                    onOpenDatePicker={(t) => setDatePickerTodo(t)}
-                                />
-                            );
-                        })}
-
-                        {combinedTasks.length === 0 && (
+                        {/* Loading skeleton */}
+                        {isLoading ? (
+                            <SkeletonList count={5} />
+                        ) : taskList.length === 0 ? (
                             <motion.div
                                 initial={{ opacity: 0, scale: 0.9, y: 20 }}
                                 animate={{
@@ -588,6 +869,25 @@ const Dashboard = () => {
                                 </div>
                                 <p>No tasks found in "{getFilterTitle()}"</p>
                             </motion.div>
+                        ) : (
+                            taskList.map((task, index) => {
+                                // Check if this is a document task or regular todo
+                                const isDocTask = 'docId' in task;
+                                return (
+                                    <TodoItem
+                                        key={isDocTask ? `doc-${task.docId}-${task.lineIndex}` : task.id}
+                                        docTask={isDocTask ? task as DocTask : undefined}
+                                        todo={isDocTask ? undefined : task as Todo}
+                                        index={index}
+                                        onToggle={handleToggle}
+                                        onDocTaskToggle={handleDocTaskToggle}
+                                        onDelete={handleDelete}
+                                        onOpenNotes={(t) => setEditingNote(t)}
+                                        onOpenDatePicker={(t) => setDatePickerTodo(t)}
+                                        onJumpToDoc={handleJumpToDoc}
+                                    />
+                                );
+                            })
                         )}
                     </motion.div>
 
@@ -612,10 +912,15 @@ const Dashboard = () => {
                         }}
                         className="pb-20 origin-top"
                     >
-                        <NotesView
-                            notes={todos}
-                            onNoteClick={(t) => setEditingNote(t)}
-                        />
+                        {/* Loading skeleton */}
+                        {isLoading ? (
+                            <SkeletonGrid count={6} />
+                        ) : (
+                            <NotesView
+                                notes={todos}
+                                onNoteClick={(t) => setEditingNote(t)}
+                            />
+                        )}
                     </motion.div>
                 </div>
             </main>
@@ -673,9 +978,11 @@ const Dashboard = () => {
                                             // Open full editor with current title
                                             const newNote = {
                                                 id: 0, // Temp ID
+                                                user_id: user?.id || '',
                                                 title: title,
                                                 is_completed: false,
-                                                content: ''
+                                                content: '',
+                                                created_at: new Date().toISOString()
                                             };
                                             setEditingNote(newNote as Todo);
                                             setTitle('');
@@ -720,10 +1027,12 @@ const Dashboard = () => {
                                     // Open Note Editor directly for new document
                                     setEditingNote({
                                         id: 0,
+                                        user_id: user?.id || '',
                                         title: '',
                                         is_completed: false,
                                         is_document: true,  // This is a standalone document
-                                        content: ''
+                                        content: '',
+                                        created_at: new Date().toISOString()
                                     } as Todo);
                                 } else {
                                     // Open Quick Input
@@ -812,6 +1121,11 @@ const Dashboard = () => {
                                         note={editingNote}
                                         onSave={handleSaveNote}
                                         onClose={() => setEditingNote(null)}
+                                        embeddedTasks={editingNote?.embedded_tasks || null}
+                                        onToggleEmbeddedTask={(lineIndex, completed) =>
+                                            handleEmbeddedTaskToggle(editingNote.id, lineIndex, completed)
+                                        }
+                                        onJumpToLine={(lineIndex) => handleJumpToDoc(editingNote.id, lineIndex)}
                                     />
                                 </div>
                             </motion.div>

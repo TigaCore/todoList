@@ -7,7 +7,7 @@ import { LanguageProvider } from './contexts/LanguageContext'
 
 function App() {
     const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem('supabase-token');
         return token ? children : <Navigate to="/login" />;
     };
 

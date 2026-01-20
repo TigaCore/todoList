@@ -2,6 +2,15 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Safe area padding for notched devices */
+.pb-safe {
+    padding-bottom: calc(1rem + env(safe-area-inset-bottom));
+}
+
+.pb-safe-md {
+    padding-bottom: calc(1.5rem + env(safe-area-inset-bottom));
+}
+
 /* Tiptap Task List Styles */
 .ProseMirror ul[data-type="taskList"] {
   list-style: none !important;
@@ -384,4 +393,31 @@
 
 .hljs-strong {
   font-weight: bold;
+}
+
+/* KaTeX Math Formula Styles */
+.math-inline {
+  @apply text-indigo-600 dark:text-indigo-400;
+  font-style: italic;
+}
+
+.math-block {
+  @apply my-4 text-center;
+}
+
+.math-error {
+  @apply text-red-500 font-mono text-sm;
+}
+
+/* Ensure KaTeX renders correctly in dark mode */
+.dark .katex {
+  color: #9ca3af !important;
+}
+
+.dark .katex .mathit {
+  color: #a5b4fc !important;
+}
+
+.dark .katex .mathbf {
+  color: #c4b5fd !important;
 }

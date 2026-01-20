@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import api from '../api/client';
+import { supabase } from '../api/supabase';
 import { motion } from 'framer-motion';
 import { ArrowRight, Mail, Lock } from 'lucide-react';
+import OAuthButtons from '../components/OAuthButtons';
 
 const Login = () => {
     const [email, setEmail] = useState('');
@@ -16,11 +17,25 @@ const Login = () => {
         setError('');
         setIsLoading(true);
         try {
-            const response = await api.post('/users/login', { email, password });
-            localStorage.setItem('token', response.data.access_token);
+            const { data, error: authError } = await supabase.auth.signInWithPassword({
+                email,
+                password
+            });
+
+            if (authError) {
+                throw authError;
+            }
+
+            // Store the session token
+            if (data.session) {
+                localStorage.setItem('supabase-token', data.session.access_token);
+                localStorage.setItem('supabase-refresh-token', data.session.refresh_token);
+            }
+
             navigate('/');
         } catch (err: any) {
-            setError('Invalid email or password');
+            console.error('Login error:', err);
+            setError(err.message || 'Invalid email or password');
         } finally {
             setIsLoading(false);
         }
@@ -138,11 +153,40 @@ const Login = () => {
                     </motion.button>
                 </motion.form>
 
+                {/* Divider */}
+                <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.2 }}
+                    className="relative my-6"
+                >
+                    <div className="absolute inset-0 flex items-center">
+                        <div className="w-full border-t border-gray-300/50"></div>
+                    </div>
+                    <div className="relative flex justify-center text-sm">
+                        <span className="px-4 bg-gradient-to-r from-transparent via-white/50 to-transparent text-gray-400">
+                            Or continue with
+                        </span>
+                    </div>
+                </motion.div>
+
+                {/* OAuth Buttons */}
+                <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.25 }}
+                >
+                    <OAuthButtons
+                        onSuccess={() => navigate('/')}
+                        onError={(err) => setError(err)}
+                    />
+                </motion.div>
+
                 {/* Sign Up Link */}
                 <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    transition={{ delay: 0.3 }}
+                    transition={{ delay: 0.4 }}
                     className="mt-8 text-center"
                 >
                     <p className="text-gray-500 text-sm">
@@ -158,23 +202,29 @@ const Login = () => {
                     <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
-                        transition={{ delay: 0.5 }}
+                        transition={{ delay: 0.6 }}
                         className="mt-6 pt-6 border-t border-white/30"
                     >
                         <button
                             type="button"
                             onClick={() => {
-                                setEmail(import.meta.env.VITE_DEV_EMAIL || 'test@example.com');
-                                setPassword(import.meta.env.VITE_DEV_PASSWORD || 'password');
                                 const devEmail = import.meta.env.VITE_DEV_EMAIL || 'test@example.com';
                                 const devPass = import.meta.env.VITE_DEV_PASSWORD || 'password';
                                 setEmail(devEmail);
                                 setPassword(devPass);
 
                                 setIsLoading(true);
-                                api.post('/users/login', { email: devEmail, password: devPass })
-                                    .then(response => {
-                                        localStorage.setItem('token', response.data.access_token);
+                                supabase.auth.signInWithPassword({ email: devEmail, password: devPass })
+                                    .then(({ data, error }) => {
+                                        if (error) {
+                                            setError('Dev login failed: ' + error.message);
+                                            setIsLoading(false);
+                                            return;
+                                        }
+                                        if (data.session) {
+                                            localStorage.setItem('supabase-token', data.session.access_token);
+                                            localStorage.setItem('supabase-refresh-token', data.session.refresh_token);
+                                        }
                                         navigate('/');
                                     })
                                     .catch(() => {
