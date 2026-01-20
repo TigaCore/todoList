@@ -133,7 +133,7 @@ const TodoItem = React.forwardRef<HTMLDivElement, TodoItemProps>(({
                         <button
                             onClick={(e) => { e.stopPropagation(); onOpenNotes?.(todo!); }}
                             className="p-2 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-                            title="Edit Notes"
+                            title={t('tasks.editNotes')}
                         >
                             <FileText size={18} />
                         </button>
@@ -141,7 +141,7 @@ const TodoItem = React.forwardRef<HTMLDivElement, TodoItemProps>(({
                         <button
                             onClick={(e) => { e.stopPropagation(); onOpenDatePicker?.(todo!); }}
                             className="p-2 text-gray-400 hover:text-orange-500 dark:hover:text-orange-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-                            title="Set Reminder"
+                            title={t('tasks.setReminder')}
                         >
                             <Bell size={18} />
                         </button>
@@ -161,7 +161,7 @@ const TodoItem = React.forwardRef<HTMLDivElement, TodoItemProps>(({
                         <button
                             onClick={(e) => { e.stopPropagation(); onJumpToDoc?.(docTask!.docId, docTask!.lineIndex); }}
                             className="p-2 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-lg transition-colors"
-                            title="Jump to Document"
+                            title={t('tasks.jumpToDocument')}
                         >
                             <ExternalLink size={18} />
                         </button>

@@ -14,7 +14,7 @@ import Toast, { ToastMessage, ToastType } from '../components/Toast';
 import ConfirmDialog from '../components/ConfirmDialog';
 import { SkeletonList, SkeletonGrid } from '../components/Skeleton';
 import { LocalNotifications } from '@capacitor/local-notifications';
-import { isToday, parseISO, format } from 'date-fns';
+import { isToday, parseISO } from 'date-fns';
 import { useLanguage } from '../contexts/LanguageContext';
 import { parseMarkdownTasks, updateMarkdownTask } from '../utils/markdownTasks';
 
@@ -867,7 +867,7 @@ const Dashboard = () => {
                                 <div className="w-32 h-32 bg-indigo-100 rounded-full flex items-center justify-center mb-4">
                                     <Search size={40} className="text-indigo-300" />
                                 </div>
-                                <p>No tasks found in "{getFilterTitle()}"</p>
+                                <p>{t('tasks.noTasksInFilter').replace('{filter}', getFilterTitle())}</p>
                             </motion.div>
                         ) : (
                             taskList.map((task, index) => {
@@ -961,7 +961,7 @@ const Dashboard = () => {
                                         type="text"
                                         value={title}
                                         onChange={(e) => setTitle(e.target.value)}
-                                        placeholder="What needs to be done?"
+                                        placeholder={t('tasks.inputPlaceholder')}
                                         className="flex-1 bg-transparent border-none outline-none focus:outline-none focus:ring-0 text-gray-800 placeholder-gray-400 text-lg px-4 py-2"
                                         autoFocus
                                         onBlur={(e) => {
@@ -989,7 +989,7 @@ const Dashboard = () => {
                                             setIsInputOpen(false);
                                         }}
                                         className="p-2 mr-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50/50 rounded-xl transition-colors"
-                                        title="Open Full Editor"
+                                        title={t('tasks.openFullEditor')}
                                     >
                                         <Maximize2 size={20} />
                                     </button>
@@ -1140,7 +1140,8 @@ const Dashboard = () => {
                 onClose={() => setDatePickerTodo(null)}
                 onSelect={(date) => {
                     if (datePickerTodo) {
-                        handleUpdateDate(datePickerTodo.id, format(date, "yyyy-MM-dd'T'HH:mm"));
+                        // Use toISOString() to preserve timezone info correctly
+                        handleUpdateDate(datePickerTodo.id, date.toISOString());
                         setDatePickerTodo(null);
                     }
                 }}

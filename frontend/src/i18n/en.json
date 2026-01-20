@@ -69,6 +69,12 @@
     "tasks": {
         "addTask": "Add Task",
         "noTasks": "No tasks yet",
+        "noTasksInFilter": "No tasks found in \"{filter}\"",
+        "inputPlaceholder": "What needs to be done?",
+        "openFullEditor": "Open Full Editor",
+        "editNotes": "Edit Notes",
+        "setReminder": "Set Reminder",
+        "jumpToDocument": "Jump to Document",
         "dueDate": "Due Date",
         "reminder": "Reminder"
     },

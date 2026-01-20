@@ -69,6 +69,12 @@
     "tasks": {
         "addTask": "添加任务",
         "noTasks": "暂无任务",
+        "noTasksInFilter": "在 \"{filter}\" 中暂无任务",
+        "inputPlaceholder": "你想做什么？",
+        "openFullEditor": "打开完整编辑器",
+        "editNotes": "编辑笔记",
+        "setReminder": "设置提醒",
+        "jumpToDocument": "跳转到文档",
         "dueDate": "截止日期",
         "reminder": "提醒"
     },

@@ -40,9 +40,8 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
         if (stored === 'zh' || stored === 'en') {
             return stored;
         }
-        // Auto-detect from browser
-        const browserLang = navigator.language.toLowerCase();
-        return browserLang.startsWith('zh') ? 'zh' : 'en';
+        // 默认中文
+        return 'zh';
     });
 
     const setLanguage = (lang: Language) => {
