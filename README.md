@@ -74,31 +74,25 @@ VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
 
 适用于自有服务器部署 (Nginx)。
 
-### 1. 服务器初始化 (Root)
+### 1. 服务器初始化
 
-首次在服务器上部署时，运行初始化脚本以配置 Nginx 和日志目录：
+首次部署时，确保目录就绪：
 
 ```bash
 sudo ./setup_prod.sh
 ```
 
-这会自动：
-- 创建 `/var/www/todo-app` 目录
-- 配置 Nginx 站点 (`/etc/nginx/sites-available/todo-app`)
-- 设置日志目录 (`logs/nginx/`, `logs/deploy/`)
+这会创建 `/var/www/todo-app` 目录并设置权限。Nginx 配置需自行配置到 `/etc/nginx/conf.d/`。
 
 ### 2. 发布更新
 
-每次需要发布新版本时，只需运行：
+每次发布新版本：
 
 ```bash
 ./deploy_app.sh
 ```
 
-脚本会自动：
-1. 构建前端资源 (`npm run build`)
-2. 将构建产物复制到 `/var/www/todo-app`
-3. 记录部署日志到 `logs/deploy/`
+脚本会编译前端并将静态文件复制到 `/var/www/todo-app`。
 
 ---
 
