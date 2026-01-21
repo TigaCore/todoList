@@ -131,11 +131,19 @@ const Dashboard = () => {
 
     // Handle realtime changes from Supabase
     const handleRealtimeChange = useCallback((payload: RealtimePayload) => {
+        console.log('Realtime change received:', payload.eventType, payload);
         switch (payload.eventType) {
             case 'INSERT':
-                // Add new todo to the list
+                // Add new todo to the list (only if not already exists - avoids duplicate from optimistic update)
                 if (payload.new) {
                     setTodos(prev => {
+                        // Check if already exists (prevents duplicate after optimistic update)
+                        const exists = prev.some(t => t.id === payload.new!.id);
+                        if (exists) {
+                            console.log('INSERT skipped - todo already exists:', payload.new!.id);
+                            return prev;
+                        }
+                        console.log('INSERT applied - adding new todo:', payload.new!.id);
                         const updated = [payload.new!, ...prev];
                         updateDocTasks(updated);
                         return updated;
@@ -156,15 +164,41 @@ const Dashboard = () => {
                 break;
             case 'DELETE':
                 // Remove deleted todo
-                if (payload.old) {
+                // Note: payload.old requires REPLICA IDENTITY FULL on the table
+                // If payload.old is null, we cannot determine which todo to delete
+                if (payload.old && payload.old.id) {
                     setTodos(prev => {
+                        const exists = prev.some(t => t.id === payload.old!.id);
+                        if (!exists) {
+                            console.log('DELETE skipped - todo already removed:', payload.old!.id);
+                            return prev;
+                        }
+                        console.log('DELETE applied - removing todo:', payload.old!.id);
                         const updated = prev.filter(t => t.id !== payload.old!.id);
                         updateDocTasks(updated);
                         return updated;
                     });
+                } else {
+                    console.warn('DELETE event received but payload.old is missing. Enable REPLICA IDENTITY FULL on todos table.');
                 }
                 break;
         }
+    }, [updateDocTasks]);
+
+    // Handle broadcast delete event (for cross-client sync when postgres_changes DELETE fails)
+    const handleBroadcastDelete = useCallback((payload: { todoId: number }) => {
+        console.log('Broadcast DELETE received:', payload.todoId);
+        setTodos(prev => {
+            const exists = prev.some(t => t.id === payload.todoId);
+            if (!exists) {
+                console.log('Broadcast DELETE skipped - todo already removed:', payload.todoId);
+                return prev;
+            }
+            console.log('Broadcast DELETE applied - removing todo:', payload.todoId);
+            const updated = prev.filter(t => t.id !== payload.todoId);
+            updateDocTasks(updated);
+            return updated;
+        });
     }, [updateDocTasks]);
 
     // Setup realtime subscription
@@ -178,7 +212,8 @@ const Dashboard = () => {
         }
 
         const channel = supabase
-            .channel('todos-realtime')
+            .channel(`todos-realtime-${userId}`)
+            // Listen for postgres changes (INSERT, UPDATE, DELETE)
             .on('postgres_changes' as any, {
                 event: '*',
                 schema: 'public',
@@ -187,6 +222,13 @@ const Dashboard = () => {
             }, (payload: RealtimePayload) => {
                 console.log('Realtime payload received:', payload.eventType, payload);
                 handleRealtimeChange(payload);
+            })
+            // Listen for broadcast events (for DELETE sync fallback)
+            .on('broadcast', { event: 'todo-deleted' }, (payload) => {
+                console.log('Broadcast event received:', payload);
+                if (payload.payload?.todoId) {
+                    handleBroadcastDelete(payload.payload as { todoId: number });
+                }
             })
             .subscribe((status) => {
                 console.log('Realtime subscription status:', status);
@@ -200,7 +242,7 @@ const Dashboard = () => {
             });
 
         realtimeChannel.current = channel;
-    }, [handleRealtimeChange]);
+    }, [handleRealtimeChange, handleBroadcastDelete]);
 
     // Clean up realtime subscription
     const cleanupRealtime = useCallback(() => {
@@ -482,6 +524,17 @@ const Dashboard = () => {
 
                 if (error) {
                     throw error;
+                }
+
+                // Broadcast delete event to other clients
+                // This ensures sync works even if postgres_changes DELETE doesn't include old data
+                if (realtimeChannel.current) {
+                    realtimeChannel.current.send({
+                        type: 'broadcast',
+                        event: 'todo-deleted',
+                        payload: { todoId: id }
+                    });
+                    console.log('Broadcast DELETE sent for todo:', id);
                 }
 
                 showToast('success', t('toast.taskDeleted'));
