@@ -48,7 +48,7 @@ const Register = () => {
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-indigo-50 flex flex-col justify-center px-6 py-12">
+        <div className="min-h-screen flex flex-col justify-center px-6 py-12" style={{ background: 'linear-gradient(135deg, #F8F6F3 0%, #F2EFEB 50%, #EFEBE7 100%)' }}>
             {/* Animated Background Orbs */}
             <motion.div
                 className="absolute top-32 right-10 w-80 h-80 bg-purple-200/40 rounded-full blur-3xl"
@@ -59,7 +59,7 @@ const Register = () => {
                 transition={{ duration: 9, repeat: Infinity, ease: "easeInOut" }}
             />
             <motion.div
-                className="absolute bottom-10 left-10 w-72 h-72 bg-indigo-200/40 rounded-full blur-3xl"
+                className="absolute bottom-10 left-10 w-72 h-72 bg-stone-200/40 rounded-full blur-3xl"
                 animate={{
                     scale: [1.1, 1, 1.1],
                     opacity: [0.4, 0.6, 0.4]
@@ -103,7 +103,7 @@ const Register = () => {
                             value={nickname}
                             onChange={(e) => setNickname(e.target.value)}
                             required
-                            className="w-full pl-12 pr-4 py-4 bg-white/80 backdrop-blur-sm border border-gray-200 rounded-2xl text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 transition-all"
+                            className="w-full pl-12 pr-4 py-4 bg-white/80 backdrop-blur-sm border border-gray-200 rounded-2xl text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-stone-400/20 focus:border-stone-400 transition-all"
                         />
                     </div>
 
@@ -116,7 +116,7 @@ const Register = () => {
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                             required
-                            className="w-full pl-12 pr-4 py-4 bg-white/80 backdrop-blur-sm border border-gray-200 rounded-2xl text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 transition-all"
+                            className="w-full pl-12 pr-4 py-4 bg-white/80 backdrop-blur-sm border border-gray-200 rounded-2xl text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-stone-400/20 focus:border-stone-400 transition-all"
                         />
                     </div>
 
@@ -130,7 +130,7 @@ const Register = () => {
                             onChange={(e) => setPassword(e.target.value)}
                             required
                             minLength={6}
-                            className="w-full pl-12 pr-4 py-4 bg-white/80 backdrop-blur-sm border border-gray-200 rounded-2xl text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 transition-all"
+                            className="w-full pl-12 pr-4 py-4 bg-white/80 backdrop-blur-sm border border-gray-200 rounded-2xl text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-stone-400/20 focus:border-stone-400 transition-all"
                         />
                     </div>
 
@@ -151,7 +151,7 @@ const Register = () => {
                         disabled={isLoading}
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
-                        className="w-full py-4 bg-indigo-500 text-white font-medium rounded-2xl flex items-center justify-center gap-2 hover:bg-indigo-600 transition-colors disabled:opacity-70 shadow-lg shadow-indigo-500/25"
+                        className="w-full py-4 bg-stone-500 text-white font-medium rounded-2xl flex items-center justify-center gap-2 hover:bg-stone-600 transition-colors disabled:opacity-70 shadow-lg shadow-stone-500/25"
                     >
                         {isLoading ? (
                             <motion.div
@@ -177,7 +177,7 @@ const Register = () => {
                 >
                     <p className="text-gray-500 text-sm">
                         Already have an account?{' '}
-                        <Link to="/login" className="text-indigo-600 font-medium hover:underline">
+                        <Link to="/login" className="font-medium hover:underline" style={{ color: '#8B7E74' }}>
                             Sign in
                         </Link>
                     </p>

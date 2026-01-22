@@ -71,99 +71,95 @@ const TodoItem = React.forwardRef<HTMLDivElement, TodoItemProps>(({
                     delay: staggerDelay
                 }
             }}
-            exit={{ opacity: 0, scale: 0.95, transition: { duration: 0.2, ease: [0.4, 0, 0.2, 1] } }}
+            exit={{ opacity: 0, scale: 0.95, transition: { duration: 0.2 } }}
             whileHover={{
-                y: -2,
-                transition: { type: "spring", stiffness: 400, damping: 25 }
-            }}
-            whileTap={{
-                scale: 0.98,
-                transition: { type: "spring", stiffness: 400, damping: 25 }
+                backgroundColor: 'rgba(0,0,0,0.02)',
+                transition: { duration: 0.2 }
             }}
             onClick={handleClick}
-            className={`glass-card p-4 rounded-xl group cursor-pointer ${isCompleted ? 'opacity-60 grayscale-[0.5]' : ''}`}
+            className={`py-4 px-2 border-b border-gray-100 group cursor-pointer ${isCompleted ? 'opacity-50 grayscale' : ''}`}
         >
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-5">
                 <button
                     onClick={handleToggle}
-                    className={`flex-shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-300 ${isCompleted
-                        ? 'bg-indigo-500 border-indigo-500 text-white shadow-sm scale-110'
-                        : 'border-gray-300 dark:border-gray-500 hover:border-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30'
+                    className={`flex-shrink-0 w-5 h-5 rounded-full border flex items-center justify-center transition-all duration-300 ${isCompleted
+                        ? 'bg-[#8B7E74] border-[#8B7E74] text-white scale-100'
+                        : 'border-[#8B7E74] hover:bg-[#8B7E74]/10'
                         }`}
                 >
-                    {isCompleted && <Check size={14} strokeWidth={3} />}
+                    {isCompleted && <Check size={12} strokeWidth={2.5} />}
                 </button>
 
                 <div className="flex-1 min-w-0">
-                    <h3 className={`font-medium text-gray-800 dark:text-gray-100 truncate transition-all ${isCompleted ? 'line-through text-gray-400 dark:text-gray-500' : ''}`}>
+                    <h3 className={`text-[17px] tracking-tight text-[#2D2A26] truncate transition-all ${isCompleted ? 'line-through text-gray-400' : 'font-normal'}`}>
                         {title}
                     </h3>
 
                     {/* Metadata Row */}
-                    <div className="flex items-center gap-3 mt-1.5 flex-wrap">
-                        {/* Source document link for document tasks */}
+                    <div className="flex items-center gap-4 mt-1">
+                        {/* Source document link */}
                         {isDocTask && (
-                            <span className="inline-flex items-center text-xs px-2 py-0.5 rounded-full text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-100 dark:border-indigo-800 hover:bg-indigo-100 dark:hover:bg-indigo-800/50 transition-colors cursor-pointer group/link">
-                                <ExternalLink size={10} className="mr-1 opacity-70 group-hover/link:opacity-100 transition-opacity" />
-                                <span className="truncate max-w-[120px] group-hover/link:underline">{docTask!.docTitle}</span>
+                            <span className="inline-flex items-center text-xs text-stone-500 hover:text-stone-800 transition-colors cursor-pointer group/link">
+                                <ExternalLink size={10} className="mr-1" />
+                                <span className="truncate max-w-[150px] group-hover/link:underline">{docTask!.docTitle}</span>
                             </span>
                         )}
 
-                        {/* Due date for regular todos */}
+                        {/* Due date */}
                         {!isDocTask && todo?.due_date && (
-                            <span className={`flex items-center text-xs px-2 py-0.5 rounded-full border ${new Date(todo.due_date) < new Date() && !todo.is_completed
-                                ? 'text-rose-600 bg-rose-50 dark:bg-rose-900/30 border-rose-100 dark:border-rose-800'
-                                : 'text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-700/50 border-gray-100 dark:border-gray-600'
+                            <span className={`flex items-center text-xs ${new Date(todo.due_date) < new Date() && !todo.is_completed
+                                ? 'text-[#B85450]'
+                                : 'text-stone-400'
                                 }`}>
-                                <Calendar size={12} className="mr-1" />
+                                <Calendar size={11} className="mr-1.5" />
                                 {format(new Date(todo.due_date), 'MMM d, H:mm')}
                             </span>
                         )}
+
                         {!isDocTask && todo?.content && (
-                            <span className="flex items-center justify-center w-6 h-6 text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/30 border border-amber-100 dark:border-amber-800 rounded-full" title={t('notes.hasNotes')}>
-                                <FileText size={12} />
+                            <span className="flex items-center text-stone-400" title={t('notes.hasNotes')}>
+                                <FileText size={11} />
                             </span>
                         )}
                     </div>
                 </div>
 
-                {/* Actions - only for regular todos */}
+                {/* Actions */}
                 {!isDocTask && (
-                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button
                             onClick={(e) => { e.stopPropagation(); onOpenNotes?.(todo!); }}
-                            className="p-2 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                            className="p-1.5 text-gray-300 hover:text-[#2D2A26] transition-colors"
                             title={t('tasks.editNotes')}
                         >
-                            <FileText size={18} />
+                            <FileText size={16} />
                         </button>
 
                         <button
                             onClick={(e) => { e.stopPropagation(); onOpenDatePicker?.(todo!); }}
-                            className="p-2 text-gray-400 hover:text-orange-500 dark:hover:text-orange-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                            className="p-1.5 text-gray-300 hover:text-[#2D2A26] transition-colors"
                             title={t('tasks.setReminder')}
                         >
-                            <Bell size={18} />
+                            <Bell size={16} />
                         </button>
 
                         <button
                             onClick={(e) => { e.stopPropagation(); onDelete(todo!.id); }}
-                            className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors"
+                            className="p-1.5 text-gray-300 hover:text-[#B85450] transition-colors"
                         >
-                            <Trash2 size={18} />
+                            <Trash2 size={16} />
                         </button>
                     </div>
                 )}
 
-                {/* Jump to doc icon for document tasks */}
+                {/* Jump to doc icon */}
                 {isDocTask && (
                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button
                             onClick={(e) => { e.stopPropagation(); onJumpToDoc?.(docTask!.docId, docTask!.lineIndex); }}
-                            className="p-2 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-lg transition-colors"
-                            title={t('tasks.jumpToDocument')}
+                            className="p-1.5 text-gray-300 hover:text-[#2D2A26] transition-colors"
                         >
-                            <ExternalLink size={18} />
+                            <ExternalLink size={16} />
                         </button>
                     </div>
                 )}

@@ -219,7 +219,7 @@ const TimelineDrawer: React.FC<TimelineDrawerProps> = ({ isOpen, onClose, todos,
                         className="fixed top-0 right-0 h-full w-full sm:w-[420px] glass-modal z-50 flex flex-col rounded-l-3xl overflow-hidden"
                     >
                         {/* Header */}
-                        <div className="p-5 pt-safe border-b border-gray-100/50 dark:border-gray-700/50 flex items-center justify-between bg-gradient-to-r from-indigo-50/80 to-purple-50/80 dark:from-indigo-950/50 dark:to-purple-950/50">
+                        <div className="p-5 pt-safe border-b border-gray-100/50 dark:border-gray-700/50 flex items-center justify-between bg-gradient-to-r from-stone-50/80 to-neutral-50/80 dark:from-stone-950/50 dark:to-neutral-950/50">
                             <div>
                                 <h2 className="font-bold text-xl text-gray-800 dark:text-gray-100">{t('timeline.title')}</h2>
                                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{t('timeline.activityHistory')}</p>
@@ -236,7 +236,7 @@ const TimelineDrawer: React.FC<TimelineDrawerProps> = ({ isOpen, onClose, todos,
                         <div className="flex-1 overflow-y-auto p-4">
                             {isLoading ? (
                                 <div className="flex justify-center py-20">
-                                    <Loader2 size={28} className="animate-spin text-indigo-500" />
+                                    <Loader2 size={28} className="animate-spin text-stone-500" />
                                 </div>
                             ) : activities.length === 0 ? (
                                 <div className="text-center py-20 text-gray-400">
@@ -303,10 +303,10 @@ const TimelineDrawer: React.FC<TimelineDrawerProps> = ({ isOpen, onClose, todos,
 
                                             {/* Day Ended Marker (Fixed) */}
                                             <div className="relative pl-6 pt-3">
-                                                <div className="absolute -left-[7px] top-5 w-3 h-3 rounded-full bg-indigo-400 dark:bg-indigo-500 ring-4 ring-indigo-100 dark:ring-indigo-900/50"></div>
-                                                <div className="glass-card p-3 rounded-xl flex items-center gap-3 bg-gradient-to-r from-indigo-50/80 to-purple-50/80 dark:from-indigo-950/30 dark:to-purple-950/30 border-indigo-200/50 dark:border-indigo-800/50">
-                                                    <div className="p-2 rounded-xl bg-indigo-100 dark:bg-indigo-900/50">
-                                                        <Moon size={18} className="text-indigo-500" />
+                                                <div className="absolute -left-[7px] top-5 w-3 h-3 rounded-full bg-stone-400 dark:bg-stone-500 ring-4 ring-stone-100 dark:ring-stone-900/50"></div>
+                                                <div className="glass-card p-3 rounded-xl flex items-center gap-3 bg-gradient-to-r from-stone-50/80 to-neutral-50/80 dark:from-stone-950/30 dark:to-neutral-950/30 border-stone-200/50 dark:border-stone-800/50">
+                                                    <div className="p-2 rounded-xl bg-stone-100 dark:bg-stone-900/50">
+                                                        <Moon size={18} className="text-stone-500" />
                                                     </div>
                                                     <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{t('timeline.dayEnded')}</p>
                                                 </div>

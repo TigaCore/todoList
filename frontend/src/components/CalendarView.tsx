@@ -87,7 +87,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({ todos, onTaskClick }) => {
         const total = tasks.length;
         if (completedCount === total) return 'bg-green-100 dark:bg-green-900/50';
         if (completedCount > 0) return 'bg-amber-100 dark:bg-amber-900/50';
-        return 'bg-indigo-100 dark:bg-indigo-900/50';
+        return 'bg-stone-100 dark:bg-stone-900/50';
     };
 
     // Navigation handlers
@@ -178,7 +178,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({ todos, onTaskClick }) => {
                 <div className="flex-1 flex justify-end">
                     <button
                         onClick={goToToday}
-                        className="px-3 py-1.5 text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-lg transition-colors"
+                        className="px-3 py-1.5 text-sm font-medium text-stone-600 dark:text-stone-400 hover:bg-stone-50 dark:hover:bg-stone-900/30 rounded-lg transition-colors"
                     >
                         {t('calendar.today')}
                     </button>
@@ -246,8 +246,8 @@ const CalendarView: React.FC<CalendarViewProps> = ({ todos, onTaskClick }) => {
                                                 : 'bg-gray-50/60 dark:bg-gray-800/40 opacity-50'
                                             }
                                             ${isSelected
-                                                ? 'ring-2 ring-indigo-500 bg-indigo-50/60 dark:bg-indigo-900/30'
-                                                : 'hover:bg-indigo-50/60 dark:hover:bg-indigo-900/20'
+                                                ? 'ring-2 ring-stone-500 bg-stone-50/60 dark:bg-stone-900/30'
+                                                : 'hover:bg-stone-50/60 dark:hover:bg-stone-900/20'
                                             }
                                         `}
                                     >
@@ -321,7 +321,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({ todos, onTaskClick }) => {
                                 >
                                     <div className={`
                                         w-10 h-10 rounded-full flex flex-col items-center justify-center
-                                        ${isDayToday ? 'bg-indigo-500 text-white' : 'bg-gray-100 dark:bg-gray-600'}
+                                        ${isDayToday ? 'bg-stone-500 text-white' : 'bg-gray-100 dark:bg-gray-600'}
                                     `}>
                                         <span className="text-xs opacity-70">{format(day, 'EEE', { locale })}</span>
                                         <span className="text-sm font-bold">{format(day, 'd')}</span>
@@ -469,7 +469,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({ todos, onTaskClick }) => {
                                         }}
                                         whileHover={{ scale: 1.02 }}
                                         whileTap={{ scale: 0.98 }}
-                                        className="glass-card rounded-xl p-3 text-left hover:bg-indigo-50/50 dark:hover:bg-indigo-900/20 transition-colors"
+                                        className="glass-card rounded-xl p-3 text-left hover:bg-stone-50/50 dark:hover:bg-stone-900/20 transition-colors"
                                     >
                                         <h4 className="font-semibold text-gray-800 dark:text-gray-100">
                                             {format(month, 'MMMM', { locale })}
@@ -480,7 +480,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({ todos, onTaskClick }) => {
                                             </span>
                                             {monthTasks.length > 0 && (
                                                 <div className="flex gap-0.5">
-                                                    <div className={`w-2 h-2 rounded-full ${completedCount === monthTasks.length ? 'bg-green-400' : 'bg-indigo-400'}`} />
+                                                    <div className={`w-2 h-2 rounded-full ${completedCount === monthTasks.length ? 'bg-green-400' : 'bg-stone-400'}`} />
                                                     <div className={`w-2 h-2 rounded-full opacity-50 ${completedCount > 0 ? 'bg-green-400' : 'bg-indigo-400'}`} />
                                                     <div className={`w-2 h-2 rounded-full opacity-25 ${completedCount > monthTasks.length / 2 ? 'bg-green-400' : 'bg-indigo-400'}`} />
                                                 </div>
@@ -497,7 +497,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({ todos, onTaskClick }) => {
             {/* Stats Footer */}
             <div className="flex justify-center gap-6 py-4 text-sm">
                 <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full bg-indigo-400" />
+                    <div className="w-3 h-3 rounded-full bg-stone-400" />
                     <span className="text-gray-600 dark:text-gray-300">{t('calendar.pending')}</span>
                 </div>
                 <div className="flex items-center gap-2">

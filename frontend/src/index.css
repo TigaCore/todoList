@@ -41,7 +41,7 @@
   width: 1.125rem;
   height: 1.125rem;
   cursor: pointer;
-  accent-color: #6366f1;
+  accent-color: #8B7E74;
   border-radius: 0.25rem;
   margin: 0;
 }
@@ -62,20 +62,34 @@
 
 @layer base {
   :root {
-    --fullscreen-bg: linear-gradient(135deg, #e0e7ff 0%, #f0f5ff 25%, #faf5ff 50%, #f0f5ff 75%, #e0e7ff 100%);
+    --fullscreen-bg: linear-gradient(135deg, #F8F6F3 0%, #F2EFEB 50%, #EFEBE7 100%);
+    --accent: #8B7E74;
+    --accent-light: #A89F96;
+    --accent-dark: #6B6058;
+    --surface: rgba(255, 252, 249, 0.7);
+    --surface-hover: rgba(255, 252, 249, 0.85);
+    --border: rgba(139, 126, 116, 0.15);
+    --shadow-color: rgba(139, 126, 116, 0.08);
   }
 
   .dark {
-    --fullscreen-bg: linear-gradient(135deg, #0f0d1a 0%, #1a1625 25%, #1e1b2e 50%, #1a1625 75%, #0f0d1a 100%);
+    --fullscreen-bg: linear-gradient(135deg, #1C1A17 0%, #201E1B 50%, #252320 100%);
+    --accent: #A89F96;
+    --accent-light: #BEB6AE;
+    --accent-dark: #8B7E74;
+    --surface: rgba(40, 38, 35, 0.7);
+    --surface-hover: rgba(50, 48, 44, 0.85);
+    --border: rgba(160, 150, 140, 0.15);
+    --shadow-color: rgba(0, 0, 0, 0.25);
   }
 
   body {
-    @apply text-gray-900 antialiased;
+    @apply text-gray-800 antialiased;
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
-    /* Gradient background for glassmorphism effect */
-    background: linear-gradient(135deg, #e0e7ff 0%, #f0f5ff 25%, #faf5ff 50%, #f0f5ff 75%, #e0e7ff 100%);
+    background: var(--fullscreen-bg);
     background-attachment: fixed;
     min-height: 100vh;
+    color: #2D2A26;
   }
 
   /* Dark mode body */
@@ -83,7 +97,8 @@
   body.dark,
   html.dark body {
     @apply text-gray-100;
-    background: linear-gradient(135deg, #0f0d1a 0%, #1a1625 25%, #1e1b2e 50%, #1a1625 75%, #0f0d1a 100%);
+    background: var(--fullscreen-bg);
+    color: #E8E4E0;
   }
 
   html.dark {
@@ -93,190 +108,245 @@
 
 @layer components {
 
-  /* Glass effect base - strong blur for main panels */
+  /* Glass effect base - warm cream tones */
   .glass-panel {
-    @apply bg-white/70 backdrop-blur-xl border border-white/50 shadow-xl;
+    @apply backdrop-blur-xl border shadow-xl;
+    background: var(--surface);
+    border-color: var(--border);
     box-shadow:
-      0 8px 32px rgba(99, 102, 241, 0.1),
-      inset 0 1px 0 rgba(255, 255, 255, 0.6);
+      0 8px 32px var(--shadow-color),
+      inset 0 1px 0 rgba(255, 255, 255, 0.4);
   }
 
-  /* Glass card - medium blur for cards */
+  /* Glass card - for list items */
   .glass-card {
-    @apply bg-white/50 backdrop-blur-lg border border-white/60 shadow-lg transition-all duration-300;
+    @apply backdrop-blur-lg border shadow-lg transition-all duration-300;
+    background: var(--surface);
+    border-color: var(--border);
     box-shadow:
-      0 4px 24px rgba(99, 102, 241, 0.08),
-      inset 0 1px 0 rgba(255, 255, 255, 0.8);
+      0 4px 24px var(--shadow-color),
+      inset 0 1px 0 rgba(255, 255, 255, 0.5);
   }
 
   .glass-card:hover {
-    @apply bg-white/60 shadow-xl;
+    background: var(--surface-hover);
     box-shadow:
-      0 8px 32px rgba(99, 102, 241, 0.12),
-      inset 0 1px 0 rgba(255, 255, 255, 0.9);
+      0 8px 32px var(--shadow-color),
+      inset 0 1px 0 rgba(255, 255, 255, 0.6);
     transform: translateY(-2px);
   }
 
   /* Glass nav - for navigation bars */
   .glass-nav {
-    @apply bg-white/60 backdrop-blur-xl border border-white/50;
+    @apply backdrop-blur-xl border;
+    background: var(--surface);
+    border-color: var(--border);
     box-shadow:
-      0 4px 24px rgba(99, 102, 241, 0.1),
-      inset 0 1px 0 rgba(255, 255, 255, 0.7);
+      0 4px 24px var(--shadow-color),
+      inset 0 1px 0 rgba(255, 255, 255, 0.4);
   }
 
   /* Glass modal - for overlays and modals */
   .glass-modal {
-    @apply bg-white/80 backdrop-blur-2xl border border-white/60;
+    @apply backdrop-blur-2xl border;
+    background: rgba(255, 252, 249, 0.9);
+    border-color: var(--border);
     box-shadow:
-      0 25px 50px rgba(99, 102, 241, 0.15),
-      inset 0 1px 0 rgba(255, 255, 255, 0.8);
+      0 25px 50px var(--shadow-color),
+      inset 0 1px 0 rgba(255, 255, 255, 0.5);
   }
 
   /* Glass input */
   .glass-input {
-    @apply bg-white/40 backdrop-blur-md border border-white/50 focus:bg-white/70 focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-300/50 transition-all duration-200;
-    box-shadow: inset 0 1px 2px rgba(99, 102, 241, 0.05);
+    @apply backdrop-blur-md border transition-all duration-200;
+    background: rgba(255, 252, 249, 0.4);
+    border-color: var(--border);
+    box-shadow: inset 0 1px 2px var(--shadow-color);
+  }
+
+  .glass-input:focus {
+    background: rgba(255, 252, 249, 0.7);
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(139, 126, 116, 0.15);
+    outline: none;
   }
 
   /* Glass button */
   .glass-button {
-    @apply bg-white/50 backdrop-blur-md border border-white/60 hover:bg-white/70 transition-all duration-200;
+    @apply backdrop-blur-md border transition-all duration-200;
+    background: var(--surface);
+    border-color: var(--border);
     box-shadow:
-      0 2px 8px rgba(99, 102, 241, 0.1),
-      inset 0 1px 0 rgba(255, 255, 255, 0.8);
+      0 2px 8px var(--shadow-color),
+      inset 0 1px 0 rgba(255, 255, 255, 0.5);
   }
 
-  /* Primary button with glass effect */
+  .glass-button:hover {
+    background: var(--surface-hover);
+  }
+
+  /* Primary button with accent color */
   .btn-primary {
-    @apply bg-indigo-500/90 backdrop-blur-md text-white hover:bg-indigo-600/90 active:bg-indigo-700/90 transition-all duration-200 border border-indigo-400/30;
+    @apply backdrop-blur-md text-white transition-all duration-200 border;
+    background: var(--accent);
+    border-color: rgba(255, 255, 255, 0.1);
     box-shadow:
-      0 4px 16px rgba(99, 102, 241, 0.3),
-      inset 0 1px 0 rgba(255, 255, 255, 0.2);
+      0 4px 16px rgba(139, 126, 116, 0.25),
+      inset 0 1px 0 rgba(255, 255, 255, 0.15);
   }
 
   .btn-primary:hover {
+    background: var(--accent-dark);
     box-shadow:
-      0 6px 24px rgba(99, 102, 241, 0.4),
-      inset 0 1px 0 rgba(255, 255, 255, 0.3);
+      0 6px 24px rgba(139, 126, 116, 0.35),
+      inset 0 1px 0 rgba(255, 255, 255, 0.2);
     transform: translateY(-1px);
+  }
+
+  .btn-primary:active {
+    background: var(--accent-dark);
+    transform: translateY(0);
   }
 
   /* Glass backdrop for modals */
   .glass-backdrop {
-    @apply bg-indigo-950/20 backdrop-blur-sm;
+    @apply backdrop-blur-sm;
+    background: rgba(45, 42, 38, 0.2);
   }
 
-  /* FAB button with glass effect */
+  /* FAB button with accent color */
   .glass-fab {
-    @apply bg-indigo-500/90 backdrop-blur-md border border-indigo-400/30;
+    @apply backdrop-blur-md border;
+    background: var(--accent);
+    border-color: rgba(255, 255, 255, 0.1);
     box-shadow:
-      0 8px 32px rgba(99, 102, 241, 0.35),
-      inset 0 1px 0 rgba(255, 255, 255, 0.2);
+      0 8px 32px rgba(139, 126, 116, 0.3),
+      inset 0 1px 0 rgba(255, 255, 255, 0.15);
   }
 
   .glass-fab:hover {
-    @apply bg-indigo-600/90;
+    background: var(--accent-dark);
     box-shadow:
-      0 12px 40px rgba(99, 102, 241, 0.45),
-      inset 0 1px 0 rgba(255, 255, 255, 0.3);
+      0 12px 40px rgba(139, 126, 116, 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 0.2);
   }
 
   /* ========== DARK MODE VARIANTS ========== */
 
   /* Dark glass panel */
   .dark .glass-panel {
-    @apply bg-gray-800/70 border-gray-700/50;
+    background: var(--surface);
+    border-color: var(--border);
     box-shadow:
-      0 8px 32px rgba(0, 0, 0, 0.3),
-      inset 0 1px 0 rgba(255, 255, 255, 0.05);
+      0 8px 32px var(--shadow-color),
+      inset 0 1px 0 rgba(255, 255, 255, 0.03);
   }
 
   /* Dark glass card */
   .dark .glass-card {
-    @apply bg-gray-800/50 border-gray-700/40;
+    background: var(--surface);
+    border-color: var(--border);
     box-shadow:
-      0 4px 24px rgba(0, 0, 0, 0.2),
-      inset 0 1px 0 rgba(255, 255, 255, 0.05);
+      0 4px 24px var(--shadow-color),
+      inset 0 1px 0 rgba(255, 255, 255, 0.03);
   }
 
   .dark .glass-card:hover {
-    @apply bg-gray-800/70;
+    background: var(--surface-hover);
     box-shadow:
-      0 8px 32px rgba(0, 0, 0, 0.3),
-      inset 0 1px 0 rgba(255, 255, 255, 0.08);
+      0 8px 32px var(--shadow-color),
+      inset 0 1px 0 rgba(255, 255, 255, 0.05);
   }
 
   /* Dark glass nav */
   .dark .glass-nav {
-    @apply bg-gray-800/60 border-gray-700/50;
+    background: var(--surface);
+    border-color: var(--border);
     box-shadow:
-      0 4px 24px rgba(0, 0, 0, 0.25),
-      inset 0 1px 0 rgba(255, 255, 255, 0.05);
+      0 4px 24px var(--shadow-color),
+      inset 0 1px 0 rgba(255, 255, 255, 0.03);
   }
 
   /* Dark glass modal */
   .dark .glass-modal {
-    @apply bg-gray-800/90 border-gray-700/60;
+    background: rgba(40, 38, 35, 0.95);
+    border-color: var(--border);
     box-shadow:
-      0 25px 50px rgba(0, 0, 0, 0.4),
-      inset 0 1px 0 rgba(255, 255, 255, 0.05);
+      0 25px 50px var(--shadow-color),
+      inset 0 1px 0 rgba(255, 255, 255, 0.03);
   }
 
   /* Dark glass input */
   .dark .glass-input {
-    @apply bg-gray-700/40 border-gray-600/50 text-gray-100 placeholder:text-gray-400;
-    @apply focus:bg-gray-700/70 focus:ring-indigo-400/30 focus:border-indigo-500/50;
+    background: rgba(50, 48, 44, 0.5);
+    border-color: var(--border);
+    @apply text-gray-100 placeholder:text-gray-500;
     box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.2);
+  }
+
+  .dark .glass-input:focus {
+    background: rgba(60, 58, 54, 0.7);
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(168, 159, 150, 0.2);
   }
 
   /* Dark glass button */
   .dark .glass-button {
-    @apply bg-gray-700/50 border-gray-600/60 text-gray-200 hover:bg-gray-700/70;
+    background: var(--surface);
+    border-color: var(--border);
+    @apply text-gray-200;
     box-shadow:
-      0 2px 8px rgba(0, 0, 0, 0.2),
-      inset 0 1px 0 rgba(255, 255, 255, 0.05);
+      0 2px 8px var(--shadow-color),
+      inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  }
+
+  .dark .glass-button:hover {
+    background: var(--surface-hover);
   }
 
   /* Dark primary button */
   .dark .btn-primary {
-    @apply bg-indigo-600/90 hover:bg-indigo-500/90 active:bg-indigo-700/90 border-indigo-500/30;
+    background: var(--accent);
+    border-color: rgba(255, 255, 255, 0.05);
     box-shadow:
-      0 4px 16px rgba(99, 102, 241, 0.25),
-      inset 0 1px 0 rgba(255, 255, 255, 0.1);
+      0 4px 16px rgba(139, 126, 116, 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.08);
   }
 
   .dark .btn-primary:hover {
+    background: var(--accent-light);
     box-shadow:
-      0 6px 24px rgba(99, 102, 241, 0.35),
-      inset 0 1px 0 rgba(255, 255, 255, 0.15);
+      0 6px 24px rgba(139, 126, 116, 0.3),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1);
   }
 
   /* Dark glass backdrop */
   .dark .glass-backdrop {
-    @apply bg-black/40 backdrop-blur-sm;
+    @apply backdrop-blur-sm;
+    background: rgba(0, 0, 0, 0.4);
   }
 
   /* Dark glass FAB */
   .dark .glass-fab {
-    @apply bg-indigo-600/90 border-indigo-500/30;
+    background: var(--accent);
+    border-color: rgba(255, 255, 255, 0.05);
     box-shadow:
-      0 8px 32px rgba(99, 102, 241, 0.3),
-      inset 0 1px 0 rgba(255, 255, 255, 0.1);
+      0 8px 32px rgba(139, 126, 116, 0.25),
+      inset 0 1px 0 rgba(255, 255, 255, 0.08);
   }
 
   .dark .glass-fab:hover {
-    @apply bg-indigo-500/90;
+    background: var(--accent-light);
     box-shadow:
-      0 12px 40px rgba(99, 102, 241, 0.4),
-      inset 0 1px 0 rgba(255, 255, 255, 0.15);
+      0 12px 40px rgba(139, 126, 116, 0.35),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1);
   }
 }
 
-/* Code Block Syntax Highlighting Theme (GitHub-like) */
+/* Code Block Syntax Highlighting Theme */
 .ProseMirror pre {
-  background: #1e1e1e;
-  color: #d4d4d4;
+  background: #2D2A26;
+  color: #E8E4E0;
   border-radius: 0.5rem;
   padding: 1rem;
   margin: 0.75rem 0;
@@ -296,8 +366,8 @@
 
 /* Inline code */
 .ProseMirror code:not(pre code) {
-  background: #f3f4f6;
-  color: #e11d48;
+  background: #F2EFEB;
+  color: #8B7E74;
   padding: 0.125rem 0.375rem;
   border-radius: 0.25rem;
   font-family: 'Fira Code', monospace;
@@ -306,14 +376,14 @@
 
 /* Dark mode inline code */
 .dark .ProseMirror code:not(pre code) {
-  background: #374151;
-  color: #f472b6;
+  background: #3A3835;
+  color: #BEB6AE;
 }
 
-/* Syntax Highlighting Colors */
+/* Syntax Highlighting Colors - warm neutral theme */
 .hljs-comment,
 .hljs-quote {
-  color: #6a9955;
+  color: #8B9A8B;
   font-style: italic;
 }
 
@@ -321,7 +391,7 @@
 .hljs-selector-tag,
 .hljs-literal,
 .hljs-type {
-  color: #569cd6;
+  color: #9A8E82;
 }
 
 .hljs-string,
@@ -329,62 +399,62 @@
 .hljs-template-variable,
 .hljs-variable,
 .hljs-template-tag {
-  color: #ce9178;
+  color: #A89080;
 }
 
 .hljs-number,
 .hljs-symbol,
 .hljs-bullet,
 .hljs-link {
-  color: #b5cea8;
+  color: #8B9A8B;
 }
 
 .hljs-function,
 .hljs-title,
 .hljs-section {
-  color: #dcdcaa;
+  color: #C4B8A8;
 }
 
 .hljs-attr,
 .hljs-attribute {
-  color: #9cdcfe;
+  color: #A8A090;
 }
 
 .hljs-name,
 .hljs-tag {
-  color: #569cd6;
+  color: #9A8E82;
 }
 
 .hljs-class .hljs-title,
 .hljs-title.class_ {
-  color: #4ec9b0;
+  color: #8B9A90;
 }
 
 .hljs-params {
-  color: #9cdcfe;
+  color: #A8A090;
 }
 
 .hljs-built_in {
-  color: #4fc1ff;
+  color: #90A098;
 }
 
 .hljs-regexp {
-  color: #d16969;
+  color: #B08080;
 }
 
 .hljs-meta,
 .hljs-meta-keyword {
-  color: #c586c0;
+  color: #A090A0;
 }
 
 .hljs-deletion {
-  color: #f14c4c;
-  background-color: rgba(241, 76, 76, 0.1);
+  color: #B85450;
+  background-color: rgba(184, 84, 80, 0.1);
 }
 
 .hljs-addition {
-  color: #89d185;
-  background-color: rgba(137, 209, 133, 0.1);
+  color: #6B8E6B;
+  background-color: rgba(107, 142, 107, 0.1);
 }
 
 .hljs-emphasis {
@@ -397,8 +467,12 @@
 
 /* KaTeX Math Formula Styles */
 .math-inline {
-  @apply text-indigo-600 dark:text-indigo-400;
+  color: var(--accent);
   font-style: italic;
+}
+
+.dark .math-inline {
+  color: var(--accent-light);
 }
 
 .math-block {
@@ -406,18 +480,36 @@
 }
 
 .math-error {
-  @apply text-red-500 font-mono text-sm;
+  color: #B85450;
+  @apply font-mono text-sm;
 }
 
 /* Ensure KaTeX renders correctly in dark mode */
 .dark .katex {
-  color: #9ca3af !important;
+  color: #A8A090 !important;
 }
 
 .dark .katex .mathit {
-  color: #a5b4fc !important;
+  color: #BEB6AE !important;
 }
 
 .dark .katex .mathbf {
-  color: #c4b5fd !important;
+  color: #C4B8A8 !important;
+}
+
+/* Accent color utility classes */
+.text-accent {
+  color: var(--accent);
+}
+
+.bg-accent {
+  background-color: var(--accent);
+}
+
+.border-accent {
+  border-color: var(--accent);
+}
+
+.ring-accent {
+  --tw-ring-color: var(--accent);
 }

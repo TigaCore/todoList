@@ -59,21 +59,21 @@ const Sidebar: React.FC<SidebarProps> = ({
     // Folder UI state
     const [isAddingFolder, setIsAddingFolder] = useState(false);
     const [newFolderName, setNewFolderName] = useState('');
-    const [newFolderColor, setNewFolderColor] = useState('indigo');
+    const [newFolderColor, setNewFolderColor] = useState('stone');
     const [editingFolderId, setEditingFolderId] = useState<number | null>(null);
     const [editFolderName, setEditFolderName] = useState('');
-    const [editFolderColor, setEditFolderColor] = useState('indigo');
+    const [editFolderColor, setEditFolderColor] = useState('stone');
     const [isFolderLoading, setIsFolderLoading] = useState(false);
     const [deletingFolderId, setDeletingFolderId] = useState<number | null>(null);
 
-    // Folder color options
+    // Folder color options - muted, premium tones
     const folderColors: Record<string, { bg: string; text: string; ring: string }> = {
-        indigo: { bg: 'bg-indigo-500', text: 'text-indigo-500', ring: 'ring-indigo-300' },
-        rose: { bg: 'bg-rose-500', text: 'text-rose-500', ring: 'ring-rose-300' },
-        amber: { bg: 'bg-amber-500', text: 'text-amber-500', ring: 'ring-amber-300' },
-        emerald: { bg: 'bg-emerald-500', text: 'text-emerald-500', ring: 'ring-emerald-300' },
-        sky: { bg: 'bg-sky-500', text: 'text-sky-500', ring: 'ring-sky-300' },
-        purple: { bg: 'bg-purple-500', text: 'text-purple-500', ring: 'ring-purple-300' },
+        stone: { bg: 'bg-stone-400', text: 'text-stone-500', ring: 'ring-stone-300' },
+        warmGray: { bg: 'bg-neutral-400', text: 'text-neutral-500', ring: 'ring-neutral-300' },
+        taupe: { bg: 'bg-amber-700/60', text: 'text-amber-700/70', ring: 'ring-amber-300' },
+        sage: { bg: 'bg-emerald-700/50', text: 'text-emerald-700/60', ring: 'ring-emerald-300' },
+        slate: { bg: 'bg-slate-400', text: 'text-slate-500', ring: 'ring-slate-300' },
+        mauve: { bg: 'bg-purple-300/70', text: 'text-purple-400/80', ring: 'ring-purple-200' },
     };
 
     // Filter folders by type based on active tab
@@ -96,11 +96,11 @@ const Sidebar: React.FC<SidebarProps> = ({
     }, [user?.nickname]);
 
     const menuItems = [
-        { id: 'all', label: t('filter.all'), icon: List, color: 'text-indigo-600' },
-        { id: 'today', label: t('filter.today'), icon: Sun, color: 'text-amber-500' },
-        { id: 'upcoming', label: t('filter.upcoming'), icon: Calendar, color: 'text-purple-500' },
-        { id: 'completed', label: t('filter.completed'), icon: Star, color: 'text-green-500' },
-        { id: 'calendar', label: t('filter.calendar'), icon: CalendarDays, color: 'text-rose-500' },
+        { id: 'all', label: t('filter.all'), icon: List, color: 'text-stone-600 dark:text-stone-400' },
+        { id: 'today', label: t('filter.today'), icon: Sun, color: 'text-stone-600 dark:text-stone-400' },
+        { id: 'upcoming', label: t('filter.upcoming'), icon: Calendar, color: 'text-stone-600 dark:text-stone-400' },
+        { id: 'completed', label: t('filter.completed'), icon: Star, color: 'text-stone-600 dark:text-stone-400' },
+        { id: 'calendar', label: t('filter.calendar'), icon: CalendarDays, color: 'text-stone-600 dark:text-stone-400' },
     ];
 
     const showMessage = (type: 'success' | 'error', text: string) => {
@@ -115,7 +115,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         try {
             await onAddFolder(newFolderName.trim(), newFolderColor, activeTab === 'notes');
             setNewFolderName('');
-            setNewFolderColor('indigo');
+            setNewFolderColor('stone');
             setIsAddingFolder(false);
         } finally {
             setIsFolderLoading(false);
@@ -147,7 +147,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     const startEditFolder = (folder: Folder) => {
         setEditingFolderId(folder.id);
         setEditFolderName(folder.name);
-        setEditFolderColor(folder.color || 'indigo');
+        setEditFolderColor(folder.color || 'stone');
         setIsAddingFolder(false);
     };
 
@@ -327,10 +327,10 @@ const Sidebar: React.FC<SidebarProps> = ({
                                 className="absolute inset-0 flex flex-col"
                                 style={{ pointerEvents: view === 'menu' ? 'auto' : 'none' }}
                             >
-                                {/* Profile Header */}
-                                <div className="p-6 pt-safe bg-indigo-50/50 dark:bg-indigo-950/30 border-b border-indigo-100/50 dark:border-indigo-900/50 rounded-tr-3xl">
+                                {/* Profile Header - Minimalist */}
+                                <div className="p-6 pt-safe mb-2">
                                     <div className="flex items-center gap-4 mt-2">
-                                        <div className="w-12 h-12 rounded-full bg-indigo-500/90 backdrop-blur-md text-white flex items-center justify-center font-bold text-xl ring-4 ring-white/50 dark:ring-gray-700/50 overflow-hidden">
+                                        <div className="w-12 h-12 rounded-full bg-[#E7E5E4] text-[#2D2A26] flex items-center justify-center font-bold text-xl overflow-hidden">
                                             {user?.avatar ? (
                                                 <img src={user.avatar} alt={user.nickname} className="w-full h-full rounded-full object-cover" />
                                             ) : (
@@ -343,7 +343,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                                         </div>
                                         <button
                                             onClick={onTogglePin}
-                                            className={`p-2 rounded-xl min-w-[44px] min-h-[44px] flex items-center justify-center transition-colors ${isPinned ? 'text-indigo-600 dark:text-indigo-400 bg-indigo-100/50 dark:bg-indigo-900/30' : 'text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-white/50 dark:hover:bg-gray-700/50'}`}
+                                            className={`p-2 rounded-lg flex items-center justify-center transition-colors ${isPinned ? 'text-[#2D2A26] bg-[#E7E5E4]' : 'text-gray-400 hover:text-[#2D2A26]'}`}
                                             title={isPinned ? 'Unpin sidebar' : 'Pin sidebar'}
                                         >
                                             <Pin size={18} className={isPinned ? 'rotate-45' : ''} />
@@ -360,9 +360,9 @@ const Sidebar: React.FC<SidebarProps> = ({
                                                 onFilterChange(item.id as any);
                                                 onClose();
                                             }}
-                                            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeFilter === item.id
-                                                ? 'bg-indigo-100/60 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 shadow-sm'
-                                                : 'text-gray-600 dark:text-gray-300 hover:bg-white/50 dark:hover:bg-gray-700/50'
+                                            className={`w-full flex items-center gap-4 px-4 py-3 rounded-xl transition-all ${activeFilter === item.id
+                                                ? 'bg-[#E7E5E4] text-[#2D2A26] font-medium'
+                                                : 'text-gray-500 hover:text-stone-800'
                                                 }`}
                                         >
                                             <item.icon size={20} className={item.color} />
@@ -378,7 +378,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                                             </span>
                                             <button
                                                 onClick={() => setIsAddingFolder(!isAddingFolder)}
-                                                className="p-1 text-gray-400 hover:text-indigo-500 dark:hover:text-indigo-400 rounded-lg transition-colors"
+                                                className="p-1 text-gray-400 hover:text-stone-600 dark:hover:text-stone-400 rounded-lg transition-colors"
                                             >
                                                 <Plus size={16} />
                                             </button>
@@ -386,7 +386,7 @@ const Sidebar: React.FC<SidebarProps> = ({
 
                                         {/* Add folder form */}
                                         {isAddingFolder && (
-                                            <div className="mx-2 mb-2 p-2 rounded-xl bg-white/50 dark:bg-gray-700/50 border border-indigo-200 dark:border-indigo-800">
+                                            <div className="mx-2 mb-2 p-2 rounded-xl bg-white/50 dark:bg-gray-700/50 border border-stone-200 dark:border-stone-700">
                                                 <input
                                                     type="text"
                                                     value={newFolderName}
@@ -410,7 +410,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                                                     <button
                                                         onClick={handleAddFolderSubmit}
                                                         disabled={!newFolderName.trim() || isFolderLoading}
-                                                        className="flex-1 py-1.5 text-xs font-medium text-white bg-indigo-500 rounded-lg disabled:opacity-50"
+                                                        className="flex-1 py-1.5 text-xs font-medium text-white bg-stone-500 hover:bg-stone-600 rounded-lg disabled:opacity-50"
                                                     >
                                                         {isFolderLoading ? <Loader2 size={12} className="animate-spin mx-auto" /> : t('common.save')}
                                                     </button>
@@ -429,7 +429,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                                             <div key={folder.id}>
                                                 {editingFolderId === folder.id ? (
                                                     /* Edit form */
-                                                    <div className="mx-2 mb-2 p-2 rounded-xl bg-white/50 dark:bg-gray-700/50 border border-indigo-200 dark:border-indigo-800">
+                                                    <div className="mx-2 mb-2 p-2 rounded-xl bg-white/50 dark:bg-gray-700/50 border border-stone-200 dark:border-stone-700">
                                                         <input
                                                             type="text"
                                                             value={editFolderName}
@@ -448,7 +448,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                                                             ))}
                                                         </div>
                                                         <div className="flex gap-1">
-                                                            <button onClick={handleEditFolderSubmit} disabled={isFolderLoading} className="flex-1 py-1.5 text-xs font-medium text-white bg-indigo-500 rounded-lg disabled:opacity-50">
+                                                            <button onClick={handleEditFolderSubmit} disabled={isFolderLoading} className="flex-1 py-1.5 text-xs font-medium text-white bg-stone-500 hover:bg-stone-600 rounded-lg disabled:opacity-50">
                                                                 {isFolderLoading ? <Loader2 size={12} className="animate-spin mx-auto" /> : t('common.save')}
                                                             </button>
                                                             <button onClick={() => setEditingFolderId(null)} className="px-3 py-1.5 text-xs glass-button rounded-lg">{t('common.cancel')}</button>
@@ -474,17 +474,17 @@ const Sidebar: React.FC<SidebarProps> = ({
                                                             onClose();
                                                         }}
                                                         className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all group ${activeFilter === 'folder' && selectedFolderId === folder.id
-                                                            ? 'bg-indigo-100/60 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 shadow-sm'
-                                                            : 'text-gray-600 dark:text-gray-300 hover:bg-white/50 dark:hover:bg-gray-700/50'
+                                                            ? 'bg-[#E7E5E4] text-[#2D2A26] font-medium'
+                                                            : 'text-gray-500 hover:text-stone-800'
                                                             }`}
                                                     >
-                                                        <FolderIcon size={18} className={folderColors[folder.color || 'indigo'].text} />
+                                                        <FolderIcon size={18} className={folderColors[folder.color || 'stone']?.text || 'text-stone-500'} />
                                                         <span className="flex-1 text-left font-medium truncate">{folder.name}</span>
                                                         {/* Edit/Delete buttons on hover */}
                                                         <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
                                                             <button
                                                                 onClick={(e) => { e.stopPropagation(); startEditFolder(folder); }}
-                                                                className="p-1 text-gray-400 hover:text-indigo-500 rounded"
+                                                                className="p-1 text-gray-400 hover:text-stone-600 rounded"
                                                             >
                                                                 <Pencil size={12} />
                                                             </button>
@@ -562,7 +562,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                                             className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-white/50 dark:hover:bg-gray-700/50 transition-colors"
                                         >
                                             <div className="flex items-center gap-3">
-                                                <div className="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+                                                <div className="w-8 h-8 rounded-full bg-stone-100 dark:bg-stone-800/50 flex items-center justify-center text-stone-600 dark:text-stone-400">
                                                     <Camera size={16} />
                                                 </div>
                                                 <span className="text-gray-700 dark:text-gray-300 text-sm">{t('settings.avatar')}</span>
@@ -571,7 +571,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                                                 {user?.avatar ? (
                                                     <img src={user.avatar} alt="" className="w-8 h-8 rounded-full object-cover" />
                                                 ) : (
-                                                    <div className="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center text-white text-xs font-bold">
+                                                    <div className="w-8 h-8 rounded-full bg-stone-500 flex items-center justify-center text-white text-xs font-bold">
                                                         {user?.nickname?.[0]?.toUpperCase() || 'U'}
                                                     </div>
                                                 )}
@@ -590,7 +590,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                                         <div className="px-3 py-2.5 rounded-xl">
                                             <div className="flex items-center justify-between">
                                                 <div className="flex items-center gap-3">
-                                                    <div className="w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-900/50 flex items-center justify-center text-purple-600 dark:text-purple-400">
+                                                    <div className="w-8 h-8 rounded-full bg-stone-100 dark:bg-stone-800/50 flex items-center justify-center text-stone-600 dark:text-stone-400">
                                                         <User size={16} />
                                                     </div>
                                                     <span className="text-gray-700 dark:text-gray-300 text-sm">{t('settings.nickname')}</span>
@@ -608,7 +608,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                                                         <button
                                                             onClick={handleNicknameSave}
                                                             disabled={isSaving}
-                                                            className="p-1 rounded-lg bg-green-500 text-white"
+                                                            className="p-1 rounded-lg bg-stone-500 text-white"
                                                         >
                                                             {isSaving ? <Loader2 size={12} className="animate-spin" /> : <Check size={12} />}
                                                         </button>
@@ -637,7 +637,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                                         {/* Email */}
                                         <div className="px-3 py-2.5 rounded-xl flex items-center justify-between">
                                             <div className="flex items-center gap-3">
-                                                <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center text-blue-600 dark:text-blue-400">
+                                                <div className="w-8 h-8 rounded-full bg-stone-100 dark:bg-stone-800/50 flex items-center justify-center text-stone-600 dark:text-stone-400">
                                                     <Mail size={16} />
                                                 </div>
                                                 <span className="text-gray-700 dark:text-gray-300 text-sm">{t('settings.email')}</span>
@@ -651,7 +651,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                                             className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-white/50 dark:hover:bg-gray-700/50 transition-colors"
                                         >
                                             <div className="flex items-center gap-3">
-                                                <div className="w-8 h-8 rounded-full bg-orange-100 dark:bg-orange-900/50 flex items-center justify-center text-orange-600 dark:text-orange-400">
+                                                <div className="w-8 h-8 rounded-full bg-stone-100 dark:bg-stone-800/50 flex items-center justify-center text-stone-600 dark:text-stone-400">
                                                     <Lock size={16} />
                                                 </div>
                                                 <span className="text-gray-700 dark:text-gray-300 text-sm">{t('settings.changePassword')}</span>
@@ -667,7 +667,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                                         {/* Theme */}
                                         <div className="px-3 py-2.5 rounded-xl space-y-2">
                                             <div className="flex items-center gap-3">
-                                                <div className="w-8 h-8 rounded-full bg-amber-100 dark:bg-amber-900/50 flex items-center justify-center text-amber-600 dark:text-amber-400">
+                                                <div className="w-8 h-8 rounded-full bg-stone-100 dark:bg-stone-800/50 flex items-center justify-center text-stone-600 dark:text-stone-400">
                                                     {resolvedTheme === 'dark' ? <Moon size={16} /> : <Sun size={16} />}
                                                 </div>
                                                 <span className="text-gray-700 dark:text-gray-300 text-sm">{t('settings.theme')}</span>
@@ -678,7 +678,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                                                         key={option.value}
                                                         onClick={() => setTheme(option.value)}
                                                         className={`flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg text-xs font-medium transition-all ${theme === option.value
-                                                            ? 'bg-indigo-500 text-white'
+                                                            ? 'bg-stone-500 text-white'
                                                             : 'bg-white/50 dark:bg-gray-700/50 text-gray-600 dark:text-gray-300'
                                                             }`}
                                                     >
@@ -692,7 +692,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                                         {/* Language */}
                                         <div className="px-3 py-2.5 rounded-xl space-y-2">
                                             <div className="flex items-center gap-3">
-                                                <div className="w-8 h-8 rounded-full bg-green-100 dark:bg-green-900/50 flex items-center justify-center text-green-600 dark:text-green-400">
+                                                <div className="w-8 h-8 rounded-full bg-stone-100 dark:bg-stone-800/50 flex items-center justify-center text-stone-600 dark:text-stone-400">
                                                     <Globe size={16} />
                                                 </div>
                                                 <span className="text-gray-700 dark:text-gray-300 text-sm">{t('settings.language')}</span>
@@ -703,7 +703,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                                                         key={option.value}
                                                         onClick={() => setLanguage(option.value)}
                                                         className={`flex-1 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${language === option.value
-                                                            ? 'bg-indigo-500 text-white'
+                                                            ? 'bg-stone-500 text-white'
                                                             : 'bg-white/50 dark:bg-gray-700/50 text-gray-600 dark:text-gray-300'
                                                             }`}
                                                     >
@@ -723,7 +723,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                                             className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-white/50 dark:hover:bg-gray-700/50 transition-colors disabled:opacity-50"
                                         >
                                             <div className="flex items-center gap-3">
-                                                <div className="w-8 h-8 rounded-full bg-cyan-100 dark:bg-cyan-900/50 flex items-center justify-center text-cyan-600 dark:text-cyan-400">
+                                                <div className="w-8 h-8 rounded-full bg-stone-100 dark:bg-stone-800/50 flex items-center justify-center text-stone-600 dark:text-stone-400">
                                                     {isExporting ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
                                                 </div>
                                                 <div className="text-left">

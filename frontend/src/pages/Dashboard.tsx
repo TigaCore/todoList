@@ -1040,8 +1040,8 @@ const Dashboard = () => {
                                 }}
                                 className="flex flex-col items-center justify-center py-20 text-gray-400"
                             >
-                                <div className="w-32 h-32 bg-indigo-100 rounded-full flex items-center justify-center mb-4">
-                                    <Search size={40} className="text-indigo-300" />
+                                <div className="mb-6 opacity-30">
+                                    <Search size={48} className="text-[#2D2A26]" strokeWidth={1} />
                                 </div>
                                 <p>{t('tasks.noTasksInFilter').replace('{filter}', getFilterTitle())}</p>
                             </motion.div>
@@ -1192,7 +1192,7 @@ const Dashboard = () => {
                                             setTitle('');
                                             setIsInputOpen(false);
                                         }}
-                                        className="p-2 mr-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50/50 rounded-xl transition-colors"
+                                        className="p-2 mr-2 text-gray-400 hover:text-stone-600 hover:bg-stone-50/50 rounded-xl transition-colors"
                                         title={t('tasks.openFullEditor')}
                                     >
                                         <Maximize2 size={20} />
@@ -1225,7 +1225,7 @@ const Dashboard = () => {
                                 }
                             }}
                             exit={{ scale: 0.8, opacity: 0 }}
-                            className="glass-fab w-14 h-14 text-white rounded-full active:scale-95 transition-all flex items-center justify-center pointer-events-auto border-2 border-white/20"
+                            className="w-14 h-14 bg-[#2D2A26] text-[#EFEBE7] rounded-full active:scale-95 transition-all flex items-center justify-center pointer-events-auto shadow-xl shadow-gray-400/20 hover:shadow-2xl hover:shadow-gray-400/30"
                             onClick={() => {
                                 if ((activeTab as Tab) === 'notes') {
                                     // Open Note Editor directly for new document

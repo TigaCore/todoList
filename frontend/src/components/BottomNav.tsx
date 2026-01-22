@@ -38,13 +38,13 @@ const BottomNav: React.FC<BottomNavProps> = ({ activeTab, onTabChange }) => {
 const NavButton = ({ isActive, onClick, icon }: { isActive: boolean, onClick: () => void, icon: React.ReactNode, label: string }) => (
     <button
         onClick={onClick}
-        className={`relative p-2 rounded-xl transition-all duration-300 flex flex-col items-center gap-0.5 ${isActive ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300'}`}
+        className={`relative p-2 rounded-xl transition-all duration-300 flex flex-col items-center gap-0.5 ${isActive ? 'text-stone-700 dark:text-stone-300' : 'text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300'}`}
     >
         {icon}
         {isActive && (
             <motion.div
                 layoutId="nav-indicator"
-                className="absolute -bottom-1 w-1 h-1 bg-indigo-600 dark:bg-indigo-400 rounded-full"
+                className="absolute -bottom-1 w-1 h-1 bg-stone-600 dark:bg-stone-400 rounded-full"
             />
         )}
     </button>

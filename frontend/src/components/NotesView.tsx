@@ -67,8 +67,8 @@ const NotesView: React.FC<NotesViewProps> = ({ notes, onNoteClick, selectedFolde
                         <span>{new Date(note.due_date || Date.now()).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span>
                         {note.embedded_tasks && note.embedded_tasks.length > 0 && (
                             <div className="flex items-center gap-1">
-                                <CheckSquare size={12} className="text-indigo-500" />
-                                <span className={note.embedded_tasks.every(t => t.is_completed) ? 'text-indigo-500' : ''}>
+                                <CheckSquare size={12} className="text-stone-500" />
+                                <span className={note.embedded_tasks.every(t => t.is_completed) ? 'text-stone-500' : ''}>
                                     {note.embedded_tasks.filter(t => t.is_completed).length}/{note.embedded_tasks.length}
                                 </span>
                             </div>
