@@ -347,12 +347,6 @@ const Sidebar: React.FC<SidebarProps> = ({
                                         >
                                             <Pin size={18} className={isPinned ? 'rotate-45' : ''} />
                                         </button>
-                                        <button
-                                            onClick={onClose}
-                                            className="p-2 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-white/50 dark:hover:bg-gray-700/50 rounded-xl min-w-[44px] min-h-[44px] flex items-center justify-center transition-colors"
-                                        >
-                                            <X size={20} />
-                                        </button>
                                     </div>
                                 </div>
 
