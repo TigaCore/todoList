@@ -20,7 +20,8 @@
         "all": "All Tasks",
         "today": "Today",
         "upcoming": "Upcoming",
-        "completed": "Completed"
+        "completed": "Completed",
+        "calendar": "Calendar"
     },
     "settings": {
         "title": "Settings",
@@ -199,5 +200,30 @@
         "folderUpdated": "Folder updated",
         "folderDeleted": "Folder deleted",
         "moveToFolder": "Move to folder"
+    },
+    "calendar": {
+        "title": "Calendar",
+        "today": "Today",
+        "viewMonth": "Month",
+        "viewWeek": "Week",
+        "viewDay": "Day",
+        "viewYear": "Year",
+        "tasks": "tasks",
+        "noTasks": "No tasks",
+        "noTasksForDay": "No tasks for today",
+        "noTimeTasks": "Unscheduled tasks",
+        "moreTasks": "more tasks",
+        "weekdays": {
+            "sun": "Sun",
+            "mon": "Mon",
+            "tue": "Tue",
+            "wed": "Wed",
+            "thu": "Thu",
+            "fri": "Fri",
+            "sat": "Sat"
+        },
+        "pending": "Pending",
+        "inProgress": "In Progress",
+        "completed": "Completed"
     }
 }

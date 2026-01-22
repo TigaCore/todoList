@@ -4,7 +4,7 @@ import {
     X, LogOut, Settings, Calendar, List, Star, Sun,
     ChevronLeft, ChevronRight, User, Mail, Lock, Camera,
     Moon, Monitor, Globe, Download, Info, Check, Loader2,
-    Folder as FolderIcon, Plus, Pencil, Trash2, Pin
+    Folder as FolderIcon, Plus, Pencil, Trash2, Pin, CalendarDays
 } from 'lucide-react';
 import { useLanguage, Language } from '../contexts/LanguageContext';
 import { useTheme, Theme } from '../contexts/ThemeContext';
@@ -22,7 +22,7 @@ interface SidebarProps {
     onClose: () => void;
     onLogout: () => void;
     activeFilter: string;
-    onFilterChange: (filter: 'all' | 'today' | 'upcoming' | 'completed' | 'folder') => void;
+    onFilterChange: (filter: 'all' | 'today' | 'upcoming' | 'completed' | 'folder' | 'calendar') => void;
     user?: UserData | null;
     onUserUpdate?: (user: UserData) => void;
     // Folder props
@@ -100,6 +100,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         { id: 'today', label: t('filter.today'), icon: Sun, color: 'text-amber-500' },
         { id: 'upcoming', label: t('filter.upcoming'), icon: Calendar, color: 'text-purple-500' },
         { id: 'completed', label: t('filter.completed'), icon: Star, color: 'text-green-500' },
+        { id: 'calendar', label: t('filter.calendar'), icon: CalendarDays, color: 'text-rose-500' },
     ];
 
     const showMessage = (type: 'success' | 'error', text: string) => {

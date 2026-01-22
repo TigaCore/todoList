@@ -20,7 +20,8 @@
         "all": "所有任务",
         "today": "今天",
         "upcoming": "即将到来",
-        "completed": "已完成"
+        "completed": "已完成",
+        "calendar": "日历"
     },
     "settings": {
         "title": "设置",
@@ -199,5 +200,30 @@
         "folderUpdated": "文件夹已更新",
         "folderDeleted": "文件夹已删除",
         "moveToFolder": "移动到文件夹"
+    },
+    "calendar": {
+        "title": "日历",
+        "today": "今天",
+        "viewMonth": "月",
+        "viewWeek": "周",
+        "viewDay": "日",
+        "viewYear": "年",
+        "tasks": "任务",
+        "noTasks": "暂无任务",
+        "noTasksForDay": "今天暂无任务",
+        "noTimeTasks": "未设定时间",
+        "moreTasks": "更多任务",
+        "weekdays": {
+            "sun": "日",
+            "mon": "一",
+            "tue": "二",
+            "wed": "三",
+            "thu": "四",
+            "fri": "五",
+            "sat": "六"
+        },
+        "pending": "待处理",
+        "inProgress": "进行中",
+        "completed": "已完成"
     }
 }

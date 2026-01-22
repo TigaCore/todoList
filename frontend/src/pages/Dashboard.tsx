@@ -9,6 +9,7 @@ import Sidebar from '../components/Sidebar';
 import DateTimePicker from '../components/DateTimePicker';
 import BottomNav, { Tab } from '../components/BottomNav';
 import NotesView from '../components/NotesView';
+import CalendarView from '../components/CalendarView';
 import TimelineDrawer from '../components/TimelineDrawer';
 import Toast, { ToastMessage, ToastType } from '../components/Toast';
 import ConfirmDialog from '../components/ConfirmDialog';
@@ -49,7 +50,7 @@ const Dashboard = () => {
     const [docTasks, setDocTasks] = useState<DocTask[]>([]);
     const [user, setUser] = useState<User | null>(null);
     const [title, setTitle] = useState('');
-    const [filter, setFilter] = useState<'all' | 'today' | 'upcoming' | 'completed' | 'folder'>('all');
+    const [filter, setFilter] = useState<'all' | 'today' | 'upcoming' | 'completed' | 'folder' | 'calendar'>('all');
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [isSidebarPinned, setIsSidebarPinned] = useState(() => {
         // Load pinned state from localStorage
@@ -942,6 +943,10 @@ const Dashboard = () => {
             return t('tabs.notes');
         }
 
+        if (filter === 'calendar') {
+            return t('calendar.title');
+        }
+
         switch (filter) {
             case 'today': return t('filter.today');
             case 'upcoming': return t('filter.upcoming');
@@ -999,8 +1004,8 @@ const Dashboard = () => {
                     {/* Tasks View */}
                     <motion.div
                         animate={{
-                            opacity: activeTab === 'tasks' ? 1 : 0,
-                            scale: activeTab === 'tasks' ? 1 : 0.96,
+                            opacity: activeTab === 'tasks' && filter !== 'calendar' ? 1 : 0,
+                            scale: activeTab === 'tasks' && filter !== 'calendar' ? 1 : 0.96,
                         }}
                         transition={{
                             type: "spring",
@@ -1009,11 +1014,11 @@ const Dashboard = () => {
                             mass: 0.8,
                         }}
                         style={{
-                            position: activeTab === 'tasks' ? 'relative' : 'absolute',
+                            position: activeTab === 'tasks' && filter !== 'calendar' ? 'relative' : 'absolute',
                             top: 0,
                             left: 0,
                             right: 0,
-                            pointerEvents: activeTab === 'tasks' ? 'auto' : 'none',
+                            pointerEvents: activeTab === 'tasks' && filter !== 'calendar' ? 'auto' : 'none',
                         }}
                         className="space-y-3 pb-20 origin-top"
                     >
@@ -1065,8 +1070,8 @@ const Dashboard = () => {
                     {/* Notes View */}
                     <motion.div
                         animate={{
-                            opacity: activeTab === 'notes' ? 1 : 0,
-                            scale: activeTab === 'notes' ? 1 : 0.96,
+                            opacity: activeTab === 'notes' && filter !== 'calendar' ? 1 : 0,
+                            scale: activeTab === 'notes' && filter !== 'calendar' ? 1 : 0.96,
                         }}
                         transition={{
                             type: "spring",
@@ -1075,11 +1080,11 @@ const Dashboard = () => {
                             mass: 0.8,
                         }}
                         style={{
-                            position: activeTab === 'notes' ? 'relative' : 'absolute',
+                            position: activeTab === 'notes' && filter !== 'calendar' ? 'relative' : 'absolute',
                             top: 0,
                             left: 0,
                             right: 0,
-                            pointerEvents: activeTab === 'notes' ? 'auto' : 'none',
+                            pointerEvents: activeTab === 'notes' && filter !== 'calendar' ? 'auto' : 'none',
                         }}
                         className="pb-20 origin-top"
                     >
@@ -1093,6 +1098,33 @@ const Dashboard = () => {
                                 selectedFolderId={selectedFolderId}
                             />
                         )}
+                    </motion.div>
+
+                    {/* Calendar View */}
+                    <motion.div
+                        animate={{
+                            opacity: filter === 'calendar' ? 1 : 0,
+                            scale: filter === 'calendar' ? 1 : 0.96,
+                        }}
+                        transition={{
+                            type: "spring",
+                            stiffness: 400,
+                            damping: 28,
+                            mass: 0.8,
+                        }}
+                        style={{
+                            position: filter === 'calendar' ? 'relative' : 'absolute',
+                            top: 0,
+                            left: 0,
+                            right: 0,
+                            pointerEvents: filter === 'calendar' ? 'auto' : 'none',
+                        }}
+                        className="pb-20 origin-top"
+                    >
+                        <CalendarView
+                            todos={todos}
+                            onTaskClick={(todo) => setEditingNote(todo)}
+                        />
                     </motion.div>
                 </div>
             </main>
@@ -1179,7 +1211,7 @@ const Dashboard = () => {
                     </AnimatePresence>
 
                     {/* FAB Button - Centered */}
-                    {!isInputOpen && (
+                    {!isInputOpen && filter !== 'calendar' && (
                         <motion.button
                             initial={{ scale: 0.8, opacity: 0 }}
                             animate={{
@@ -1195,7 +1227,7 @@ const Dashboard = () => {
                             exit={{ scale: 0.8, opacity: 0 }}
                             className="glass-fab w-14 h-14 text-white rounded-full active:scale-95 transition-all flex items-center justify-center pointer-events-auto border-2 border-white/20"
                             onClick={() => {
-                                if (activeTab === 'notes') {
+                                if ((activeTab as Tab) === 'notes') {
                                     // Open Note Editor directly for new document
                                     setEditingNote({
                                         id: 0,
@@ -1216,7 +1248,7 @@ const Dashboard = () => {
                         >
                             {/* Icon changes based on tab */}
                             <AnimatePresence mode="wait">
-                                {activeTab === 'notes' ? (
+                                {(activeTab as Tab) === 'notes' ? (
                                     <motion.div
                                         key="pen"
                                         initial={{ rotate: -90, opacity: 0 }}
@@ -1243,11 +1275,13 @@ const Dashboard = () => {
                 </div>
             </div>
 
-            {/* Bottom Navigation */}
-            <BottomNav activeTab={activeTab} onTabChange={(tab) => {
-                setActiveTab(tab);
-                setIsInputOpen(false); // Reset input state when switching tabs
-            }} />
+            {/* Bottom Navigation - hide in calendar view */}
+            {filter !== 'calendar' && (
+                <BottomNav activeTab={activeTab} onTabChange={(tab) => {
+                    setActiveTab(tab);
+                    setIsInputOpen(false); // Reset input state when switching tabs
+                }} />
+            )}
 
             {/* Sidebar */}
             <Sidebar
