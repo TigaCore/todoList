@@ -7,14 +7,20 @@ import { Todo } from '../api/supabase';
 interface NotesViewProps {
     notes: Todo[];
     onNoteClick: (note: Todo) => void;
+    selectedFolderId?: number | null;
 }
 
-const NotesView: React.FC<NotesViewProps> = ({ notes, onNoteClick }) => {
+const NotesView: React.FC<NotesViewProps> = ({ notes, onNoteClick, selectedFolderId }) => {
     const { t } = useLanguage();
 
     // Only show standalone documents (is_document=true)
     // Tasks with attached notes are edited by clicking the task, not shown here
-    const displayNotes = notes.filter(n => n.is_document === true);
+    // Apply folder filter if selectedFolderId is provided
+    const displayNotes = notes.filter(n => {
+        if (n.is_document !== true) return false;
+        if (selectedFolderId !== null && selectedFolderId !== undefined && n.folder_id !== selectedFolderId) return false;
+        return true;
+    });
 
     if (displayNotes.length === 0) {
         return (

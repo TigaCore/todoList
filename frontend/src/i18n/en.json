@@ -181,5 +181,23 @@
         "updateFailed": "Failed to update task status",
         "tasksCount": "{completed}/{total} tasks completed",
         "emptyState": "No tasks in this document"
+    },
+    "folder": {
+        "all": "All",
+        "uncategorized": "Uncategorized",
+        "addFolder": "Add Folder",
+        "editFolder": "Edit Folder",
+        "deleteFolder": "Delete Folder",
+        "folderName": "Folder Name",
+        "folderColor": "Folder Color",
+        "manageFolder": "Manage Folders",
+        "taskFolders": "Task Folders",
+        "docFolders": "Document Folders",
+        "noFolders": "No folders yet",
+        "confirmDelete": "Are you sure you want to delete this folder? Items will be moved to Uncategorized.",
+        "folderCreated": "Folder created",
+        "folderUpdated": "Folder updated",
+        "folderDeleted": "Folder deleted",
+        "moveToFolder": "Move to folder"
     }
 }

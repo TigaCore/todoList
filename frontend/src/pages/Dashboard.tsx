@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase, Todo, PartialTodo, DocTask } from '../api/supabase';
+import { supabase, Todo, PartialTodo, DocTask, Folder } from '../api/supabase';
 import { Plus, Search, Menu, PenLine, Maximize2, History } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import TodoItem from '../components/TodoItem';
@@ -49,8 +49,13 @@ const Dashboard = () => {
     const [docTasks, setDocTasks] = useState<DocTask[]>([]);
     const [user, setUser] = useState<User | null>(null);
     const [title, setTitle] = useState('');
-    const [filter, setFilter] = useState<'all' | 'today' | 'upcoming' | 'completed'>('all');
+    const [filter, setFilter] = useState<'all' | 'today' | 'upcoming' | 'completed' | 'folder'>('all');
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const [isSidebarPinned, setIsSidebarPinned] = useState(() => {
+        // Load pinned state from localStorage
+        const saved = localStorage.getItem('sidebar-pinned');
+        return saved === 'true';
+    });
     const [isInputOpen, setIsInputOpen] = useState(false);
     const [isTimelineOpen, setIsTimelineOpen] = useState(false);
     const [isAddingTodo, setIsAddingTodo] = useState(false);
@@ -81,6 +86,10 @@ const Dashboard = () => {
     // Network Status
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [, setIsOnline] = useState(true);
+
+    // Folder State
+    const [folders, setFolders] = useState<Folder[]>([]);
+    const [selectedFolderId, setSelectedFolderId] = useState<number | null>(null);
 
     // Toast Helper Functions
     const showToast = useCallback((type: ToastType, message: string) => {
@@ -297,6 +306,91 @@ const Dashboard = () => {
         }
     };
 
+    // Fetch folders from Supabase
+    const fetchFolders = useCallback(async () => {
+        try {
+            const { data, error } = await supabase
+                .from('folders')
+                .select('*')
+                .order('created_at', { ascending: true });
+
+            if (error) {
+                console.error('Error fetching folders:', error);
+            } else {
+                setFolders(data || []);
+            }
+        } catch (error) {
+            console.error('Error fetching folders:', error);
+        }
+    }, []);
+
+    // Folder CRUD operations
+    const handleAddFolder = async (name: string, color: string, isForDocument: boolean) => {
+        if (!user) return;
+        try {
+            // Build insert data - is_for_document is optional until DB is updated
+            const insertData: Record<string, unknown> = { name, color, user_id: user.id };
+            const { data, error } = await supabase
+                .from('folders')
+                .insert([insertData])
+                .select()
+                .single();
+
+            if (error) throw error;
+
+            // Add the is_for_document flag to local state even if not in DB
+            setFolders(prev => [...prev, { ...data, is_for_document: isForDocument }]);
+            showToast('success', t('folder.folderCreated'));
+        } catch (error: any) {
+            console.error('Error adding folder:', error);
+            showToast('error', error.message || 'Failed to create folder');
+        }
+    };
+
+    const handleEditFolder = async (id: number, name: string, color: string) => {
+        try {
+            const { error } = await supabase
+                .from('folders')
+                .update({ name, color })
+                .eq('id', id);
+
+            if (error) throw error;
+
+            setFolders(prev => prev.map(f => f.id === id ? { ...f, name, color } : f));
+            showToast('success', t('folder.folderUpdated'));
+        } catch (error: any) {
+            console.error('Error editing folder:', error);
+            showToast('error', error.message || 'Failed to update folder');
+        }
+    };
+
+    const handleDeleteFolder = async (id: number) => {
+        try {
+            const { error } = await supabase
+                .from('folders')
+                .delete()
+                .eq('id', id);
+
+            if (error) throw error;
+
+            // Update local todos to remove folder_id (they become uncategorized)
+            setTodos(prev => prev.map(todo =>
+                todo.folder_id === id ? { ...todo, folder_id: null } : todo
+            ));
+            setFolders(prev => prev.filter(f => f.id !== id));
+
+            // If the deleted folder was selected, go back to All
+            if (selectedFolderId === id) {
+                setSelectedFolderId(null);
+            }
+
+            showToast('success', t('folder.folderDeleted'));
+        } catch (error: any) {
+            console.error('Error deleting folder:', error);
+            showToast('error', error.message || 'Failed to delete folder');
+        }
+    };
+
     // Get current user
     const getCurrentUser = async () => {
         const { data: { session } } = await supabase.auth.getSession();
@@ -315,6 +409,7 @@ const Dashboard = () => {
     useEffect(() => {
         getCurrentUser();
         fetchTodos();
+        fetchFolders();
         requestNotificationPermission();
 
         // Listen for auth state changes
@@ -795,6 +890,12 @@ const Dashboard = () => {
         // Exclude standalone documents from task list - they only show in Notes tab
         if (todo.is_document) return false;
 
+        // Folder filter - only apply when filter mode is 'folder'
+        if (filter === 'folder') {
+            if (selectedFolderId === null) return true; // Show all if no folder selected
+            return todo.folder_id === selectedFolderId;
+        }
+
         if (filter === 'completed') return todo.is_completed;
         if (!todo.is_completed) {
             if (filter === 'today') {
@@ -809,6 +910,13 @@ const Dashboard = () => {
 
     // Filter document tasks based on current filter
     const filteredDocTasks = docTasks.filter(task => {
+        // Folder filter for doc tasks - only apply when filter mode is 'folder'
+        if (filter === 'folder') {
+            if (selectedFolderId === null) return !task.isCompleted; // Show all uncompleted if no folder selected
+            const parentTodo = todos.find(t => t.id === task.docId);
+            if (parentTodo?.folder_id !== selectedFolderId) return false;
+        }
+
         if (filter === 'completed') return task.isCompleted;
         return !task.isCompleted || filter === 'all';
     });
@@ -826,12 +934,22 @@ const Dashboard = () => {
     });
 
     const getFilterTitle = () => {
-        if (activeTab === 'notes') return t('tabs.notes');
+        if (activeTab === 'notes') {
+            if (filter === 'folder' && selectedFolderId) {
+                const folder = folders.find(f => f.id === selectedFolderId);
+                return folder?.name || t('tabs.notes');
+            }
+            return t('tabs.notes');
+        }
 
         switch (filter) {
             case 'today': return t('filter.today');
             case 'upcoming': return t('filter.upcoming');
             case 'completed': return t('filter.completed');
+            case 'folder': {
+                const folder = folders.find(f => f.id === selectedFolderId);
+                return folder?.name || t('filter.all');
+            }
             default: return t('filter.all');
         }
     };
@@ -972,6 +1090,7 @@ const Dashboard = () => {
                             <NotesView
                                 notes={todos}
                                 onNoteClick={(t) => setEditingNote(t)}
+                                selectedFolderId={selectedFolderId}
                             />
                         )}
                     </motion.div>
@@ -1132,13 +1251,26 @@ const Dashboard = () => {
 
             {/* Sidebar */}
             <Sidebar
-                isOpen={isSidebarOpen}
+                isOpen={isSidebarOpen || isSidebarPinned}
                 onClose={() => setIsSidebarOpen(false)}
                 onLogout={handleLogout}
                 activeFilter={filter}
                 onFilterChange={setFilter}
                 user={user}
                 onUserUpdate={handleUserUpdate}
+                folders={folders}
+                selectedFolderId={selectedFolderId}
+                onFolderSelect={(folderId, _isForDocument) => setSelectedFolderId(folderId)}
+                onAddFolder={handleAddFolder}
+                onEditFolder={handleEditFolder}
+                onDeleteFolder={handleDeleteFolder}
+                activeTab={activeTab}
+                isPinned={isSidebarPinned}
+                onTogglePin={() => {
+                    const newValue = !isSidebarPinned;
+                    setIsSidebarPinned(newValue);
+                    localStorage.setItem('sidebar-pinned', String(newValue));
+                }}
             />
 
             {/* Note Editor Overlay */}

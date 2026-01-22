@@ -3,11 +3,12 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
     X, LogOut, Settings, Calendar, List, Star, Sun,
     ChevronLeft, ChevronRight, User, Mail, Lock, Camera,
-    Moon, Monitor, Globe, Download, Info, Check, Loader2
+    Moon, Monitor, Globe, Download, Info, Check, Loader2,
+    Folder as FolderIcon, Plus, Pencil, Trash2, Pin
 } from 'lucide-react';
 import { useLanguage, Language } from '../contexts/LanguageContext';
 import { useTheme, Theme } from '../contexts/ThemeContext';
-import { supabase } from '../api/supabase';
+import { supabase, Folder } from '../api/supabase';
 
 interface UserData {
     id: string;
@@ -21,14 +22,29 @@ interface SidebarProps {
     onClose: () => void;
     onLogout: () => void;
     activeFilter: string;
-    onFilterChange: (filter: 'all' | 'today' | 'upcoming' | 'completed') => void;
+    onFilterChange: (filter: 'all' | 'today' | 'upcoming' | 'completed' | 'folder') => void;
     user?: UserData | null;
     onUserUpdate?: (user: UserData) => void;
+    // Folder props
+    folders: Folder[];
+    selectedFolderId: number | null;
+    onFolderSelect: (folderId: number | null, isForDocument: boolean) => void;
+    onAddFolder: (name: string, color: string, isForDocument: boolean) => Promise<void>;
+    onEditFolder: (id: number, name: string, color: string) => Promise<void>;
+    onDeleteFolder: (id: number) => Promise<void>;
+    activeTab: 'tasks' | 'notes';
+    // Pin props
+    isPinned: boolean;
+    onTogglePin: () => void;
 }
 
 type View = 'menu' | 'settings';
 
-const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, onLogout, activeFilter, onFilterChange, user, onUserUpdate }) => {
+const Sidebar: React.FC<SidebarProps> = ({
+    isOpen, onClose, onLogout, activeFilter, onFilterChange, user, onUserUpdate,
+    folders, selectedFolderId, onFolderSelect, onAddFolder, onEditFolder, onDeleteFolder, activeTab,
+    isPinned, onTogglePin
+}) => {
     const { t, language, setLanguage } = useLanguage();
     const { theme, setTheme, resolvedTheme } = useTheme();
     const [view, setView] = useState<View>('menu');
@@ -39,6 +55,31 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, onLogout, activeFilt
     const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
     const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
+
+    // Folder UI state
+    const [isAddingFolder, setIsAddingFolder] = useState(false);
+    const [newFolderName, setNewFolderName] = useState('');
+    const [newFolderColor, setNewFolderColor] = useState('indigo');
+    const [editingFolderId, setEditingFolderId] = useState<number | null>(null);
+    const [editFolderName, setEditFolderName] = useState('');
+    const [editFolderColor, setEditFolderColor] = useState('indigo');
+    const [isFolderLoading, setIsFolderLoading] = useState(false);
+    const [deletingFolderId, setDeletingFolderId] = useState<number | null>(null);
+
+    // Folder color options
+    const folderColors: Record<string, { bg: string; text: string; ring: string }> = {
+        indigo: { bg: 'bg-indigo-500', text: 'text-indigo-500', ring: 'ring-indigo-300' },
+        rose: { bg: 'bg-rose-500', text: 'text-rose-500', ring: 'ring-rose-300' },
+        amber: { bg: 'bg-amber-500', text: 'text-amber-500', ring: 'ring-amber-300' },
+        emerald: { bg: 'bg-emerald-500', text: 'text-emerald-500', ring: 'ring-emerald-300' },
+        sky: { bg: 'bg-sky-500', text: 'text-sky-500', ring: 'ring-sky-300' },
+        purple: { bg: 'bg-purple-500', text: 'text-purple-500', ring: 'ring-purple-300' },
+    };
+
+    // Filter folders by type based on active tab
+    const filteredFolders = folders.filter(f =>
+        activeTab === 'notes' ? f.is_for_document === true : f.is_for_document !== true
+    );
 
     // Reset view when sidebar closes
     useEffect(() => {
@@ -64,6 +105,49 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, onLogout, activeFilt
     const showMessage = (type: 'success' | 'error', text: string) => {
         setMessage({ type, text });
         setTimeout(() => setMessage(null), 3000);
+    };
+
+    // Folder CRUD handlers
+    const handleAddFolderSubmit = async () => {
+        if (!newFolderName.trim() || isFolderLoading) return;
+        setIsFolderLoading(true);
+        try {
+            await onAddFolder(newFolderName.trim(), newFolderColor, activeTab === 'notes');
+            setNewFolderName('');
+            setNewFolderColor('indigo');
+            setIsAddingFolder(false);
+        } finally {
+            setIsFolderLoading(false);
+        }
+    };
+
+    const handleEditFolderSubmit = async () => {
+        if (!editFolderName.trim() || !editingFolderId || isFolderLoading) return;
+        setIsFolderLoading(true);
+        try {
+            await onEditFolder(editingFolderId, editFolderName.trim(), editFolderColor);
+            setEditingFolderId(null);
+        } finally {
+            setIsFolderLoading(false);
+        }
+    };
+
+    const handleDeleteFolderConfirm = async () => {
+        if (!deletingFolderId || isFolderLoading) return;
+        setIsFolderLoading(true);
+        try {
+            await onDeleteFolder(deletingFolderId);
+            setDeletingFolderId(null);
+        } finally {
+            setIsFolderLoading(false);
+        }
+    };
+
+    const startEditFolder = (folder: Folder) => {
+        setEditingFolderId(folder.id);
+        setEditFolderName(folder.name);
+        setEditFolderColor(folder.color || 'indigo');
+        setIsAddingFolder(false);
     };
 
     const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -186,14 +270,16 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, onLogout, activeFilt
         <AnimatePresence>
             {isOpen && (
                 <>
-                    {/* Backdrop */}
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        onClick={onClose}
-                        className="glass-backdrop fixed inset-0 z-40 transition-opacity"
-                    />
+                    {/* Backdrop - only show when not pinned */}
+                    {!isPinned && (
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            onClick={onClose}
+                            className="glass-backdrop fixed inset-0 z-40 transition-opacity"
+                        />
+                    )}
 
                     {/* Drawer */}
                     <motion.div
@@ -206,7 +292,10 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, onLogout, activeFilt
                             damping: 30,
                             mass: 0.85
                         }}
-                        className="fixed top-0 left-0 h-full w-[300px] glass-modal z-50 flex flex-col rounded-r-3xl overflow-hidden"
+                        className={`fixed top-0 left-0 h-full w-[300px] glass-modal flex flex-col overflow-hidden ${isPinned
+                            ? 'z-30 rounded-none border-r border-gray-200/50 dark:border-gray-700/50'
+                            : 'z-50 rounded-r-3xl'
+                            }`}
                     >
                         {/* Message Toast */}
                         <AnimatePresence>
@@ -252,6 +341,13 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, onLogout, activeFilt
                                             <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{user?.email || 'guest@example.com'}</p>
                                         </div>
                                         <button
+                                            onClick={onTogglePin}
+                                            className={`p-2 rounded-xl min-w-[44px] min-h-[44px] flex items-center justify-center transition-colors ${isPinned ? 'text-indigo-600 dark:text-indigo-400 bg-indigo-100/50 dark:bg-indigo-900/30' : 'text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-white/50 dark:hover:bg-gray-700/50'}`}
+                                            title={isPinned ? 'Unpin sidebar' : 'Pin sidebar'}
+                                        >
+                                            <Pin size={18} className={isPinned ? 'rotate-45' : ''} />
+                                        </button>
+                                        <button
                                             onClick={onClose}
                                             className="p-2 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-white/50 dark:hover:bg-gray-700/50 rounded-xl min-w-[44px] min-h-[44px] flex items-center justify-center transition-colors"
                                         >
@@ -278,6 +374,141 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, onLogout, activeFilt
                                             <span className="font-medium">{item.label}</span>
                                         </button>
                                     ))}
+
+                                    {/* Folder Section - show for both tabs */}
+                                    <div className="mt-4 pt-4 border-t border-gray-100/50 dark:border-gray-700/50">
+                                        <div className="flex items-center justify-between px-2 mb-2">
+                                            <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">
+                                                {activeTab === 'notes' ? t('folder.docFolders') : t('folder.taskFolders')}
+                                            </span>
+                                            <button
+                                                onClick={() => setIsAddingFolder(!isAddingFolder)}
+                                                className="p-1 text-gray-400 hover:text-indigo-500 dark:hover:text-indigo-400 rounded-lg transition-colors"
+                                            >
+                                                <Plus size={16} />
+                                            </button>
+                                        </div>
+
+                                        {/* Add folder form */}
+                                        {isAddingFolder && (
+                                            <div className="mx-2 mb-2 p-2 rounded-xl bg-white/50 dark:bg-gray-700/50 border border-indigo-200 dark:border-indigo-800">
+                                                <input
+                                                    type="text"
+                                                    value={newFolderName}
+                                                    onChange={(e) => setNewFolderName(e.target.value)}
+                                                    placeholder={t('folder.folderName')}
+                                                    className="w-full px-2 py-1.5 text-sm rounded-lg glass-input dark:text-gray-100 mb-2"
+                                                    autoFocus
+                                                    onKeyDown={(e) => e.key === 'Enter' && handleAddFolderSubmit()}
+                                                />
+                                                <div className="flex items-center gap-1 mb-2">
+                                                    {Object.keys(folderColors).map(color => (
+                                                        <button
+                                                            key={color}
+                                                            type="button"
+                                                            onClick={() => setNewFolderColor(color)}
+                                                            className={`w-5 h-5 rounded-full ${folderColors[color].bg} ${newFolderColor === color ? 'ring-2 ring-offset-1 ' + folderColors[color].ring : ''} transition-transform`}
+                                                        />
+                                                    ))}
+                                                </div>
+                                                <div className="flex gap-1">
+                                                    <button
+                                                        onClick={handleAddFolderSubmit}
+                                                        disabled={!newFolderName.trim() || isFolderLoading}
+                                                        className="flex-1 py-1.5 text-xs font-medium text-white bg-indigo-500 rounded-lg disabled:opacity-50"
+                                                    >
+                                                        {isFolderLoading ? <Loader2 size={12} className="animate-spin mx-auto" /> : t('common.save')}
+                                                    </button>
+                                                    <button
+                                                        onClick={() => { setIsAddingFolder(false); setNewFolderName(''); }}
+                                                        className="px-3 py-1.5 text-xs glass-button rounded-lg"
+                                                    >
+                                                        {t('common.cancel')}
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* Folder list */}
+                                        {filteredFolders.map(folder => (
+                                            <div key={folder.id}>
+                                                {editingFolderId === folder.id ? (
+                                                    /* Edit form */
+                                                    <div className="mx-2 mb-2 p-2 rounded-xl bg-white/50 dark:bg-gray-700/50 border border-indigo-200 dark:border-indigo-800">
+                                                        <input
+                                                            type="text"
+                                                            value={editFolderName}
+                                                            onChange={(e) => setEditFolderName(e.target.value)}
+                                                            className="w-full px-2 py-1.5 text-sm rounded-lg glass-input dark:text-gray-100 mb-2"
+                                                            autoFocus
+                                                        />
+                                                        <div className="flex items-center gap-1 mb-2">
+                                                            {Object.keys(folderColors).map(color => (
+                                                                <button
+                                                                    key={color}
+                                                                    type="button"
+                                                                    onClick={() => setEditFolderColor(color)}
+                                                                    className={`w-5 h-5 rounded-full ${folderColors[color].bg} ${editFolderColor === color ? 'ring-2 ring-offset-1 ' + folderColors[color].ring : ''}`}
+                                                                />
+                                                            ))}
+                                                        </div>
+                                                        <div className="flex gap-1">
+                                                            <button onClick={handleEditFolderSubmit} disabled={isFolderLoading} className="flex-1 py-1.5 text-xs font-medium text-white bg-indigo-500 rounded-lg disabled:opacity-50">
+                                                                {isFolderLoading ? <Loader2 size={12} className="animate-spin mx-auto" /> : t('common.save')}
+                                                            </button>
+                                                            <button onClick={() => setEditingFolderId(null)} className="px-3 py-1.5 text-xs glass-button rounded-lg">{t('common.cancel')}</button>
+                                                        </div>
+                                                    </div>
+                                                ) : deletingFolderId === folder.id ? (
+                                                    /* Delete confirmation */
+                                                    <div className="mx-2 mb-2 p-2 rounded-xl bg-rose-50/50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800">
+                                                        <p className="text-xs text-gray-600 dark:text-gray-300 mb-2">{t('folder.confirmDelete')}</p>
+                                                        <div className="flex gap-1">
+                                                            <button onClick={handleDeleteFolderConfirm} disabled={isFolderLoading} className="flex-1 py-1.5 text-xs font-medium text-white bg-rose-500 rounded-lg disabled:opacity-50">
+                                                                {isFolderLoading ? <Loader2 size={12} className="animate-spin mx-auto" /> : t('common.delete')}
+                                                            </button>
+                                                            <button onClick={() => setDeletingFolderId(null)} className="px-3 py-1.5 text-xs glass-button rounded-lg">{t('common.cancel')}</button>
+                                                        </div>
+                                                    </div>
+                                                ) : (
+                                                    /* Normal folder item */
+                                                    <button
+                                                        onClick={() => {
+                                                            onFolderSelect(folder.id, activeTab === 'notes');
+                                                            onFilterChange('folder');
+                                                            onClose();
+                                                        }}
+                                                        className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all group ${activeFilter === 'folder' && selectedFolderId === folder.id
+                                                            ? 'bg-indigo-100/60 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 shadow-sm'
+                                                            : 'text-gray-600 dark:text-gray-300 hover:bg-white/50 dark:hover:bg-gray-700/50'
+                                                            }`}
+                                                    >
+                                                        <FolderIcon size={18} className={folderColors[folder.color || 'indigo'].text} />
+                                                        <span className="flex-1 text-left font-medium truncate">{folder.name}</span>
+                                                        {/* Edit/Delete buttons on hover */}
+                                                        <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                            <button
+                                                                onClick={(e) => { e.stopPropagation(); startEditFolder(folder); }}
+                                                                className="p-1 text-gray-400 hover:text-indigo-500 rounded"
+                                                            >
+                                                                <Pencil size={12} />
+                                                            </button>
+                                                            <button
+                                                                onClick={(e) => { e.stopPropagation(); setDeletingFolderId(folder.id); }}
+                                                                className="p-1 text-gray-400 hover:text-rose-500 rounded"
+                                                            >
+                                                                <Trash2 size={12} />
+                                                            </button>
+                                                        </div>
+                                                    </button>
+                                                )}
+                                            </div>
+                                        ))}
+
+                                        {filteredFolders.length === 0 && !isAddingFolder && (
+                                            <p className="px-4 py-2 text-xs text-gray-400 dark:text-gray-500">{t('folder.noFolders')}</p>
+                                        )}
+                                    </div>
                                 </div>
 
                                 {/* Footer */}

@@ -33,6 +33,7 @@ export type Todo = {
     due_date?: string | null
     reminder_at?: string | null
     embedded_tasks?: EmbeddedTask[] | null
+    folder_id?: number | null
     created_at: string
 }
 
@@ -43,6 +44,16 @@ export type EmbeddedTask = {
     line_index: number
     text: string
     is_completed: boolean
+}
+
+// Folder type for organizing tasks and documents
+export type Folder = {
+    id: number
+    user_id: string
+    name: string
+    color?: string
+    is_for_document?: boolean  // true = document folder, false/undefined = task folder
+    created_at: string
 }
 
 export type User = {

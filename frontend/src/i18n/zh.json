@@ -181,5 +181,23 @@
         "updateFailed": "更新任务状态失败",
         "tasksCount": "{completed}/{total} 个任务已完成",
         "emptyState": "此文档暂无任务"
+    },
+    "folder": {
+        "all": "全部",
+        "uncategorized": "未分类",
+        "addFolder": "添加文件夹",
+        "editFolder": "编辑文件夹",
+        "deleteFolder": "删除文件夹",
+        "folderName": "文件夹名称",
+        "folderColor": "文件夹颜色",
+        "manageFolder": "管理文件夹",
+        "taskFolders": "任务文件夹",
+        "docFolders": "文档文件夹",
+        "noFolders": "暂无文件夹",
+        "confirmDelete": "确定要删除此文件夹吗？其中的项目将移至未分类。",
+        "folderCreated": "文件夹已创建",
+        "folderUpdated": "文件夹已更新",
+        "folderDeleted": "文件夹已删除",
+        "moveToFolder": "移动到文件夹"
     }
 }
